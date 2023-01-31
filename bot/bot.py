@@ -22,9 +22,7 @@ import config
 # setup
 logger = logging.getLogger(__name__)
 
-HELP_MESSAGE = """Hi! I'm a poor man's ChatGPT re-created with GPT-3 DaVinci OpenAI model.
-
-Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
+HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
 
 I also have a terrible memory, so don't expect me to remember any chat context.
 
@@ -39,9 +37,8 @@ async def start_handle(update: Update, context: CallbackContext):
     init_user(update, context)
     context.user_data["last_interation_timestamp"] = time.time()
 
-    reply_text = "Hi! I'm <b>ChatGPT</b> bot implemented with GPT-3.5 OpenAI API 🤖\n\n"
+    reply_text = "Hi! I'm a poor man's ChatGPT re-created with GPT-3 DaVinci OpenAI model.\n\n"
     reply_text += HELP_MESSAGE
-
     reply_text += "\nAnd now... ask me anything!"
 
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
@@ -77,7 +74,7 @@ async def message_handle(update: Update, context: CallbackContext, message=None)
         context.user_data["last_message"] = message
         answer = chatgpt.ChatGPT().send_message(message)
     except Exception as e:
-        error_text = f"Something went wrong during completion. Reason: {e}"
+        error_text = f"Failed to answer. Reason: {e}"
         logger.error(error_text)
         await update.message.reply_text(error_text)
         return
