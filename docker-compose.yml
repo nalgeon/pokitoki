@@ -3,7 +3,7 @@ version: "3"
 services:
     pokitoki:
         container_name: pokitoki
-        command: python3 bot/bot.py
+        command: python3 -m bot.bot
         restart: always
         build:
             context: "."

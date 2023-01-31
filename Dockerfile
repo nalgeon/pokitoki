@@ -18,5 +18,3 @@ RUN pip3 install -r requirements.txt
 
 COPY ./config.yml .
 COPY ./bot ./bot
-
-CMD ["bash"]
