@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+    pokitoki:
+        container_name: pokitoki
+        command: python3 bot/bot.py
+        restart: always
+        build:
+            context: "."
+            dockerfile: Dockerfile
