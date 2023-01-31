@@ -5,5 +5,5 @@ with open("config.yml", "r") as f:
 
 telegram_token = config["telegram_token"]
 openai_api_key = config["openai_api_key"]
-allowed_telegram_usernames = config["allowed_telegram_usernames"]
+telegram_usernames = config["telegram_usernames"]
 persistence_path = config["persistence_path"]
