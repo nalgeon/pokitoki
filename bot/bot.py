@@ -61,12 +61,10 @@ async def retry_handle(update: Update, context: CallbackContext):
         return
 
     last_message = context.user_data["last_message"]
-    await message_handle(update, context, message=last_message, use_new_dialog_timeout=False)
+    await message_handle(update, context, message=last_message)
 
 
-async def message_handle(
-    update: Update, context: CallbackContext, message=None, use_new_dialog_timeout=True
-):
+async def message_handle(update: Update, context: CallbackContext, message=None):
     init_user(update, context)
 
     context.user_data["last_interation_timestamp"] = time.time()

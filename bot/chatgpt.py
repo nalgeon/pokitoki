@@ -37,7 +37,7 @@ class ChatGPT:
                     presence_penalty=0,
                 )
                 elapsed = dt.datetime.now() - start
-                print(f"getting an answer, took {elapsed}")
+                print(f"getting an answer took {elapsed}")
                 answer = r.choices[0].text
                 answer = answer.strip()
 
