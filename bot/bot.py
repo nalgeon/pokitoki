@@ -25,8 +25,8 @@ I also have a terrible memory, so don't expect me to remember any chat context.
 
 Supported commands:
 
-/retry – Regenerate last bot answer
-/help – Show help
+/retry – retry answering the last question
+/help – show help
 """
 
 model = DaVinci()
