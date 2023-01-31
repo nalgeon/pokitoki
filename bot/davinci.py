@@ -24,6 +24,7 @@ class DaVinci:
                 raise ValueError("received an empty answer")
             answer = resp.choices[0].text
             answer = answer.strip()
+            answer = answer.replace(" < ", " &lt; ")
             return answer
 
         except openai.error.InvalidRequestError as exc:
