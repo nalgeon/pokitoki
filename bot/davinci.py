@@ -1,9 +1,12 @@
+import re
 import openai
 from bot import config
 
 openai.api_key = config.openai_api_key
 
 BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses. Write code inside <pre>, </pre> tags."
+
+PRE_RE = re.compile(r"&lt;(/?pre)")
 
 
 class DaVinci:
@@ -24,7 +27,8 @@ class DaVinci:
                 raise ValueError("received an empty answer")
             answer = resp.choices[0].text
             answer = answer.strip()
-            answer = answer.replace(" < ", " &lt; ")
+            answer = answer.replace("<", "&lt;")
+            answer = PRE_RE.sub(r"<\1", answer)
             return answer
 
         except openai.error.InvalidRequestError as exc:
