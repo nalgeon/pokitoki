@@ -1,11 +1,13 @@
 # DaVinci (GPT-3) Telegram Bot
 
-This is a poor man's ChatGPT re-created with GPT-3 DaVinci OpenAI model.
+This is a poor man's ChatGPT rebuilt with the GPT-3 DaVinci OpenAI model. It has a terrible memory, so don't expect it to remember any chat context.
 
-## Bot commands
+Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot).
 
--   `/retry` – Regenerate last bot answer
--   `/help` – Show help
+Available commands:
+
+-   `/retry` - retry answering the last question
+-   `/help` - show help
 
 ## Setup
 
@@ -13,13 +15,9 @@ This is a poor man's ChatGPT re-created with GPT-3 DaVinci OpenAI model.
 
 2. Get your Telegram bot token from [@BotFather](https://t.me/BotFather)
 
-3. Edit `config.example.yml` to add your tokens and raname it to `config.yml`:
+3. Copy `config.example.yml` to `config.yml` and specify your tokens there.
 
-```bash
-mv config.example.yml config.yml
-```
-
-4. Run:
+4. Start the bot:
 
 ```bash
 docker compose up --build
