@@ -9,7 +9,7 @@ services:
             context: .
             dockerfile: Dockerfile
         volumes:
-          - ./config.yml:/code/config.yml
+          - ./config.yml:/code/config.yml:ro
           - bot_persistent_volume:/code/bot_data
 
 volumes:
