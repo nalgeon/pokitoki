@@ -6,5 +6,12 @@ services:
         command: python3 -m bot.bot
         restart: always
         build:
-            context: "."
+            context: .
             dockerfile: Dockerfile
+        volumes:
+          - ./config.yml:/code/config.yml
+          - bot_persistent_volume:/code/bot_data/persistence.pkl
+
+volumes:
+  bot_persistent_volume:
+    name: bot_persistent_volume
