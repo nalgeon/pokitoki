@@ -65,28 +65,30 @@ async def help_handle(update: Update, context: CallbackContext):
 
 
 async def retry_handle(update: Update, context: CallbackContext):
-    if not context.user_data.get("last_message"):
+    if not context.user_data.get("last_question"):
         await update.message.reply_text("No message to retry 🤷‍♂️")
         return
-    last_message = context.user_data["last_message"]
-    await message_handle(update, context, message=last_message)
+    last_question = context.user_data["last_question"]
+    await message_handle(update, context, question=last_question)
 
 
-async def message_handle(update: Update, context: CallbackContext, message=None):
-    # send typing action
-    await update.message.chat.send_action(action="typing")
+async def message_handle(update: Update, context: CallbackContext, question=None):
+    message = update.message or update.edited_message
+    await message.chat.send_action(action="typing")
 
     try:
-        message = message or update.message.text
-        context.user_data["last_message"] = message
-        answer = model.ask(message)
+        question = question or message.text
+        question, history = _prepare_question(question, context)
+        answer = model.ask(question, history)
+        context.user_data["last_question"] = question
+        context.user_data["last_answer"] = answer
     except Exception as e:
         error_text = f"Failed to answer. Reason: {e}"
         logger.error(error_text)
-        await update.message.reply_text(error_text)
+        await message.reply_text(error_text)
         return
 
-    await update.message.reply_text(answer, parse_mode=ParseMode.HTML)
+    await message.reply_text(answer, parse_mode=ParseMode.HTML)
 
 
 async def error_handler(update: Update, context: CallbackContext) -> None:
@@ -104,6 +106,14 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
     )
 
     await context.bot.send_message(update.effective_chat.id, message, parse_mode=ParseMode.HTML)
+
+
+def _prepare_question(question: str, context: CallbackContext) -> tuple[str, list]:
+    history = []
+    if question[0] == "+" and "last_answer" in context.user_data:
+        question = question[1:].strip()
+        history = [(context.user_data["last_question"], context.user_data["last_answer"])]
+    return question, history
 
 
 if __name__ == "__main__":

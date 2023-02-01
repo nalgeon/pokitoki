@@ -10,9 +10,10 @@ PRE_RE = re.compile(r"&lt;(/?pre)")
 
 
 class DaVinci:
-    def ask(self, question):
+    def ask(self, question, history=None):
         try:
-            prompt = self._generate_prompt(question)
+            history = history or []
+            prompt = self._generate_prompt(question, history)
             resp = openai.Completion.create(
                 engine="text-davinci-003",
                 prompt=prompt,
@@ -22,13 +23,7 @@ class DaVinci:
                 frequency_penalty=0,
                 presence_penalty=0,
             )
-
-            if len(resp.choices) == 0:
-                raise ValueError("received an empty answer")
-            answer = resp.choices[0].text
-            answer = answer.strip()
-            answer = answer.replace("<", "&lt;")
-            answer = PRE_RE.sub(r"<\1", answer)
+            answer = self._prepare_answer(resp)
             return answer
 
         except openai.error.InvalidRequestError as exc:
@@ -37,9 +32,22 @@ class DaVinci:
         except Exception as exc:
             raise ValueError("failed to answer") from exc
 
-    def _generate_prompt(self, question):
+    def _generate_prompt(self, question, history):
         prompt = BASE_PROMPT
+        for q, a in history:
+            prompt += f"Question: {q}\n"
+            prompt += f"Answer: {a}\n"
         prompt += "\n\n"
         prompt += f"Question: {question}\n"
         prompt += "Answer: "
         return prompt
+
+    def _prepare_answer(self, resp):
+        if len(resp.choices) == 0:
+            raise ValueError("received an empty answer")
+
+        answer = resp.choices[0].text
+        answer = answer.strip()
+        answer = answer.replace("<", "&lt;")
+        answer = PRE_RE.sub(r"<\1", answer)
+        return answer
