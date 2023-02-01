@@ -49,7 +49,7 @@ def main() -> None:
     )
     application.add_error_handler(error_handler)
 
-    print("✓ Bot started")
+    print(f"✓ Bot started. Allowed users: {user_filter}")
     application.run_polling()
 
 
