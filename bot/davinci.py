@@ -29,9 +29,6 @@ class DaVinci:
         except openai.error.InvalidRequestError as exc:
             raise ValueError("too many tokens to make completion") from exc
 
-        except Exception as exc:
-            raise ValueError("failed to answer") from exc
-
     def _generate_prompt(self, question, history):
         prompt = BASE_PROMPT
         for q, a in history:
