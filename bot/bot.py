@@ -1,7 +1,9 @@
+import datetime as dt
 import logging
 import traceback
 import html
 import json
+import sys
 
 from telegram import Update
 from telegram.ext import (
@@ -16,6 +18,12 @@ from telegram.constants import ParseMode
 
 from bot.davinci import DaVinci
 from bot import config
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +57,7 @@ def main() -> None:
     )
     application.add_error_handler(error_handler)
 
-    print(f"✓ Bot started. Allowed users: {user_filter}")
+    logging.info(f"allowed users: {user_filter}")
     application.run_polling()
 
 
@@ -77,9 +85,15 @@ async def message_handle(update: Update, context: CallbackContext, question=None
     await message.chat.send_action(action="typing")
 
     try:
+        username = message.from_user.username
         question = question or message.text
         question, history = _prepare_question(question, context)
+        start = dt.datetime.now()
         answer = model.ask(question, history)
+        elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
+        logger.info(
+            f"question from user={username}, n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
+        )
         context.user_data["last_question"] = question
         context.user_data["last_answer"] = answer
     except Exception as e:
