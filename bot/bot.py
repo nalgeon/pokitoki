@@ -24,6 +24,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
+logging.getLogger("openai").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ async def message_handle(update: Update, context: CallbackContext, question=None
         question = question or message.text
         question, history = _prepare_question(question, context)
         start = dt.datetime.now()
-        answer = model.ask(question, history)
+        answer = await model.ask(question, history)
         elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
         logger.info(
             f"question from user={username}, n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"

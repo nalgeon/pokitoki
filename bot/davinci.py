@@ -10,11 +10,11 @@ PRE_RE = re.compile(r"&lt;(/?pre)")
 
 
 class DaVinci:
-    def ask(self, question, history=None):
+    async def ask(self, question, history=None):
         try:
             history = history or []
             prompt = self._generate_prompt(question, history)
-            resp = openai.Completion.create(
+            resp = await openai.Completion.acreate(
                 engine="text-davinci-003",
                 prompt=prompt,
                 temperature=0.7,
