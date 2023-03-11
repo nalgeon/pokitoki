@@ -1,3 +1,5 @@
+"""Telegram chat bot built using the language model from OpenAI."""
+
 import datetime as dt
 import logging
 import traceback
@@ -39,18 +41,24 @@ Supported commands:
 /help – show help
 """
 
+# We are using the latest and greatest OpenAI model.
+# There is also a previous generation (GPT-3)
+# available via davinci.DaVinci class, but who needs it?
 model = ChatGPT()
 
 
-def main() -> None:
+def main():
+    # chat context persistence
     persistence = PicklePersistence(filepath=config.persistence_path)
     application = ApplicationBuilder().token(config.telegram_token).persistence(persistence).build()
 
+    # allow bot only for the selected users
     if len(config.telegram_usernames) == 0:
         user_filter = filters.ALL
     else:
         user_filter = filters.User(username=config.telegram_usernames)
 
+    # available commands: start, help, retry and message (default)
     application.add_handler(CommandHandler("start", start_handle, filters=user_filter))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))
@@ -59,6 +67,7 @@ def main() -> None:
     )
     application.add_error_handler(error_handler)
 
+    # start the bot
     bot_id, _, _ = config.telegram_token.partition(":")
     logging.info(f"bot id: {bot_id}")
     logging.info(f"allowed users: {user_filter}")
@@ -66,6 +75,7 @@ def main() -> None:
 
 
 async def start_handle(update: Update, context: CallbackContext):
+    """Answers the `start` command."""
     reply_text = "Hi! I'm a poor man's ChatGPT rebuilt with the GPT-3 DaVinci OpenAI model.\n\n"
     reply_text += HELP_MESSAGE
     reply_text += "\nAnd now... ask me anything!"
@@ -73,10 +83,12 @@ async def start_handle(update: Update, context: CallbackContext):
 
 
 async def help_handle(update: Update, context: CallbackContext):
+    """Answers the `help` command."""
     await update.message.reply_text(HELP_MESSAGE, parse_mode=ParseMode.HTML)
 
 
 async def retry_handle(update: Update, context: CallbackContext):
+    """Retries asking the last question (if any)."""
     user = UserData(context.user_data)
     if not user.last_message:
         await update.message.reply_text("No message to retry 🤷‍♂️")
@@ -85,6 +97,7 @@ async def retry_handle(update: Update, context: CallbackContext):
 
 
 async def message_handle(update: Update, context: CallbackContext, question=None):
+    """Answers a question from the user."""
     message = update.message or update.edited_message
     await message.chat.send_action(action="typing")
 
@@ -110,6 +123,7 @@ async def message_handle(update: Update, context: CallbackContext, question=None
 
 
 async def error_handler(update: Update, context: CallbackContext) -> None:
+    """If the bot failed to answer, prints the error and the stack trace (if any)."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
     # collect error message
@@ -127,11 +141,12 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
 
 
 def _prepare_question(question: str, context: CallbackContext) -> tuple[str, list]:
+    """Returns the question along with the previous messages (for follow-up questions)."""
     user = UserData(context.user_data)
     history = []
     if question[0] == "+":
         question = question[1:].strip()
-        history = user.build_history()
+        history = list(user.messages)
     else:
         # user is asking a question 'from scratch',
         # so the bot should forget the previous history

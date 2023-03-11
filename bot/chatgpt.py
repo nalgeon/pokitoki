@@ -1,3 +1,6 @@
+"""ChatGPT (GPT-3.5) language model from OpenAI."""
+
+import pprint
 import re
 import openai
 from bot.models import UserMessage
@@ -11,7 +14,10 @@ PRE_RE = re.compile(r"&lt;(/?pre)")
 
 
 class ChatGPT:
+    """OpenAI API wrapper."""
+
     async def ask(self, question: str, history: list[UserMessage]):
+        """Asks the language model a question and returns an answer."""
         try:
             messages = self._generate_messages(question, history)
             resp = await openai.ChatCompletion.acreate(
@@ -30,14 +36,20 @@ class ChatGPT:
             raise ValueError("too many tokens to make completion") from exc
 
     def _generate_messages(self, question: str, history: list[UserMessage]) -> list[dict]:
+        """Builds message history to provide context for the language model."""
         messages = [{"role": "system", "content": BASE_PROMPT}]
         for message in history:
             messages.append({"role": "user", "content": message.question})
             messages.append({"role": "assistant", "content": message.answer})
         messages.append({"role": "user", "content": question})
+        pprint.pprint(messages)
         return messages
 
     def _prepare_answer(self, resp):
+        """
+        Post-processes an answer from the language model,
+        fixing possible HTML formatting issues.
+        """
         if len(resp.choices) == 0:
             raise ValueError("received an empty answer")
 

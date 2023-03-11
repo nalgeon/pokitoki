@@ -1,3 +1,5 @@
+"""DaVinci (GPT-3) language model from OpenAI."""
+
 import re
 import openai
 from bot import config
@@ -10,7 +12,10 @@ PRE_RE = re.compile(r"&lt;(/?pre)")
 
 
 class DaVinci:
+    """OpenAI API wrapper."""
+
     async def ask(self, question, history=None):
+        """Asks the language model a question and returns an answer."""
         try:
             history = history or []
             prompt = self._generate_prompt(question, history)
@@ -30,6 +35,7 @@ class DaVinci:
             raise ValueError("too many tokens to make completion") from exc
 
     def _generate_prompt(self, question, history):
+        """Builds a prompt to provide context for the language model."""
         prompt = BASE_PROMPT
         for q, a in history:
             prompt += "\n"
@@ -42,6 +48,10 @@ class DaVinci:
         return prompt
 
     def _prepare_answer(self, resp):
+        """
+        Post-processes an answer from the language model,
+        fixing possible HTML formatting issues.
+        """
         if len(resp.choices) == 0:
             raise ValueError("received an empty answer")
 

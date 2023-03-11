@@ -1,15 +1,22 @@
+"""
+Command-line interface to the OpenAI API.
+
+Usage example:
+$ python -m bot.cli "What is your name?"
+"""
+
 import asyncio
 import sys
 import textwrap
 
-from bot.davinci import DaVinci
+from bot.chatgpt import ChatGPT
 
-ai = DaVinci()
+ai = ChatGPT()
 
 
 async def main(question):
     print(f"> {question}")
-    answer = await ai.ask(question)
+    answer = await ai.ask(question, history=[])
     lines = textwrap.wrap(answer, width=60)
     for line in lines:
         print(line)
