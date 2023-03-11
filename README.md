@@ -6,7 +6,16 @@ This is a Telegram chat bot built using the ChatGPT (aka GPT-3.5) language model
 
 The bot has a terrible memory, so don't expect it to remember any chat context by default. But you can ask follow-up questions using a plus sign:
 
-<img src="docs/chat-2.png" alt="Follow-up question" width="400">
+<table>
+    <tr>
+        <td>
+            <img src="docs/chat-2.png" alt="Question" width="400">
+        </td>
+        <td>
+            <img src="docs/chat-3.png" alt="Follow-up question" width="400">
+        </td>
+    </tr>
+</table>
 
 ## Available commands
 
