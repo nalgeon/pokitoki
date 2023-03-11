@@ -16,7 +16,7 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
-from bot.davinci import DaVinci
+from bot.chatgpt import ChatGPT
 from bot.models import UserData
 from bot import config
 
@@ -39,7 +39,7 @@ Supported commands:
 /help – show help
 """
 
-model = DaVinci()
+model = ChatGPT()
 
 
 def main() -> None:

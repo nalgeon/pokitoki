@@ -1,10 +1,10 @@
-# DaVinci (GPT-3) Telegram Bot
+# ChatGPT Telegram Bot
 
-This is a poor man's ChatGPT rebuilt with the GPT-3 DaVinci OpenAI model.
+This is a Telegram chat bot built using the ChatGPT (aka GPT-3.5) language model from OpenAI.
 
 <img src="docs/chat-1.png" alt="Sample chat" width="400">
 
-The bot has a terrible memory, so don't expect it to remember any chat context. But you can ask follow-up questions using a plus sign:
+The bot has a terrible memory, so don't expect it to remember any chat context by default. But you can ask follow-up questions using a plus sign:
 
 <img src="docs/chat-2.png" alt="Follow-up question" width="400">
 
