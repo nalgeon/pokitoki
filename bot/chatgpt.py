@@ -1,15 +1,12 @@
 """ChatGPT (GPT-3.5) language model from OpenAI."""
 
-import re
 import openai
 from bot.models import UserMessage
 from bot import config
 
 openai.api_key = config.openai_api_key
 
-BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses. Write code inside <pre>, </pre> tags."
-
-PRE_RE = re.compile(r"&lt;(/?pre)")
+BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
 
 
 class ChatGPT:
@@ -45,14 +42,10 @@ class ChatGPT:
 
     def _prepare_answer(self, resp):
         """
-        Post-processes an answer from the language model,
-        fixing possible HTML formatting issues.
+        Post-processes an answer from the language model.
         """
         if len(resp.choices) == 0:
             raise ValueError("received an empty answer")
 
         answer = resp.choices[0].message.content
-        answer = answer.strip()
-        answer = answer.replace("<", "&lt;")
-        answer = PRE_RE.sub(r"<\1", answer)
         return answer

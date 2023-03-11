@@ -76,7 +76,7 @@ def main():
 
 async def start_handle(update: Update, context: CallbackContext):
     """Answers the `start` command."""
-    reply_text = "Hi! I'm a poor man's ChatGPT rebuilt with the GPT-3 DaVinci OpenAI model.\n\n"
+    reply_text = "Hi! I'm a humble ChatGPT Telegram Bot.\n\n"
     reply_text += HELP_MESSAGE
     reply_text += "\nAnd now... ask me anything!"
     await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)

@@ -20,7 +20,7 @@ class DaVinci:
             history = history or []
             prompt = self._generate_prompt(question, history)
             resp = await openai.Completion.acreate(
-                engine="text-davinci-003",
+                model="text-davinci-003",
                 prompt=prompt,
                 temperature=0.7,
                 max_tokens=1000,
@@ -44,7 +44,6 @@ class DaVinci:
         prompt += "\n"
         prompt += f"Question: {question}\n"
         prompt += "Answer: "
-        print(prompt)
         return prompt
 
     def _prepare_answer(self, resp):
