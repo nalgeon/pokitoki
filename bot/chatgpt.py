@@ -1,6 +1,5 @@
 """ChatGPT (GPT-3.5) language model from OpenAI."""
 
-import pprint
 import re
 import openai
 from bot.models import UserMessage
@@ -42,7 +41,6 @@ class ChatGPT:
             messages.append({"role": "user", "content": message.question})
             messages.append({"role": "assistant", "content": message.answer})
         messages.append({"role": "user", "content": question})
-        pprint.pprint(messages)
         return messages
 
     def _prepare_answer(self, resp):
