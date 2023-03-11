@@ -32,11 +32,13 @@ class DaVinci:
     def _generate_prompt(self, question, history):
         prompt = BASE_PROMPT
         for q, a in history:
+            prompt += "\n"
             prompt += f"Question: {q}\n"
             prompt += f"Answer: {a}\n"
-        prompt += "\n\n"
+        prompt += "\n"
         prompt += f"Question: {question}\n"
         prompt += "Answer: "
+        print(prompt)
         return prompt
 
     def _prepare_answer(self, resp):

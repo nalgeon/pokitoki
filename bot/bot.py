@@ -17,6 +17,7 @@ from telegram.ext import (
 from telegram.constants import ParseMode
 
 from bot.davinci import DaVinci
+from bot.models import UserData
 from bot import config
 
 logging.basicConfig(
@@ -58,6 +59,8 @@ def main() -> None:
     )
     application.add_error_handler(error_handler)
 
+    bot_id, _, _ = config.telegram_token.partition(":")
+    logging.info(f"bot id: {bot_id}")
     logging.info(f"allowed users: {user_filter}")
     application.run_polling()
 
@@ -74,11 +77,11 @@ async def help_handle(update: Update, context: CallbackContext):
 
 
 async def retry_handle(update: Update, context: CallbackContext):
-    if not context.user_data.get("last_question"):
+    user = UserData(context.user_data)
+    if not user.last_message:
         await update.message.reply_text("No message to retry 🤷‍♂️")
         return
-    last_question = context.user_data["last_question"]
-    await message_handle(update, context, question=last_question)
+    await message_handle(update, context, question=user.last_message.question)
 
 
 async def message_handle(update: Update, context: CallbackContext, question=None):
@@ -95,10 +98,10 @@ async def message_handle(update: Update, context: CallbackContext, question=None
         logger.info(
             f"question from user={username}, n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
         )
-        context.user_data["last_question"] = question
-        context.user_data["last_answer"] = answer
-    except Exception as e:
-        error_text = f"Failed to answer. Reason: {e}"
+        user = UserData(context.user_data)
+        user.add_message(question, answer)
+    except Exception as exc:
+        error_text = f"Failed to answer. Reason: {exc}"
         logger.error(error_text)
         await message.reply_text(error_text)
         return
@@ -124,10 +127,15 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
 
 
 def _prepare_question(question: str, context: CallbackContext) -> tuple[str, list]:
+    user = UserData(context.user_data)
     history = []
-    if question[0] == "+" and "last_answer" in context.user_data:
+    if question[0] == "+":
         question = question[1:].strip()
-        history = [(context.user_data["last_question"], context.user_data["last_answer"])]
+        history = user.build_history()
+    else:
+        # user is asking a question 'from scratch',
+        # so the bot should forget the previous history
+        user.clear_messages()
     return question, history
 
 
