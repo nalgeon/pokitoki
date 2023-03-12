@@ -7,7 +7,7 @@ import html
 import json
 import sys
 
-from telegram import Update
+from telegram import Chat, Message, Update
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -29,6 +29,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("__main__").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -71,10 +72,11 @@ def main():
     else:
         user_filter = filters.User(username=config.telegram_usernames)
 
-    # available commands: start, help, retry and message (default)
+    # available commands: start, help, retry
     application.add_handler(CommandHandler("start", start_handle, filters=user_filter))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))
+    # default action is to reply to a message
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND & user_filter, message_handle)
     )
@@ -88,6 +90,7 @@ def main():
 
 
 async def post_init(application: Application) -> None:
+    """Defines bot settings."""
     await application.bot.set_my_commands(BOT_COMMANDS)
 
 
@@ -110,12 +113,36 @@ async def retry_handle(update: Update, context: CallbackContext):
     if not user.last_message:
         await update.message.reply_text("No message to retry 🤷‍♂️")
         return
-    await message_handle(update, context, question=user.last_message.question)
+    await reply_to(update.message, context, question=user.last_message.question)
 
 
-async def message_handle(update: Update, context: CallbackContext, question=None):
+async def message_handle(update: Update, context: CallbackContext):
     """Answers a question from the user."""
     message = update.message or update.edited_message
+
+    # the bot is meant to answer questions in private chats,
+    # but it can also answer a specific question in a group when mentioned
+    if message.chat.type != Chat.PRIVATE:
+        if not message.text.startswith(context.bot.name) or not message.reply_to_message:
+            # ignore a message in a group, unless it is both
+            # (1) is mentioning the bot and (2) is replying to a previous message
+            return
+        prompt = message.text.removeprefix(context.bot.name).strip()
+        question = (
+            f"{prompt}: {message.reply_to_message.text}"
+            if prompt
+            else message.reply_to_message.text
+        )
+    else:
+        # allow any messages in a private chat
+        question = message.text
+
+    logger.debug(f"question: {question}")
+    await reply_to(message, context, question=question)
+
+
+async def reply_to(message: Message, context: CallbackContext, question: str):
+    """Replies to a specific question."""
     await message.chat.send_action(action="typing")
 
     try:
