@@ -38,4 +38,4 @@ docker compose up --build
 
 ## Credits
 
-Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot).
+Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot). I simplified the hell out of it, removed all the bells and whistles, refactored the code, and added comments.
