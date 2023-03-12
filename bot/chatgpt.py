@@ -1,5 +1,6 @@
 """ChatGPT (GPT-3.5) language model from OpenAI."""
 
+import re
 import openai
 from bot.models import UserMessage
 from bot import config
@@ -8,6 +9,7 @@ openai.api_key = config.openai_api_key
 
 BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
 
+PRE_RE = re.compile(r"&lt;(/?pre)")
 
 class ChatGPT:
     """OpenAI API wrapper."""
@@ -48,4 +50,7 @@ class ChatGPT:
             raise ValueError("received an empty answer")
 
         answer = resp.choices[0].message.content
+        answer = answer.strip()
+        answer = answer.replace("<", "&lt;")
+        answer = PRE_RE.sub(r"<\1", answer)
         return answer

@@ -10,7 +10,6 @@ BASE_PROMPT = "Your primary goal is to answer my questions. This may involve wri
 
 PRE_RE = re.compile(r"&lt;(/?pre)")
 
-
 class DaVinci:
     """OpenAI API wrapper."""
 
