@@ -123,16 +123,13 @@ async def message_handle(update: Update, context: CallbackContext):
     # the bot is meant to answer questions in private chats,
     # but it can also answer a specific question in a group when mentioned
     if message.chat.type != Chat.PRIVATE:
-        if not message.text.startswith(context.bot.name) or not message.reply_to_message:
-            # ignore a message in a group, unless it is both
-            # (1) is mentioning the bot and (2) is replying to a previous message
+        if not message.text.startswith(context.bot.name):
+            # ignore a message in a group unless it is mentioning the bot
             return
-        prompt = message.text.removeprefix(context.bot.name).strip()
-        question = (
-            f"{prompt}: {message.reply_to_message.text}"
-            if prompt
-            else message.reply_to_message.text
-        )
+        question = message.text.removeprefix(context.bot.name).strip()
+        if message.reply_to_message:
+            # the real question is in the original message
+            question = f"{question}: {message.reply_to_message.text}"
     else:
         # allow any messages in a private chat
         question = message.text
