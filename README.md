@@ -23,6 +23,11 @@ The bot has a terrible memory, so don't expect it to remember any chat context b
     </tr>
 </table>
 
+Available commands:
+
+-   `/retry` - retry answering the last question
+-   `/help` - show help
+
 ## Groups
 
 To get an answer from the bot in a group, mention it in a reply to a question, or ask a question directly:
@@ -30,18 +35,15 @@ To get an answer from the bot in a group, mention it in a reply to a question, o
 <table>
     <tr>
         <td>
-            <img src="docs/chat-4.png" alt="Question" width="400">
+            <img src="docs/chat-4.png" alt="Reply with mention" width="400">
         </td>
         <td>
-            <img src="docs/chat-5.png" alt="Follow-up question" width="400">
+            <img src="docs/chat-5.png" alt="Direct question" width="400">
         </td>
     </tr>
 </table>
 
-## Available commands
-
--   `/retry` - retry answering the last question
--   `/help` - show help
+The bot will ignore questions from group members unless they are listed in the `telegram_usernames` config property.
 
 ## Setup
 
