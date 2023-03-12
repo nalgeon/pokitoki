@@ -9,6 +9,7 @@ import sys
 
 from telegram import Update
 from telegram.ext import (
+    Application,
     ApplicationBuilder,
     CallbackContext,
     CommandHandler,
@@ -41,10 +42,20 @@ Supported commands:
 /help – show help
 """
 
+_MY_COMMANDS = [
+        ('start', 'what is this bot about?'),
+        ('retry', 'retry answering the last question'),
+        ('help', 'show help'),
+    ]
+
 # We are using the latest and greatest OpenAI model.
 # There is also a previous generation (GPT-3)
 # available via davinci.DaVinci class, but who needs it?
 model = ChatGPT()
+
+
+async def post_init(application: Application) -> None:
+    await application.bot.set_my_commands(_MY_COMMANDS)
 
 
 def main():
