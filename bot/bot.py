@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
 
-I also have a terrible memory, so don't expect me to remember any chat context.
+I also have a terrible memory, so don't expect me to remember any chat context (unless you put a '+' sign in front of the question).
 
 Supported commands:
 
