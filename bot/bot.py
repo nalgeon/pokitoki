@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
 
-I also have a terrible memory, so don't expect me to remember any chat context (unless you put a '+' sign in front of the question).
+I have a terrible memory, so don't expect me to remember any chat context (unless you put a '+' sign in front of the question).
 
 Supported commands:
 
@@ -73,15 +73,12 @@ def main():
         user_filter = filters.User(username=config.telegram_usernames)
 
     # available commands: start, help, retry
-    application.add_handler(CommandHandler("start", start_handle, filters=user_filter))
+    application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))
     # default action is to reply to a message
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND & user_filter, message_handle)
-    )
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND & ~user_filter, restricted_handle)
     )
     application.add_error_handler(error_handler)
 
@@ -99,10 +96,16 @@ async def post_init(application: Application) -> None:
 
 async def start_handle(update: Update, context: CallbackContext):
     """Answers the `start` command."""
-    reply_text = "Hi! I'm a humble ChatGPT Telegram Bot.\n\n"
-    reply_text += HELP_MESSAGE
-    reply_text += "\nAnd now... ask me anything!"
-    await update.message.reply_text(reply_text, parse_mode=ParseMode.HTML)
+    if update.effective_user.username in config.telegram_usernames:
+        reply_text = "Hi! I'm a humble ChatGPT Telegram Bot.\n\n"
+        reply_text += HELP_MESSAGE
+        reply_text += "\nLet's go!"
+    else:
+        reply_text = (
+            "Sorry, I don't know you. To setup your own bot, "
+            "visit https://github.com/nalgeon/pokitoki"
+        )
+    await update.message.reply_text(reply_text)
 
 
 async def help_handle(update: Update, context: CallbackContext):
@@ -140,15 +143,6 @@ async def message_handle(update: Update, context: CallbackContext):
 
     logger.debug(f"question: {question}")
     await _reply_to(message, context, question=question)
-
-
-async def restricted_handle(update: Update, context: CallbackContext):
-    """Answers to the unknown users."""
-    text = (
-        "Sorry, I don't know you. To setup your own bot, "
-        "visit https://github.com/nalgeon/pokitoki"
-    )
-    await update.message.reply_text(text)
 
 
 async def error_handler(update: Update, context: CallbackContext) -> None:
