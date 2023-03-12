@@ -130,6 +130,7 @@ async def message_handle(update: Update, context: CallbackContext):
         if message.reply_to_message:
             # the real question is in the original message
             question = f"{question}: {message.reply_to_message.text}"
+            message = message.reply_to_message
     else:
         # allow any messages in a private chat
         question = message.text
