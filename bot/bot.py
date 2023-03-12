@@ -80,6 +80,9 @@ def main():
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND & user_filter, message_handle)
     )
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND & ~user_filter, restricted_handle)
+    )
     application.add_error_handler(error_handler)
 
     # start the bot
@@ -137,6 +140,15 @@ async def message_handle(update: Update, context: CallbackContext):
 
     logger.debug(f"question: {question}")
     await reply_to(message, context, question=question)
+
+
+async def restricted_handle(update: Update, context: CallbackContext):
+    """Answers to the unknown users."""
+    text = (
+        "Sorry, I don't know you. To setup your own bot, "
+        "visit https://github.com/nalgeon/pokitoki"
+    )
+    await update.message.reply_text(text)
 
 
 async def reply_to(message: Message, context: CallbackContext, question: str):
