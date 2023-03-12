@@ -2,7 +2,13 @@
 
 This is a Telegram chat bot built using the ChatGPT (aka GPT-3.5) language model from OpenAI.
 
+## Private chats
+
+You can use the bot as a personal assistant:
+
 <img src="docs/chat-1.png" alt="Sample chat" width="400">
+
+You can also allow other users to use the bot; list them in the `telegram_usernames` config property.
 
 The bot has a terrible memory, so don't expect it to remember any chat context by default. But you can ask follow-up questions using a plus sign:
 
@@ -13,6 +19,21 @@ The bot has a terrible memory, so don't expect it to remember any chat context b
         </td>
         <td>
             <img src="docs/chat-3.png" alt="Follow-up question" width="400">
+        </td>
+    </tr>
+</table>
+
+## Groups
+
+To get an answer from the bot in a group, mention it in a reply to a question, or ask a question directly:
+
+<table>
+    <tr>
+        <td>
+            <img src="docs/chat-4.png" alt="Question" width="400">
+        </td>
+        <td>
+            <img src="docs/chat-5.png" alt="Follow-up question" width="400">
         </td>
     </tr>
 </table>
@@ -38,4 +59,4 @@ docker compose up --build
 
 ## Credits
 
-Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot). I simplified the hell out of it, removed all the bells and whistles, refactored the code, and added comments.
+Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot). I removed all the bells and whistles, refactored the code and added comments.
