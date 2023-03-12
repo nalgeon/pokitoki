@@ -61,7 +61,13 @@ async def post_init(application: Application) -> None:
 def main():
     # chat context persistence
     persistence = PicklePersistence(filepath=config.persistence_path)
-    application = ApplicationBuilder().token(config.telegram_token).persistence(persistence).build()
+    application = (
+            ApplicationBuilder()
+            .token(config.telegram_token)
+            .post_init(post_init)
+            .persistence(persistence)
+            .build()
+        )
 
     # allow bot only for the selected users
     if len(config.telegram_usernames) == 0:
