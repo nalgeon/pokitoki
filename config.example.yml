@@ -1,4 +1,6 @@
+# see config.py for details
 telegram_token: ""
 openai_api_key: ""
-telegram_usernames: [] # if empty, the bot is available to anyone
-persistence_path: "./data/persistence.pkl" # path where to store user data
+telegram_usernames: []
+persistence_path: "./data/persistence.pkl"
+message_format: "HTML"
