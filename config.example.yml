@@ -3,4 +3,3 @@ telegram_token: ""
 openai_api_key: ""
 telegram_usernames: []
 persistence_path: "./data/persistence.pkl"
-message_format: "HTML"
