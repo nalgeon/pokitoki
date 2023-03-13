@@ -147,20 +147,9 @@ async def message_handle(update: Update, context: CallbackContext):
 
 async def error_handler(update: Update, context: CallbackContext) -> None:
     """If the bot failed to answer, prints the error and the stack trace (if any)."""
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
-
-    # collect error message
-    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
-    tb_string = "".join(tb_list)[:2000]
-    update_str = update.to_dict() if isinstance(update, Update) else str(update)
-    message = (
-        f"An exception was raised while handling an update\n"
-        f"<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}"
-        "</pre>\n\n"
-        f"<pre>{html.escape(tb_string)}</pre>"
-    )
-
-    await context.bot.send_message(update.effective_chat.id, message, parse_mode=ParseMode.HTML)
+    logger.error("Exception while handling an update %s:", update, exc_info=context.error)
+    message = f"⚠️ {context.error}"
+    await context.bot.send_message(update.effective_chat.id, message)
 
 
 async def _reply_to(message: Message, context: CallbackContext, question: str):
