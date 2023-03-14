@@ -17,7 +17,7 @@ telegram_usernames = set(config["telegram_usernames"])
 
 # The list of Telegram group ids, whose members are allowed to chat with the bot.
 # If empty, the bot will only be available to `telegram_usernames`.
-telegram_chat_ids = config["telegram_chat_ids"]
+telegram_chat_ids = config.get("telegram_chat_ids", [])
 
 # Where to store the chat context file.
 persistence_path = config["persistence_path"]
