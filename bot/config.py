@@ -5,6 +5,9 @@ import yaml
 with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
+# Bot version.
+version = 46
+
 # Telegram Bot API token.
 telegram_token = config["telegram_token"]
 

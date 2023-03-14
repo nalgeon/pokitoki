@@ -38,11 +38,19 @@ Supported commands:
 
 /retry – retry answering the last question
 /help – show help
+/version – show debug information
 """
+
+PRIVACY_MESSAGE = (
+    "⚠️ The bot does not have access to group messages, "
+    "so it cannot reply in groups. Use @botfather "
+    "to give the bot access (Bot Settings > Group Privacy > Turn off)"
+)
 
 BOT_COMMANDS = [
     ("retry", "retry answering the last question"),
     ("help", "show help"),
+    ("version", "show debug information"),
 ]
 
 # We are using the latest and greatest OpenAI model.
@@ -73,6 +81,7 @@ def main():
     # available commands: start, help, retry
     application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
+    application.add_handler(CommandHandler("version", version_handle, filters=user_filter))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))
     # default action is to reply to a message
     message_filter = filters.TEXT & ~filters.COMMAND & (user_filter | chat_filter)
@@ -81,7 +90,7 @@ def main():
 
     # start the bot
     bot_id, _, _ = config.telegram_token.partition(":")
-    logging.info(f"bot id: {bot_id}")
+    logging.info(f"bot id: {bot_id}, version: {config.version}")
     logging.info(f"allowed users: {config.telegram_usernames}")
     logging.info(f"allowed chats: {config.telegram_chat_ids}")
     application.run_polling()
@@ -94,21 +103,53 @@ async def post_init(application: Application) -> None:
 
 async def start_handle(update: Update, context: CallbackContext):
     """Answers the `start` command."""
-    if update.effective_user.username in config.telegram_usernames:
-        reply_text = "Hi! I'm a humble ChatGPT Telegram Bot.\n\n"
-        reply_text += HELP_MESSAGE
-        reply_text += "\nLet's go!"
-    else:
-        reply_text = (
+    if update.effective_user.username not in config.telegram_usernames:
+        text = (
             "Sorry, I don't know you. To setup your own bot, "
             "visit https://github.com/nalgeon/pokitoki"
         )
-    await update.message.reply_text(reply_text)
+        await update.message.reply_text(text)
+        return
+
+    text = "Hi! I'm a humble ChatGPT Telegram Bot.\n\n"
+    text += HELP_MESSAGE
+    text += "\nLet's go!"
+    if not context.bot.can_read_all_group_messages:
+        text += f"\n\n{PRIVACY_MESSAGE}"
+    await update.message.reply_text(text)
 
 
 async def help_handle(update: Update, context: CallbackContext):
     """Answers the `help` command."""
     await update.message.reply_text(HELP_MESSAGE, parse_mode=ParseMode.HTML)
+
+
+async def version_handle(update: Update, context: CallbackContext):
+    """Answers the `version` command."""
+    chat = update.message.chat
+    text = (
+        "<pre>"
+        "Chat information:\n"
+        f"- id: {chat.id}\n"
+        f"- title: {chat.title}\n"
+        f"- type: {chat.type}"
+        "</pre>"
+    )
+    bot = await context.bot.get_me()
+    text += (
+        "\n\n<pre>"
+        "Bot information:\n"
+        f"- id: {bot.id}\n"
+        f"- name: {bot.name}\n"
+        f"- version: {config.version}\n"
+        f"- usernames: {config.telegram_usernames}\n"
+        f"- chat IDs: {config.telegram_chat_ids}\n"
+        f"- access to messages: {bot.can_read_all_group_messages}"
+        "</pre>"
+    )
+    if not bot.can_read_all_group_messages:
+        text += f"\n\n{PRIVACY_MESSAGE}"
+    await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
 async def retry_handle(update: Update, context: CallbackContext):
