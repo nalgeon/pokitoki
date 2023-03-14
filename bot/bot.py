@@ -136,13 +136,16 @@ async def version_handle(update: Update, context: CallbackContext):
         "</pre>"
     )
     bot = await context.bot.get_me()
+    usernames = (
+        "all" if not config.telegram_usernames else f"{len(config.telegram_usernames)} users"
+    )
     text += (
         "\n\n<pre>"
         "Bot information:\n"
         f"- id: {bot.id}\n"
         f"- name: {bot.name}\n"
         f"- version: {config.version}\n"
-        f"- usernames: {config.telegram_usernames}\n"
+        f"- usernames: {usernames}\n"
         f"- chat IDs: {config.telegram_chat_ids}\n"
         f"- access to messages: {bot.can_read_all_group_messages}"
         "</pre>"
