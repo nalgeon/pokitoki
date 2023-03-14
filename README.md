@@ -43,7 +43,7 @@ To get an answer from the bot in a group, mention it in a reply to a question, o
     </tr>
 </table>
 
-The bot will ignore questions from group members unless they are listed in the `telegram_usernames` config property.
+To make the bot reply to group members, list the group id in the `telegram_chat_ids` config property. Otherwise, the bot will ignore questions from group members unless they are listed in the `telegram_usernames` config property.
 
 ## Setup
 

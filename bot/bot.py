@@ -2,9 +2,6 @@
 
 import datetime as dt
 import logging
-import traceback
-import html
-import json
 import sys
 
 from telegram import Chat, Message, Update
@@ -69,23 +66,25 @@ def main():
     # allow bot only for the selected users
     if len(config.telegram_usernames) == 0:
         user_filter = filters.ALL
+        chat_filter = filters.ALL
     else:
         user_filter = filters.User(username=config.telegram_usernames)
+        chat_filter = filters.Chat(chat_id=config.telegram_chat_ids)
 
     # available commands: start, help, retry
     application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))
     # default action is to reply to a message
-    application.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND & user_filter, message_handle)
-    )
+    message_filter = filters.TEXT & ~filters.COMMAND & (user_filter | chat_filter)
+    application.add_handler(MessageHandler(message_filter, message_handle))
     application.add_error_handler(error_handler)
 
     # start the bot
     bot_id, _, _ = config.telegram_token.partition(":")
     logging.info(f"bot id: {bot_id}")
-    logging.info(f"allowed users: {user_filter}")
+    logging.info(f"allowed users: {config.telegram_usernames}")
+    logging.info(f"allowed chats: {config.telegram_chat_ids}")
     application.run_polling()
 
 
@@ -125,6 +124,7 @@ async def retry_handle(update: Update, context: CallbackContext):
 async def message_handle(update: Update, context: CallbackContext):
     """Answers a question from the user."""
     message = update.message or update.edited_message
+    logger.debug(update)
 
     # the bot is meant to answer questions in private chats,
     # but it can also answer a specific question in a group when mentioned

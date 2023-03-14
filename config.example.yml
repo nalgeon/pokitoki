@@ -2,4 +2,5 @@
 telegram_token: ""
 openai_api_key: ""
 telegram_usernames: []
+telegram_chat_ids: []
 persistence_path: "./data/persistence.pkl"
