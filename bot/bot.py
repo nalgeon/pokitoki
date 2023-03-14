@@ -41,7 +41,6 @@ Supported commands:
 """
 
 BOT_COMMANDS = [
-    ("start", "what is this bot about?"),
     ("retry", "retry answering the last question"),
     ("help", "show help"),
 ]
