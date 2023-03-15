@@ -28,6 +28,8 @@ Available commands:
 -   `/retry` - retry answering the last question
 -   `/help` - show help
 
+To rephrase or add to the last question, simply edit it. The bot will then answer the updated question.
+
 ## Groups
 
 To get an answer from the bot in a group, mention it in a reply to a question, or ask a question directly:
