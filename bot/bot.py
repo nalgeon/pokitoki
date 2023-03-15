@@ -17,7 +17,7 @@ from telegram.ext import (
 from telegram.constants import ParseMode
 
 from bot.chatgpt import ChatGPT
-from bot.models import UserData
+from bot.models import UserData, UserMessage
 from bot import config
 
 logging.basicConfig(
@@ -161,7 +161,18 @@ async def retry_handle(update: Update, context: CallbackContext):
     if not user.last_message:
         await update.message.reply_text("No message to retry 🤷‍♂️")
         return
-    await _reply_to(update.message, context, question=user.last_message.question)
+
+    history = []
+    if len(user.messages) > 1:
+        # Ignore an repeated question
+        history = list(user.messages)[:-1]
+
+    await _reply_to(
+            update.message,
+            context,
+            question=user.last_message.question,
+            history=history,
+        )
 
 
 async def message_handle(update: Update, context: CallbackContext):
@@ -195,14 +206,22 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
     await context.bot.send_message(update.effective_chat.id, message)
 
 
-async def _reply_to(message: Message, context: CallbackContext, question: str):
+async def _reply_to(
+        message: Message,
+        context: CallbackContext,
+        question: str,
+        history: list[UserMessage] = [],
+):
     """Replies to a specific question."""
     await message.chat.send_action(action="typing")
+
+    is_retry = bool(history)
 
     try:
         username = message.from_user.username
         question = question or message.text
-        question, history = _prepare_question(question, context)
+        if not is_retry:
+            question, history = _prepare_question(question, context)
         start = dt.datetime.now()
         answer = await model.ask(question, history)
         elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
@@ -210,7 +229,11 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
             f"question from user={username}, n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
         )
         user = UserData(context.user_data)
-        user.add_message(question, answer)
+        if is_retry:
+            # Store history as it is but save the last answer
+            user.update_message(question, answer)
+        else:
+            user.add_message(question, answer)
     except Exception as exc:
         error_text = f"Failed to answer. Reason: {exc}"
         logger.error(error_text)
