@@ -158,10 +158,10 @@ async def version_handle(update: Update, context: CallbackContext):
 async def retry_handle(update: Update, context: CallbackContext):
     """Retries asking the last question (if any)."""
     user = UserData(context.user_data)
-    if not user.last_message:
+    last_message = user.messages.pop()
+    if not last_message:
         await update.message.reply_text("No message to retry 🤷‍♂️")
         return
-    last_message = user.pop_message()
     await _reply_to(update.message, context, question=last_message.question)
 
 
@@ -185,7 +185,6 @@ async def message_handle(update: Update, context: CallbackContext):
         # allow any messages in a private chat
         question = message.text
 
-    logger.debug(f"question: {question}")
     await _reply_to(message, context, question=question)
 
 
@@ -198,6 +197,7 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
 
 async def _reply_to(message: Message, context: CallbackContext, question: str):
     """Replies to a specific question."""
+    logger.debug(f"question: {question}")
     await message.chat.send_action(action="typing")
 
     try:
@@ -215,7 +215,8 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         user = UserData(context.user_data)
         # we save the original question to preserve '+'
         # and other question modifiers
-        user.add_message(question, answer)
+        user.messages.add(question, answer)
+        logger.debug(user.messages)
         await message.reply_text(answer, parse_mode=ParseMode.HTML)
 
     except Exception as exc:
@@ -230,11 +231,11 @@ def _prepare_question(question: str, context: CallbackContext) -> tuple[str, lis
     history = []
     if question[0] == "+":
         question = question[1:].strip()
-        history = list(user.messages)
+        history = user.messages.as_list()
     else:
         # user is asking a question 'from scratch',
         # so the bot should forget the previous history
-        user.clear_messages()
+        user.messages.clear()
     return question, history
 
 
