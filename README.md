@@ -54,6 +54,23 @@ To get an answer from the bot in a group, mention it in a reply to a question, o
 
 To make the bot reply to group members, list the group id in the `telegram_chat_ids` config property. Otherwise, the bot will ignore questions from group members unless they are listed in the `telegram_usernames` config property.
 
+If you don't know the group id, run the `/version` bot command in a group to find it:
+
+```
+Chat information:
+- id: -1001405001234
+- title: My Favorite Group
+- type: supergroup
+
+Bot information:
+- id: 5930739038
+- name: @pokitokibot
+- version: 56
+- usernames: 6 users
+- chat IDs: []
+- access to messages: True
+```
+
 ## Setup
 
 1. Get your [OpenAI API](https://openai.com/api/) key
