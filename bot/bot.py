@@ -26,7 +26,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("openai").setLevel(logging.WARNING)
-logging.getLogger("__main__").setLevel(logging.INFO)
+logging.getLogger("__main__").setLevel(logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +184,9 @@ async def message_handle(update: Update, context: CallbackContext):
     else:
         # allow any messages in a private chat
         question = message.text
+        if message.reply_to_message:
+            # it's a follow-up question
+            question = f"+ {question}"
 
     await _reply_to(message, context, question=question)
 
@@ -234,7 +237,7 @@ def _prepare_question(question: str, context: CallbackContext) -> tuple[str, lis
     user = UserData(context.user_data)
     history = []
     if question[0] == "+":
-        question = question[1:].strip()
+        question = question.strip("+ ")
         history = user.messages.as_list()
     else:
         # user is asking a question 'from scratch',
