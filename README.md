@@ -2,6 +2,13 @@
 
 This is a Telegram chat bot built using the ChatGPT (aka GPT-3.5) language model from OpenAI.
 
+Notable features:
+
+-   Both one-on-one and group chats.
+-   Direct questions or mentions.
+-   Ask again by retrying or editing the last message.
+-   Follow-up questions.
+
 ## Personal chats
 
 The bot acts as your personal assistant:
@@ -63,4 +70,4 @@ docker compose up --build
 
 ## Credits
 
-Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot). I removed all the bells and whistles, refactored the code and added comments.
+Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot).
