@@ -16,9 +16,10 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
+from bot import config
+from bot import questions
 from bot.chatgpt import ChatGPT
 from bot.models import UserData
-from bot import config
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -26,7 +27,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("openai").setLevel(logging.WARNING)
-logging.getLogger("__main__").setLevel(logging.DEBUG)
+logging.getLogger("__main__").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 
@@ -172,21 +173,14 @@ async def message_handle(update: Update, context: CallbackContext):
 
     # the bot is meant to answer questions in private chats,
     # but it can also answer a specific question in a group when mentioned
-    if message.chat.type != Chat.PRIVATE:
-        if not message.text.startswith(context.bot.name):
-            # ignore a message in a group unless it is mentioning the bot
-            return
-        question = message.text.removeprefix(context.bot.name).strip()
-        if message.reply_to_message:
-            # the real question is in the original message
-            question = f"{question}: {message.reply_to_message.text}"
-            message = message.reply_to_message
+    if message.chat.type == Chat.PRIVATE:
+        question = questions.extract_private(message, context)
     else:
-        # allow any messages in a private chat
-        question = message.text
-        if message.reply_to_message:
-            # it's a follow-up question
-            question = f"+ {question}"
+        question, message = questions.extract_group(message, context)
+
+    if not question:
+        # this is not a question to the bot, so ignore it
+        return
 
     await _reply_to(message, context, question=question)
 
@@ -210,7 +204,7 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
     try:
         username = message.from_user.username
         question = question or message.text
-        prep_question, history = _prepare_question(question, context)
+        prep_question, history = questions.prepare(question, context)
 
         start = dt.datetime.now()
         answer = await model.ask(prep_question, history)
@@ -230,20 +224,6 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         error_text = f"Failed to answer. Reason: {exc}"
         logger.error(error_text)
         await message.reply_text(error_text)
-
-
-def _prepare_question(question: str, context: CallbackContext) -> tuple[str, list]:
-    """Returns the question along with the previous messages (for follow-up questions)."""
-    user = UserData(context.user_data)
-    history = []
-    if question[0] == "+":
-        question = question.strip("+ ")
-        history = user.messages.as_list()
-    else:
-        # user is asking a question 'from scratch',
-        # so the bot should forget the previous history
-        user.messages.clear()
-    return question, history
 
 
 if __name__ == "__main__":
