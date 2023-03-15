@@ -17,15 +17,15 @@ The bot acts as your personal assistant:
 
 To allow other users to use the bot, list them in the `telegram_usernames` config property.
 
-The bot has a terrible memory, so don't expect it to remember any chat context by default. But you can ask follow-up questions using a plus sign:
+The bot has a terrible memory, so don't expect it to remember any chat context by default. You can, however, reply with a follow-up question. Alternatively, use a plus sign to follow up:
 
 <table>
     <tr>
         <td>
-            <img src="docs/chat-2.png" alt="Question" width="400">
+            <img src="docs/chat-2.png" alt="Follow-up by reply" width="400">
         </td>
         <td>
-            <img src="docs/chat-3.png" alt="Follow-up question" width="400">
+            <img src="docs/chat-3.png" alt="Follow-up by plus sign" width="400">
         </td>
     </tr>
 </table>
