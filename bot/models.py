@@ -38,6 +38,10 @@ class UserData:
         """Adds a message to the message history."""
         self.messages.append(UserMessage(question, answer))
 
+    def update_message(self, question: str, answer: str):
+        """Update last message."""
+        self.messages[-1] = UserMessage(question, answer)
+
     def clear_messages(self):
         """Cleares messages history."""
         self.data["messages"] = deque([], MAX_HISTORY_DEPTH)
