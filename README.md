@@ -10,6 +10,8 @@ The bot acts as your personal assistant:
 
 To allow other users to use the bot, list them in the `telegram_usernames` config property.
 
+Something, it's easier to edit your previous message instead of copy and paste. This bot works as you expected. When you finish your editing, bot will answer on new version of your message.
+
 The bot has a terrible memory, so don't expect it to remember any chat context by default. But you can ask follow-up questions using a plus sign:
 
 <table>
