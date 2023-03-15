@@ -161,7 +161,8 @@ async def retry_handle(update: Update, context: CallbackContext):
     if not user.last_message:
         await update.message.reply_text("No message to retry 🤷‍♂️")
         return
-    await _reply_to(update.message, context, question=user.last_message.question)
+    last_message = user.pop_message()
+    await _reply_to(update.message, context, question=last_message.question)
 
 
 async def message_handle(update: Update, context: CallbackContext):
@@ -202,22 +203,25 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
     try:
         username = message.from_user.username
         question = question or message.text
-        question, history = _prepare_question(question, context)
+        prep_question, history = _prepare_question(question, context)
+
         start = dt.datetime.now()
-        answer = await model.ask(question, history)
+        answer = await model.ask(prep_question, history)
         elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
         logger.info(
-            f"question from user={username}, n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
+            f"question from user={username}, n_chars={len(prep_question)}, len_history={len(history)}, took={elapsed}ms"
         )
+
         user = UserData(context.user_data)
+        # we save the original question to preserve '+'
+        # and other question modifiers
         user.add_message(question, answer)
+        await message.reply_text(answer, parse_mode=ParseMode.HTML)
+
     except Exception as exc:
         error_text = f"Failed to answer. Reason: {exc}"
         logger.error(error_text)
         await message.reply_text(error_text)
-        return
-
-    await message.reply_text(answer, parse_mode=ParseMode.HTML)
 
 
 def _prepare_question(question: str, context: CallbackContext) -> tuple[str, list]:

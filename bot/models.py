@@ -38,6 +38,12 @@ class UserData:
         """Adds a message to the message history."""
         self.messages.append(UserMessage(question, answer))
 
+    def pop_message(self) -> Optional[UserMessage]:
+        """Removes the last message from the message history and returns it."""
+        if not self.messages:
+            return None
+        return self.messages.pop()
+
     def clear_messages(self):
         """Cleares messages history."""
         self.data["messages"] = deque([], MAX_HISTORY_DEPTH)
