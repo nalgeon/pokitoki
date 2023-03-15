@@ -191,6 +191,10 @@ async def message_handle(update: Update, context: CallbackContext):
 async def error_handler(update: Update, context: CallbackContext) -> None:
     """If the bot failed to answer, prints the error and the stack trace (if any)."""
     logger.error("Exception while handling an update %s:", update, exc_info=context.error)
+    if not update.effective_chat:
+        # telegram.error.NetworkError or a similar error,
+        # there is no chat to respond to
+        return
     message = f"⚠️ {context.error}"
     await context.bot.send_message(update.effective_chat.id, message)
 
