@@ -3,4 +3,5 @@ telegram_token: ""
 openai_api_key: ""
 telegram_usernames: []
 telegram_chat_ids: []
+max_history_depth: 3
 persistence_path: "./data/persistence.pkl"

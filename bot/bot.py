@@ -141,6 +141,7 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- version: {config.version}\n"
         f"- usernames: {usernames}\n"
         f"- chat IDs: {config.telegram_chat_ids}\n"
+        f"- history depth: {config.max_history_depth}\n"
         f"- access to messages: {bot.can_read_all_group_messages}"
         "</pre>"
     )

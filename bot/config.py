@@ -22,5 +22,9 @@ telegram_usernames = set(config["telegram_usernames"])
 # If empty, the bot will only be available to `telegram_usernames`.
 telegram_chat_ids = config.get("telegram_chat_ids", [])
 
+# The maximum number of previous messages
+# the bot will remember when talking to a user.
+max_history_depth = config.get("max_history_depth", 3)
+
 # Where to store the chat context file.
 persistence_path = config["persistence_path"]
