@@ -1,10 +1,20 @@
 """Working with questions in chat messages."""
 
+import datetime as dt
+import logging
 from telegram import Message
 from telegram.ext import (
     CallbackContext,
 )
+from bot.chatgpt import ChatGPT
 from bot.models import UserData
+
+logger = logging.getLogger(__name__)
+
+# We are using the latest and greatest OpenAI model.
+# There is also a previous generation (GPT-3)
+# available via davinci.DaVinci class, but who needs it?
+model = ChatGPT()
 
 
 def extract_private(message: Message, context: CallbackContext) -> str:
@@ -53,6 +63,8 @@ def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
     user = UserData(context.user_data)
     history = []
     if question[0] == "+":
+        # this is a follow-up question,
+        # so the bot should retain the previous history
         question = question.strip("+ ")
         history = user.messages.as_list()
     else:
@@ -60,3 +72,17 @@ def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
         # so the bot should forget the previous history
         user.messages.clear()
     return question, history
+
+
+async def ask(message: Message, context: CallbackContext, question: str) -> str:
+    """Answers a question using the OpenAI model."""
+    question = question or message.text
+    prep_question, history = prepare(question, context)
+    start = dt.datetime.now()
+    answer = await model.ask(prep_question, history)
+    elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
+    logger.info(
+        f"question from user={message.from_user.username}, "
+        f"n_chars={len(prep_question)}, len_history={len(history)}, took={elapsed}ms"
+    )
+    return answer

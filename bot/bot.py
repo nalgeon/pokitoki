@@ -1,6 +1,5 @@
 """Telegram chat bot built using the language model from OpenAI."""
 
-import datetime as dt
 import logging
 import sys
 
@@ -18,7 +17,6 @@ from telegram.constants import ParseMode
 
 from bot import config
 from bot import questions
-from bot.chatgpt import ChatGPT
 from bot.models import UserData
 
 logging.basicConfig(
@@ -53,11 +51,6 @@ BOT_COMMANDS = [
     ("help", "show help"),
     ("version", "show debug information"),
 ]
-
-# We are using the latest and greatest OpenAI model.
-# There is also a previous generation (GPT-3)
-# available via davinci.DaVinci class, but who needs it?
-model = ChatGPT()
 
 
 def main():
@@ -202,20 +195,13 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
     await message.chat.send_action(action="typing")
 
     try:
-        username = message.from_user.username
-        question = question or message.text
-        prep_question, history = questions.prepare(question, context)
-
-        start = dt.datetime.now()
-        answer = await model.ask(prep_question, history)
-        elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
-        logger.info(
-            f"question from user={username}, n_chars={len(prep_question)}, len_history={len(history)}, took={elapsed}ms"
-        )
+        if message.chat.type == Chat.PRIVATE and message.forward_date:
+            # this is a forwarded message, don't answer yet
+            answer = "This is a forwarded message. What should I do with it?"
+        else:
+            answer = await questions.ask(message, context, question)
 
         user = UserData(context.user_data)
-        # we save the original question to preserve '+'
-        # and other question modifiers
         user.messages.add(question, answer)
         logger.debug(user.messages)
         await message.reply_text(answer, parse_mode=ParseMode.HTML)
