@@ -61,6 +61,8 @@ def main():
         .token(config.telegram_token)
         .post_init(post_init)
         .persistence(persistence)
+        .get_updates_http_version('1.1')
+        .http_version('1.1')
         .build()
     )
 
