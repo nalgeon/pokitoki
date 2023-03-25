@@ -105,7 +105,7 @@ async def start_handle(update: Update, context: CallbackContext):
         await update.message.reply_text(text)
         return
 
-    text = "Hi! I'm a humble ChatGPT Telegram Bot.\n\n"
+    text = "Hi! I'm a humble AI-driven chat bot.\n\n"
     text += HELP_MESSAGE
     text += "\nLet's go!"
     if not context.bot.can_read_all_group_messages:

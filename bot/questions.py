@@ -6,15 +6,15 @@ from telegram import Message
 from telegram.ext import (
     CallbackContext,
 )
-from bot.chatgpt import ChatGPT
+from bot.ai.chatgpt import Model
 from bot.models import UserData
 
 logger = logging.getLogger(__name__)
 
 # We are using the latest and greatest OpenAI model.
 # There is also a previous generation (GPT-3)
-# available via davinci.DaVinci class, but who needs it?
-model = ChatGPT()
+# available via davinci.Model class, but who needs it?
+model = Model()
 
 
 def extract_private(message: Message, context: CallbackContext) -> str:

@@ -9,9 +9,9 @@ import asyncio
 import sys
 import textwrap
 
-from bot.davinci import ChatGPT
+from bot.ai.chatgpt import Model
 
-ai = ChatGPT()
+ai = Model()
 
 
 async def main(question):
