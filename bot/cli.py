@@ -9,7 +9,7 @@ import asyncio
 import sys
 import textwrap
 
-from bot.chatgpt import ChatGPT
+from bot.davinci import ChatGPT
 
 ai = ChatGPT()
 

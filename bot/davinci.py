@@ -10,28 +10,25 @@ BASE_PROMPT = "Your primary goal is to answer my questions. This may involve wri
 
 PRE_RE = re.compile(r"&lt;(/?pre)")
 
+
 class DaVinci:
     """OpenAI API wrapper."""
 
     async def ask(self, question, history=None):
         """Asks the language model a question and returns an answer."""
-        try:
-            history = history or []
-            prompt = self._generate_prompt(question, history)
-            resp = await openai.Completion.acreate(
-                model="text-davinci-003",
-                prompt=prompt,
-                temperature=0.7,
-                max_tokens=1000,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0,
-            )
-            answer = self._prepare_answer(resp)
-            return answer
-
-        except openai.error.InvalidRequestError as exc:
-            raise ValueError("too many tokens to make completion") from exc
+        history = history or []
+        prompt = self._generate_prompt(question, history)
+        resp = await openai.Completion.acreate(
+            model="text-davinci-003",
+            prompt=prompt,
+            temperature=0.7,
+            max_tokens=1000,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0,
+        )
+        answer = self._prepare_answer(resp)
+        return answer
 
     def _generate_prompt(self, question, history):
         """Builds a prompt to provide context for the language model."""
