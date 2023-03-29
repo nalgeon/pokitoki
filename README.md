@@ -1,6 +1,6 @@
 # ChatGPT Telegram Bot
 
-This is a Telegram chat bot built using the ChatGPT (aka GPT-3.5) language model from OpenAI.
+This is a Telegram chat bot built using the ChatGPT (GPT-3.5 or GPT-4) language model from OpenAI.
 
 Notable features:
 
@@ -8,6 +8,7 @@ Notable features:
 -   Direct questions or mentions.
 -   Ask again by retrying or editing the last message.
 -   Follow-up questions.
+-   Custom commands.
 
 ## Personal chats
 
