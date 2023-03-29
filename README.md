@@ -81,18 +81,7 @@ AI information:
 
 Use short commands to save time and ask the bot to do something specific with your questions. For example, ask it to proofread your writing with a `!proofread` command:
 
-> !proofread I can has write java programz
-
-Answer:
-
-> I can write Java programs.
->
-> Explanation:
->
-> -   "can has" is not proper English, so it has been changed to "can write".
-> -   "programz" is not the correct spelling of "programs", so it has been corrected.
-> -   The capitalization of "Java" has been corrected to follow proper naming conventions for programming languages.
-> -   The period has been added at the end to form a complete sentence.
+<img src="docs/chat-6.png" alt="Sample chat" width="400">
 
 There are several built-in commands:
 
