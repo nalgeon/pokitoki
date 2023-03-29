@@ -6,13 +6,17 @@ with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
 # Bot version.
-version = 61
+version = 68
 
 # Telegram Bot API token.
 telegram_token = config["telegram_token"]
 
 # OpenAI API key.
 openai_api_key = config["openai_api_key"]
+
+# OpenAI model name. One of the following:
+# gpt-3.5-turbo, gpt-4
+openai_model = config.get("openai_model", "gpt-3.5-turbo")
 
 # The list of Telegram usernames allowed to chat with the bot.
 # If empty, the bot will be available to anyone.

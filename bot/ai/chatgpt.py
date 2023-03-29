@@ -15,11 +15,15 @@ PRE_RE = re.compile(r"&lt;(/?pre)")
 class Model:
     """OpenAI API wrapper."""
 
+    def __init__(self, name: str):
+        """Creates a wrapper for a given OpenAI large language model."""
+        self.name = name
+
     async def ask(self, question: str, history: list[UserMessage]):
         """Asks the language model a question and returns an answer."""
         messages = self._generate_messages(question, history)
         resp = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
+            model=self.name,
             messages=messages,
             temperature=0.7,
             max_tokens=1000,

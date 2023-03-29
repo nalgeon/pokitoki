@@ -61,8 +61,8 @@ def main():
         .token(config.telegram_token)
         .post_init(post_init)
         .persistence(persistence)
-        .get_updates_http_version('1.1')
-        .http_version('1.1')
+        .get_updates_http_version("1.1")
+        .http_version("1.1")
         .build()
     )
 
@@ -89,6 +89,7 @@ def main():
     logging.info(f"bot id: {bot_id}, version: {config.version}")
     logging.info(f"allowed users: {config.telegram_usernames}")
     logging.info(f"allowed chats: {config.telegram_chat_ids}")
+    logging.info(f"model name: {config.openai_model}")
     application.run_polling()
 
 
@@ -123,6 +124,7 @@ async def help_handle(update: Update, context: CallbackContext):
 async def version_handle(update: Update, context: CallbackContext):
     """Answers the `version` command."""
     chat = update.message.chat
+    # chat information
     text = (
         "<pre>"
         "Chat information:\n"
@@ -135,6 +137,7 @@ async def version_handle(update: Update, context: CallbackContext):
     usernames = (
         "all" if not config.telegram_usernames else f"{len(config.telegram_usernames)} users"
     )
+    # bot information
     text += (
         "\n\n<pre>"
         "Bot information:\n"
@@ -149,6 +152,8 @@ async def version_handle(update: Update, context: CallbackContext):
     )
     if not bot.can_read_all_group_messages:
         text += f"\n\n{PRIVACY_MESSAGE}"
+    # AI information
+    text += "\n\n<pre>" "AI information:\n" f"- model: {config.openai_model}\n" "</pre>"
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
