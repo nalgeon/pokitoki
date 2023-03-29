@@ -65,13 +65,18 @@ Chat information:
 Bot information:
 - id: 5930739038
 - name: @pokitokibot
-- version: 56
+- version: 70
 - usernames: 6 users
 - chat IDs: []
 - access to messages: True
+
+AI information:
+- model: gpt-3.5-turbo
+- history depth: 3
+- commands: ['bugfix', 'proofread', 'summarize', 'translate']
 ```
 
-## 🚧 Custom commands (experimental)
+## Custom commands (🚧 experimental)
 
 Use short commands to save time and ask the bot to do something specific with your questions. For example, ask it to proofread your writing with a `!proofread` command:
 

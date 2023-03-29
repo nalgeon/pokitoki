@@ -75,15 +75,9 @@ def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
         # this is a command, so the bot should
         # process the question before asking it
         command, question = commands.extract(question)
-        if command.name:
-            if not command.action:
-                raise ValueError(f"Unknown command: {command.name}")
-            question = command.action(question, command.arg)
-            # questions with commands clear the previous history
-            user.messages.clear()
-        else:
-            # not really a command, ignore
-            pass
+        question = commands.apply(command, question)
+        # questions with commands clear the previous history
+        user.messages.clear()
 
     else:
         # user is asking a question 'from scratch',

@@ -10,15 +10,10 @@ max_history_depth: 3
 persistence_path: "./data/persistence.pkl"
 
 commands:
-    bugfix:
-        action: prefix
-        arg: "Examine the following code. Rewrite it if necessary to fix bugs and various problems. Explain the changes you've made."
-    proofread:
-        action: prefix
-        arg: "Proofread my writing. Correct grammar and punctuation errors, change words, and rephrase sentences when necessary. Make sure the resulting text is clear, concise, and easy to read. Explain the changes you've made."
-    summarize:
-        action: prefix
-        arg: "Explain the following text in simple terms. Use no more than two paragraphs."
-    translate:
-        action: prefix
-        arg: "Translate the following text into English."
+    bugfix: "Examine the following code. Rewrite it if necessary to fix bugs and various problems. Explain the changes you've made."
+
+    proofread: "Proofread the following text. Correct grammar and punctuation errors. Make sure the resulting text is clear, concise, informal, and easy to read. Explain the changes you've made."
+
+    summarize: "Explain the following text in simple terms. Use no more than two paragraphs."
+
+    translate: "Translate the following text into English."
