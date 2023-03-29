@@ -7,6 +7,7 @@ from telegram.ext import (
     CallbackContext,
 )
 
+from bot import commands
 from bot import config
 from bot.ai.chatgpt import Model
 from bot.models import UserData
@@ -69,6 +70,21 @@ def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
         # so the bot should retain the previous history
         question = question.strip("+ ")
         history = user.messages.as_list()
+
+    elif question[0] == "!":
+        # this is a command, so the bot should
+        # process the question before asking it
+        command, question = commands.extract(question)
+        if command.name:
+            if not command.action:
+                raise ValueError(f"Unknown command: {command.name}")
+            question = command.action(question, command.arg)
+            # questions with commands clear the previous history
+            user.messages.clear()
+        else:
+            # not really a command, ignore
+            pass
+
     else:
         # user is asking a question 'from scratch',
         # so the bot should forget the previous history
@@ -80,6 +96,7 @@ async def ask(message: Message, context: CallbackContext, question: str) -> str:
     """Answers a question using the OpenAI model."""
     question = question or message.text
     prep_question, history = prepare(question, context)
+    logger.debug(f"Prepared question: {prep_question}")
     start = dt.datetime.now()
     answer = await model.ask(prep_question, history)
     elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)

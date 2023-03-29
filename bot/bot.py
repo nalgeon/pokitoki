@@ -25,6 +25,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("bot.questions").setLevel(logging.INFO)
 logging.getLogger("__main__").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
@@ -137,6 +138,7 @@ async def version_handle(update: Update, context: CallbackContext):
     usernames = (
         "all" if not config.telegram_usernames else f"{len(config.telegram_usernames)} users"
     )
+
     # bot information
     text += (
         "\n\n<pre>"
@@ -146,14 +148,21 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- version: {config.version}\n"
         f"- usernames: {usernames}\n"
         f"- chat IDs: {config.telegram_chat_ids}\n"
-        f"- history depth: {config.max_history_depth}\n"
         f"- access to messages: {bot.can_read_all_group_messages}"
         "</pre>"
     )
     if not bot.can_read_all_group_messages:
         text += f"\n\n{PRIVACY_MESSAGE}"
+
     # AI information
-    text += "\n\n<pre>" "AI information:\n" f"- model: {config.openai_model}\n" "</pre>"
+    text += (
+        "\n\n<pre>"
+        "AI information:\n"
+        f"- model: {config.openai_model}\n"
+        f"- history depth: {config.max_history_depth}\n"
+        f"- commands: {list(config.commands.keys())}"
+        "</pre>"
+    )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
 

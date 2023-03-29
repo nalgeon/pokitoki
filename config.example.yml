@@ -1,8 +1,24 @@
 # see config.py for details
 telegram_token: ""
-openai_api_key: ""
-openai_model: "gpt-3.5-turbo"
 telegram_usernames: []
 telegram_chat_ids: []
+
+openai_api_key: ""
+openai_model: "gpt-3.5-turbo"
 max_history_depth: 3
+
 persistence_path: "./data/persistence.pkl"
+
+commands:
+    bugfix:
+        action: prefix
+        arg: "Examine the following code. Rewrite it if necessary to fix bugs and various problems. Explain the changes you've made."
+    proofread:
+        action: prefix
+        arg: "Proofread my writing. Correct grammar and punctuation errors, change words, and rephrase sentences when necessary. Make sure the resulting text is clear, concise, and easy to read. Explain the changes you've made."
+    summarize:
+        action: prefix
+        arg: "Explain the following text in simple terms. Use no more than two paragraphs."
+    translate:
+        action: prefix
+        arg: "Translate the following text into English."
