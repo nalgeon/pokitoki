@@ -1,7 +1,9 @@
 """Telegram chat bot built using the language model from OpenAI."""
 
 import logging
+import io
 import sys
+import textwrap
 
 from telegram import Chat, Message, Update
 from telegram.ext import (
@@ -13,7 +15,7 @@ from telegram.ext import (
     PicklePersistence,
     filters,
 )
-from telegram.constants import ParseMode
+from telegram.constants import MessageLimit, ParseMode
 
 from bot import config
 from bot import questions
@@ -222,12 +224,29 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         user = UserData(context.user_data)
         user.messages.add(question, answer)
         logger.debug(user.messages)
-        await message.reply_text(answer, parse_mode=ParseMode.HTML)
+        await _send_answer(message, context, answer)
 
     except Exception as exc:
         error_text = f"Failed to answer. Reason: {exc}"
         logger.error(error_text)
         await message.reply_text(error_text)
+
+
+async def _send_answer(message: Message, context: CallbackContext, answer: str):
+    """Sends the answer as a text reply or as a document, depending on its size."""
+    if len(answer) <= MessageLimit.MAX_TEXT_LENGTH:
+        await message.reply_text(answer, parse_mode=ParseMode.HTML)
+        return
+    doc = io.StringIO(answer)
+    caption = (
+        textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"
+    )
+    await context.bot.send_document(
+        chat_id=message.chat_id,
+        caption=caption,
+        filename=f"{message.id}.md",
+        document=doc,
+    )
 
 
 if __name__ == "__main__":
