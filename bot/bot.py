@@ -227,7 +227,8 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         await _send_answer(message, context, answer)
 
     except Exception as exc:
-        error_text = f"Failed to answer. Reason: {exc}"
+        class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
+        error_text = f"Failed to answer. Reason: {class_name}: {exc}"
         logger.error(error_text)
         await message.reply_text(error_text)
 
