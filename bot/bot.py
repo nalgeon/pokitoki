@@ -160,7 +160,7 @@ async def version_handle(update: Update, context: CallbackContext):
         "AI information:\n"
         f"- model: {config.openai_model}\n"
         f"- history depth: {config.max_history_depth}\n"
-        f"- commands: {list(config.commands.keys())}"
+        f"- shortcuts: {list(config.shortcuts.keys())}"
         "</pre>"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)

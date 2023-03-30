@@ -7,7 +7,7 @@ from telegram.ext import (
     CallbackContext,
 )
 
-from bot import commands
+from bot import shortcuts
 from bot import config
 from bot.ai.chatgpt import Model
 from bot.models import UserData
@@ -72,11 +72,11 @@ def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
         history = user.messages.as_list()
 
     elif question[0] == "!":
-        # this is a command, so the bot should
+        # this is a shortcut, so the bot should
         # process the question before asking it
-        command, question = commands.extract(question)
-        question = commands.apply(command, question)
-        # questions with commands clear the previous history
+        shortcut, question = shortcuts.extract(question)
+        question = shortcuts.apply(shortcut, question)
+        # questions with shortcuts clear the previous history
         user.messages.clear()
 
     else:

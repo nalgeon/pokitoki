@@ -33,5 +33,5 @@ max_history_depth = config.get("max_history_depth", 3)
 # Where to store the chat context file.
 persistence_path = config["persistence_path"]
 
-# Custom commands
-commands = config.get("commands", {})
+# Shortcuts
+shortcuts = config.get("shortcuts", {})

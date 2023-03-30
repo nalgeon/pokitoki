@@ -9,7 +9,7 @@ max_history_depth: 3
 
 persistence_path: "./data/persistence.pkl"
 
-commands:
+shortcuts:
     bugfix: "Examine the following code. Rewrite it if necessary to fix bugs and various problems. Explain the changes you've made."
 
     proofread: "Proofread the following text. Correct grammar and punctuation errors. Rephrase if necessary. Make sure the resulting text is clear, concise, and easy to read. Explain the changes you've made."

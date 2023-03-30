@@ -8,7 +8,7 @@ Notable features:
 -   Direct questions or mentions.
 -   Ask again by retrying or editing the last message.
 -   Follow-up questions.
--   Custom commands.
+-   Shortcuts (custom AI commands).
 
 ## Personal chats
 
@@ -74,23 +74,23 @@ Bot information:
 AI information:
 - model: gpt-3.5-turbo
 - history depth: 3
-- commands: ['bugfix', 'proofread', 'summarize', 'translate']
+- shortcuts: ['bugfix', 'proofread', 'summarize', 'translate']
 ```
 
-## Custom commands (🚧 experimental)
+## Shortcuts (🚧 experimental)
 
 Use short commands to save time and ask the bot to do something specific with your questions. For example, ask it to proofread your writing with a `!proofread` command:
 
 <img src="docs/chat-6.png" alt="Sample chat" width="400">
 
-There are several built-in commands:
+There are several built-in shortcuts:
 
 -   `bugfix` fixes your code.
 -   `proofread` fixes your writing.
 -   `translate` translates your text into English.
 -   `summarize` gives a two paragraph summary of a text.
 
-You can add your own commands. See `config.example.yml` for details.
+You can add your own shortcuts. See `config.example.yml` for details.
 
 ## Setup
 
