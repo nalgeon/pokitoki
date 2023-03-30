@@ -35,6 +35,7 @@ Available commands:
 
 -   `/retry` - retry answering the last question
 -   `/help` - show help
+-   `/version` - show bot info
 
 To rephrase or add to the last question, simply edit it. The bot will then answer the updated question.
 
@@ -62,19 +63,7 @@ Chat information:
 - id: -1001405001234
 - title: My Favorite Group
 - type: supergroup
-
-Bot information:
-- id: 5930739038
-- name: @pokitokibot
-- version: 70
-- usernames: 6 users
-- chat IDs: []
-- access to messages: True
-
-AI information:
-- model: gpt-3.5-turbo
-- history depth: 3
-- shortcuts: ['bugfix', 'proofread', 'summarize', 'translate']
+...
 ```
 
 ## Shortcuts (🚧 experimental)
@@ -91,6 +80,30 @@ There are several built-in shortcuts:
 -   `summarize` gives a two paragraph summary of a text.
 
 You can add your own shortcuts. See `config.example.yml` for details.
+
+## Bot information
+
+Use the `/version` commands to print detailed information about the current chat, bot, and AI model:
+
+```
+Chat information:
+- id: -1001405001234
+- title: My Favorite Group
+- type: supergroup
+
+Bot information:
+- id: 5930739038
+- name: @pokitokibot
+- version: 70
+- usernames: 6 users
+- chat IDs: []
+- access to messages: True
+
+AI information:
+- model: gpt-3.5-turbo
+- history depth: 3
+- shortcuts: ['bugfix', 'proofread', 'summarize', 'translate']
+```
 
 ## Setup
 
