@@ -1,6 +1,5 @@
 """Working with questions in chat messages."""
 
-import datetime as dt
 import logging
 from telegram import Message
 from telegram.ext import (
@@ -8,16 +7,9 @@ from telegram.ext import (
 )
 
 from bot import shortcuts
-from bot import config
-from bot.ai.chatgpt import Model
 from bot.models import UserData
 
 logger = logging.getLogger(__name__)
-
-# We are using the latest and greatest OpenAI model.
-# There is also a previous generation (GPT-3)
-# available via davinci.Model class, but who needs it?
-model = Model(config.openai_model)
 
 
 def extract_private(message: Message, context: CallbackContext) -> str:
@@ -84,18 +76,3 @@ def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
         # so the bot should forget the previous history
         user.messages.clear()
     return question, history
-
-
-async def ask(message: Message, context: CallbackContext, question: str) -> str:
-    """Answers a question using the OpenAI model."""
-    question = question or message.text
-    prep_question, history = prepare(question, context)
-    logger.debug(f"Prepared question: {prep_question}")
-    start = dt.datetime.now()
-    answer = await model.ask(prep_question, history)
-    elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
-    logger.info(
-        f"question from user={message.from_user.username}, "
-        f"n_chars={len(prep_question)}, len_history={len(history)}, took={elapsed}ms"
-    )
-    return answer

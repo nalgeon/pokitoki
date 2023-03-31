@@ -1,5 +1,6 @@
 """Telegram chat bot built using the language model from OpenAI."""
 
+import datetime as dt
 import logging
 import io
 import sys
@@ -19,18 +20,8 @@ from telegram.constants import MessageLimit, ParseMode
 
 from bot import config
 from bot import questions
+from bot.ai.chatgpt import Model
 from bot.models import UserData
-
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-)
-logging.getLogger("openai").setLevel(logging.WARNING)
-logging.getLogger("bot.questions").setLevel(logging.INFO)
-logging.getLogger("__main__").setLevel(logging.INFO)
-
-logger = logging.getLogger(__name__)
 
 HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
 
@@ -54,6 +45,22 @@ BOT_COMMANDS = [
     ("help", "show help"),
     ("version", "show debug information"),
 ]
+
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("bot.questions").setLevel(logging.INFO)
+logging.getLogger("__main__").setLevel(logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+
+# We are using the latest and greatest OpenAI model.
+# There is also a previous generation (GPT-3)
+# available via davinci.Model class, but who needs it?
+model = Model(config.openai_model)
 
 
 def main():
@@ -219,7 +226,7 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
             # this is a forwarded message, don't answer yet
             answer = "This is a forwarded message. What should I do with it?"
         else:
-            answer = await questions.ask(message, context, question)
+            answer = await _ask_question(message, context, question)
 
         user = UserData(context.user_data)
         user.messages.add(question, answer)
@@ -231,6 +238,23 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         error_text = f"Failed to answer. Reason: {class_name}: {exc}"
         logger.error(error_text)
         await message.reply_text(error_text)
+
+
+async def _ask_question(message: Message, context: CallbackContext, question: str) -> str:
+    """Answers a question using the OpenAI model."""
+    question = question or message.text
+    prep_question, history = questions.prepare(question, context)
+    logger.debug(f"Prepared question: {prep_question}")
+
+    start = dt.datetime.now()
+    answer = await model.ask(prep_question, history)
+    elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
+
+    logger.info(
+        f"question from user={message.from_user.username}, "
+        f"n_chars={len(prep_question)}, len_history={len(history)}, took={elapsed}ms"
+    )
+    return answer
 
 
 async def _send_answer(message: Message, context: CallbackContext, answer: str):
