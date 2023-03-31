@@ -21,6 +21,7 @@ from telegram.constants import MessageLimit, ParseMode
 from bot import config
 from bot import questions
 from bot.ai.chatgpt import Model
+from bot.fetcher import Fetcher
 from bot.models import UserData
 
 HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
@@ -57,6 +58,9 @@ logging.getLogger("__main__").setLevel(logging.DEBUG)
 
 logger = logging.getLogger(__name__)
 
+# retrieves remote content
+fetcher = Fetcher()
+
 # We are using the latest and greatest OpenAI model.
 # There is also a previous generation (GPT-3)
 # available via davinci.Model class, but who needs it?
@@ -70,6 +74,7 @@ def main():
         ApplicationBuilder()
         .token(config.telegram_token)
         .post_init(post_init)
+        .post_shutdown(post_shutdown)
         .persistence(persistence)
         .get_updates_http_version("1.1")
         .http_version("1.1")
@@ -106,6 +111,11 @@ def main():
 async def post_init(application: Application) -> None:
     """Defines bot settings."""
     await application.bot.set_my_commands(BOT_COMMANDS)
+
+
+async def post_shutdown(application: Application) -> None:
+    """Frees acquired resources."""
+    await fetcher.close()
 
 
 async def start_handle(update: Update, context: CallbackContext):
@@ -244,6 +254,7 @@ async def _ask_question(message: Message, context: CallbackContext, question: st
     """Answers a question using the OpenAI model."""
     question = question or message.text
     prep_question, history = questions.prepare(question, context)
+    prep_question = await fetcher.substitute_urls(prep_question)
     logger.debug(f"Prepared question: {prep_question}")
 
     start = dt.datetime.now()
