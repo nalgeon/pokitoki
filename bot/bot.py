@@ -54,7 +54,7 @@ logging.basicConfig(
 )
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("bot.questions").setLevel(logging.INFO)
-logging.getLogger("__main__").setLevel(logging.DEBUG)
+logging.getLogger("__main__").setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
 

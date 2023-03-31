@@ -10,6 +10,7 @@ import os
 import sys
 import textwrap
 
+from bot.fetcher import Fetcher
 import bot.ai.chatgpt
 import bot.ai.custom
 import bot.ai.davinci
@@ -19,16 +20,19 @@ MODEL = os.getenv("OPENAI_MODEL")
 
 async def main(question):
     print(f"> {question}")
+    fetcher = Fetcher()
+    question = await fetcher.substitute_urls(question)
     ai = init_model(MODEL)
     answer = await ai.ask(question, history=[])
+    await fetcher.close()
     lines = textwrap.wrap(answer, width=60)
     for line in lines:
         print(line)
 
 
 def init_model(name):
-    if not name or name == "chatgpt":
-        return bot.ai.chatgpt.Model()
+    if name.startswith("gpt"):
+        return bot.ai.chatgpt.Model(name)
     if name == "davinci":
         return bot.ai.davinci.Model()
     return bot.ai.custom.Model(name)
