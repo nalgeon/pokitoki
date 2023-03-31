@@ -21,6 +21,14 @@ MAX_LENGTHS = {
     "gpt-4": int(7 * 1024 * CHARS_PER_TOKEN),
 }
 
+# What sampling temperature to use, between 0 and 2.
+# Higher values like 0.8 will make the output more random,
+# while lower values like 0.2 will make it more focused and deterministic.
+SAMPLING_TEMPERATURE = 0.7
+
+# The maximum number of tokens to generate
+MAX_OUTPUT_TOKENS = 1000
+
 PRE_RE = re.compile(r"&lt;(/?pre)")
 
 
@@ -39,11 +47,8 @@ class Model:
         resp = await openai.ChatCompletion.acreate(
             model=self.name,
             messages=messages,
-            temperature=0.7,
-            max_tokens=1000,
-            top_p=1,
-            frequency_penalty=0,
-            presence_penalty=0,
+            temperature=SAMPLING_TEMPERATURE,
+            max_tokens=MAX_OUTPUT_TOKENS,
         )
         answer = self._prepare_answer(resp)
         return answer
