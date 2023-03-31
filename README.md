@@ -5,9 +5,8 @@ This is a Telegram chat bot built using the ChatGPT (GPT-3.5 or GPT-4) language 
 Notable features:
 
 -   Both one-on-one and group chats.
--   Direct questions or mentions.
--   Ask again by retrying or editing the last message.
--   Follow-up questions.
+-   Direct questions, mentions, follow-ups.
+-   Access external links (articles, code, data).
 -   Shortcuts (custom AI commands).
 
 ## Personal chats
@@ -66,11 +65,25 @@ Chat information:
 ...
 ```
 
-## Shortcuts (🚧 experimental)
+## External links
+
+If you ask "vanilla" ChatGPT about external resources, it will either hallucinate or admit that it doesn't have access to remote content:
+
+> Q: What is the content of https://sqlime.org/employees.sql? Make no assumptions.
+>
+> A: As an AI language model, I cannot access external URLs on the internet.
+
+The bot solves the problem by fetching the remote content and feeding it to the model:
+
+<img src="docs/chat-7.png" alt="External links" width="400">
+
+Currently only supports text content (articles, code, data), not PDFs, images or audio.
+
+## Shortcuts
 
 Use short commands to save time and ask the bot to do something specific with your questions. For example, ask it to proofread your writing with a `!proofread` command:
 
-<img src="docs/chat-6.png" alt="Sample chat" width="400">
+<img src="docs/chat-6.png" alt="Shortcuts" width="400">
 
 There are several built-in shortcuts:
 
