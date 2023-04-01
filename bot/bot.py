@@ -125,7 +125,7 @@ async def start_handle(update: Update, context: CallbackContext):
             "Sorry, I don't know you. To setup your own bot, "
             "visit https://github.com/nalgeon/pokitoki"
         )
-        await update.message.reply_text(text)
+        await update.message.(text)
         return
 
     text = "Hi! I'm a humble AI-driven chat bot.\n\n"
@@ -271,7 +271,7 @@ async def _ask_question(message: Message, context: CallbackContext, question: st
 async def _send_answer(message: Message, context: CallbackContext, answer: str):
     """Sends the answer as a text reply or as a document, depending on its size."""
     if len(answer) <= MessageLimit.MAX_TEXT_LENGTH:
-        await message.reply_text(answer, parse_mode=ParseMode.HTML)
+        await message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
         return
     doc = io.StringIO(answer)
     caption = (

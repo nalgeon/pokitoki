@@ -29,8 +29,6 @@ SAMPLING_TEMPERATURE = 0.7
 # The maximum number of tokens to generate
 MAX_OUTPUT_TOKENS = 1000
 
-PRE_RE = re.compile(r"&lt;(/?pre)")
-
 
 class Model:
     """OpenAI API wrapper."""
@@ -69,8 +67,6 @@ class Model:
 
         answer = resp.choices[0].message.content
         answer = answer.strip()
-        answer = answer.replace("<", "&lt;")
-        answer = PRE_RE.sub(r"<\1", answer)
         return answer
 
 
