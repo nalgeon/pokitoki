@@ -125,7 +125,7 @@ async def start_handle(update: Update, context: CallbackContext):
             "Sorry, I don't know you. To setup your own bot, "
             "visit https://github.com/nalgeon/pokitoki"
         )
-        await update.message.(text)
+        await update.message.reply_text(text)
         return
 
     text = "Hi! I'm a humble AI-driven chat bot.\n\n"
