@@ -25,4 +25,5 @@ jobs:
 
             - name: Run tests
               run: |
+                  cp config.example.yml config.yml
                   python -m unittest discover
