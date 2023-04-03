@@ -1,6 +1,5 @@
 """ChatGPT (GPT-3.5+) language model from OpenAI."""
 
-import re
 import textwrap
 import openai
 from bot.models import UserMessage
@@ -33,12 +32,12 @@ MAX_OUTPUT_TOKENS = 1000
 class Model:
     """OpenAI API wrapper."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
         self.maxlen = MAX_LENGTHS[name]
 
-    async def ask(self, question: str, history: list[UserMessage]):
+    async def ask(self, question: str, history: list[UserMessage]) -> str:
         """Asks the language model a question and returns an answer."""
         messages = self._generate_messages(question, history)
         messages = shorten(messages, length=self.maxlen)
@@ -60,7 +59,7 @@ class Model:
         messages.append({"role": "user", "content": question})
         return messages
 
-    def _prepare_answer(self, resp):
+    def _prepare_answer(self, resp) -> str:
         """Post-processes an answer from the language model."""
         if len(resp.choices) == 0:
             raise ValueError("received an empty answer")
