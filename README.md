@@ -129,8 +129,16 @@ AI information:
 4. Start the bot:
 
 ```bash
-docker compose up --build
+docker compose up --build --detach
 ```
+
+To stop the bot:
+
+```bash
+docker compose stop
+```
+
+For older Docker distributions, use `docker-compose` instead of `docker compose`.
 
 ## Credits
 
