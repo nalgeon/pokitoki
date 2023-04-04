@@ -17,7 +17,7 @@ The bot acts as your personal assistant:
 
 To allow other users to use the bot, list them in the `telegram_usernames` config property.
 
-The bot has a terrible memory, so don't expect it to remember any chat context by default. You can, however, reply with a follow-up question. Alternatively, use a plus sign to follow up:
+The bot has a terrible memory, so don't expect it to remember any chat context by default. You can, however, reply with a follow-up question (`Ctrl/Cmd + ↑`). Alternatively, use a plus sign to follow up:
 
 <table>
     <tr>
@@ -94,6 +94,35 @@ There are several built-in shortcuts:
 
 You can add your own shortcuts. See `config.example.yml` for details.
 
+## Other useful features
+
+The convenience of working with a bot is made up of small details. Here are some situations where it can save you time and effort.
+
+### Forwarding
+
+Say you received a message from a colleague or read a post on a channel and want to ask a question. Simply forward the message to the bot and answer the clarifying question it asks:
+
+<table>
+    <tr>
+        <td>
+            <img src="docs/chat-8.png" alt="Forwarding 1" width="400">
+        </td>
+        <td>
+            <img src="docs/chat-9.png" alt="Forwarding 2" width="400">
+        </td>
+    </tr>
+</table>
+
+### Reply with attachment
+
+Sometimes the AI's reply exceeds the maximum message length set by Telegram. In this case, the bot will not fail or spam you with messages. Instead, it will send the answer as an attached markdown file:
+
+<img src="docs/chat-10.png" alt="Reply with attachment" width="400">
+
+### Edited question
+
+To rephrase or add to the last question, edit it (`↑` shortcut). The bot will notice this and respond to the clarified question.
+
 ## Bot information
 
 Use the `/version` commands to print detailed information about the current chat, bot, and AI model:
@@ -142,4 +171,4 @@ For older Docker distributions, use `docker-compose` instead of `docker compose`
 
 ## Credits
 
-Based on the [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot).
+Originally based on [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot), although the projects have diverged quite a bit.
