@@ -19,6 +19,7 @@ from telegram.ext import (
 from telegram.constants import MessageLimit, ParseMode
 
 from bot import config
+from bot import markdown
 from bot import questions
 from bot.ai.chatgpt import Model
 from bot.fetcher import Fetcher
@@ -271,8 +272,10 @@ async def _ask_question(message: Message, context: CallbackContext, question: st
 async def _send_answer(message: Message, context: CallbackContext, answer: str):
     """Sends the answer as a text reply or as a document, depending on its size."""
     if len(answer) <= MessageLimit.MAX_TEXT_LENGTH:
-        await message.reply_text(answer, parse_mode=ParseMode.MARKDOWN)
+        answer = markdown.to_html(answer)
+        await message.reply_text(answer, parse_mode=ParseMode.HTML)
         return
+
     doc = io.StringIO(answer)
     caption = (
         textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"

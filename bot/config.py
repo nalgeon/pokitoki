@@ -6,7 +6,7 @@ with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
 # Bot version.
-version = 86
+version = 93
 
 # Telegram Bot API token.
 telegram_token = config["telegram_token"]
