@@ -169,6 +169,40 @@ docker compose stop
 
 For older Docker distributions, use `docker-compose` instead of `docker compose`.
 
+## Development setup
+
+Prepare the environment:
+
+```
+python3 -m venv env
+. env/bin/activate
+pip install -r requirements.txt
+```
+
+Run tests:
+
+```
+python -m unittest discover
+```
+
+Start the bot:
+
+```
+python -m bot.bot
+```
+
+## Contributing
+
+For new features and improvements, please first open an issue to discuss what you would like to change.
+
+Be sure to add or update tests as appropriate.
+
+Use [Black](https://black.readthedocs.io/en/stable/) for code formatting and [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
+
+## Changelog
+
+For feature history, see the [changelog](CHANGELOG.md).
+
 ## Credits
 
 Originally based on [chatgpt_telegram_bot](https://github.com/karfly/chatgpt_telegram_bot), although the projects have diverged quite a bit.
