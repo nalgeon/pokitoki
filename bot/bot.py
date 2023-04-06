@@ -41,7 +41,7 @@ PRIVACY_MESSAGE = (
 )
 
 BOT_COMMANDS = [
-    ("retry", "retry answering the last question"),
+    ("retry", "retry the last question"),
     ("help", "show help"),
     ("version", "show debug information"),
 ]
@@ -219,9 +219,11 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
     if not update:
         # telegram.error.NetworkError or a similar error, there is no chat to respond to.
         # Not sure if we should completely silence such errors.
-        logger.error("General exception: %s:", context.error)
+        logger.warning("General exception: %s:", context.error)
         return
-    logger.error("Exception while handling an update %s:", update, exc_info=context.error)
+    class_name = f"{context.error.__class__.__module__}.{context.error.__class__.__qualname__}"
+    error_text = f"{class_name}: {context.error}"
+    logger.warning("Exception while handling an update %s: %s", update, error_text)
     message = f"⚠️ {context.error}"
     await context.bot.send_message(update.effective_chat.id, message)
 
