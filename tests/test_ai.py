@@ -38,7 +38,7 @@ class ShortenTest(unittest.TestCase):
             {"role": "system", "content": "You are an AI assistant."},
             {"role": "user", "content": "Hello"},
         ]
-        shortened = chatgpt.shorten(messages, length=100)
+        shortened = chatgpt.shorten(messages, length=11)
         self.assertEqual(shortened, messages)
 
     def test_remove_messages_1(self):
@@ -48,7 +48,7 @@ class ShortenTest(unittest.TestCase):
             {"role": "assistant", "content": "My name is Alice."},
             {"role": "user", "content": "Is it cold today?"},
         ]
-        shortened = chatgpt.shorten(messages, length=50)
+        shortened = chatgpt.shorten(messages, length=11)
         self.assertEqual(
             shortened,
             [
@@ -64,7 +64,7 @@ class ShortenTest(unittest.TestCase):
             {"role": "assistant", "content": "My name is Alice."},
             {"role": "user", "content": "Is it cold today?"},
         ]
-        shortened = chatgpt.shorten(messages, length=60)
+        shortened = chatgpt.shorten(messages, length=20)
         self.assertEqual(
             shortened,
             [
@@ -79,11 +79,11 @@ class ShortenTest(unittest.TestCase):
             {"role": "system", "content": "You are an AI assistant."},
             {"role": "user", "content": "Is it cold today? I think it's rather cold"},
         ]
-        shortened = chatgpt.shorten(messages, length=45)
+        shortened = chatgpt.shorten(messages, length=11)
         self.assertEqual(
             shortened,
             [
                 {"role": "system", "content": "You are an AI assistant."},
-                {"role": "user", "content": "Is it cold today?..."},
+                {"role": "user", "content": "Is it cold today?"},
             ],
         )

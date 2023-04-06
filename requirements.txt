@@ -3,3 +3,4 @@ openai==0.27.2
 beautifulsoup4==4.12.0
 python-telegram-bot==20.1
 PyYAML==6.0
+tiktoken==0.3.3

@@ -1,22 +1,24 @@
 """ChatGPT (GPT-3.5+) language model from OpenAI."""
 
-import textwrap
+import logging
 import openai
+import tiktoken
 from bot import config
 
+logger = logging.getLogger(__name__)
+
 openai.api_key = config.openai_api_key
+encoding = tiktoken.get_encoding("cl100k_base")
 
 BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
 
-# OpenAI counts length in tokens, not charactes,
-# so these are approximate numbers (1 token = 4 chars).
-# We also leave some characters reserved for the output.
-CHARS_PER_TOKEN = 4
+# OpenAI counts length in tokens, not charactes.
+# We also leave some tokens reserved for the output.
 MAX_LENGTHS = {
     # max 4096 tokens total, max 3072 for the input
-    "gpt-3.5-turbo": int(3 * 1024 * CHARS_PER_TOKEN),
+    "gpt-3.5-turbo": int(3 * 1024),
     # max 8192 tokens total, max 7168 for the input
-    "gpt-4": int(7 * 1024 * CHARS_PER_TOKEN),
+    "gpt-4": int(7 * 1024),
 }
 
 # What sampling temperature to use, between 0 and 2.
@@ -46,6 +48,12 @@ class Model:
             temperature=SAMPLING_TEMPERATURE,
             max_tokens=MAX_OUTPUT_TOKENS,
         )
+        logger.debug(
+            "prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
+            resp.usage.prompt_tokens,
+            resp.usage.completion_tokens,
+            resp.usage.total_tokens,
+        )
         answer = self._prepare_answer(resp)
         return answer
 
@@ -70,27 +78,30 @@ class Model:
 
 def shorten(messages: list[dict], length: int) -> list[dict]:
     """
-    Truncates messages so that the total number or characters
+    Truncates messages so that the total number or tokens
     does not exceed the specified length.
     """
-    total_len = sum(len(m["content"]) for m in messages)
+    lengths = [len(encoding.encode(m["content"])) for m in messages]
+    total_len = sum(lengths)
     if total_len <= length:
         return messages
 
     # exclude older messages to fit into the desired length
     # can't exclude the prompt though
     prompt_msg, messages = messages[0], messages[1:]
+    prompt_len, lengths = lengths[0], lengths[1:]
     while len(messages) > 1 and total_len > length:
-        first, messages = messages[0], messages[1:]
-        total_len -= len(first["content"])
+        messages = messages[1:]
+        first_len, lengths = lengths[0], lengths[1:]
+        total_len -= first_len
     messages = [prompt_msg] + messages
     if total_len <= length:
         return messages
 
     # there is only one message left, and it's still longer than allowed
     # so we have to shorten it
-    prompt_len = len(prompt_msg["content"])
-    messages[1]["content"] = textwrap.shorten(
-        messages[1]["content"], length - prompt_len, placeholder="..."
-    )
+    maxlen = length - prompt_len
+    tokens = encoding.encode(messages[1]["content"])
+    tokens = tokens[:maxlen]
+    messages[1]["content"] = encoding.decode(tokens)
     return messages

@@ -1,8 +1,8 @@
 """Telegram chat bot built using the language model from OpenAI."""
 
-import datetime as dt
 import logging
 import sys
+import time
 
 from telegram import Chat, Message, Update
 from telegram.ext import (
@@ -51,6 +51,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("bot.ai.chatgpt").setLevel(logging.INFO)
 logging.getLogger("bot.questions").setLevel(logging.INFO)
 logging.getLogger("__main__").setLevel(logging.INFO)
 
@@ -290,9 +291,9 @@ async def _ask_question(
         user.messages.clear()
         history = []
 
-    start = dt.datetime.now()
+    start = time.perf_counter_ns()
     answer = await asker.ask(question, history)
-    elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
+    elapsed = int((time.perf_counter_ns() - start) / 1e6)
 
     logger.info(
         f"question from user={message.from_user.username}, "
