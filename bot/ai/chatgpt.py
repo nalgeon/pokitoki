@@ -2,7 +2,6 @@
 
 import textwrap
 import openai
-from bot.models import UserMessage
 from bot import config
 
 openai.api_key = config.openai_api_key
@@ -37,7 +36,7 @@ class Model:
         self.name = name
         self.maxlen = MAX_LENGTHS[name]
 
-    async def ask(self, question: str, history: list[UserMessage]) -> str:
+    async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
         messages = self._generate_messages(question, history)
         messages = shorten(messages, length=self.maxlen)
@@ -50,12 +49,12 @@ class Model:
         answer = self._prepare_answer(resp)
         return answer
 
-    def _generate_messages(self, question: str, history: list[UserMessage]) -> list[dict]:
+    def _generate_messages(self, question: str, history: list[tuple[str, str]]) -> list[dict]:
         """Builds message history to provide context for the language model."""
         messages = [{"role": "system", "content": BASE_PROMPT}]
-        for message in history:
-            messages.append({"role": "user", "content": message.question})
-            messages.append({"role": "assistant", "content": message.answer})
+        for prev_question, prev_answer in history:
+            messages.append({"role": "user", "content": prev_question})
+            messages.append({"role": "assistant", "content": prev_answer})
         messages.append({"role": "user", "content": question})
         return messages
 

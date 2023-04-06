@@ -4,15 +4,17 @@ from telegram import Chat, Message, Update, User
 from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 
+from bot import askers
 from bot import bot
 from bot import config
 from bot import models
-from tests.mocks import FakeAI, FakeApplication, FakeBot
+from tests.mocks import FakeGPT, FakeApplication, FakeBot
 
 
 class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        bot.model = FakeAI()
+        self.ai = FakeGPT()
+        askers.TextAsker.model = self.ai
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -23,14 +25,7 @@ class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
         config.telegram_usernames = ["alice"]
 
     async def test_start(self):
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            from_user=self.user,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11)
         await bot.start_handle(update, self.context)
         self.assertTrue(self.bot.text.startswith("Hi! I'm a humble AI-driven chat bot."))
 
@@ -50,68 +45,52 @@ class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
     async def test_retry(self):
         user_data = models.UserData(self.context.user_data)
         user_data.messages.add("What is your name?", "My name is AI.")
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            from_user=self.user,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11)
         await bot.retry_handle(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 
     async def test_message(self):
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text="What is your name?",
-            from_user=self.user,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11, text="What is your name?")
         await bot.message_handle(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
+        self.assertEqual(self.ai.question, "What is your name?")
+        self.assertEqual(self.ai.history, [])
+
+    async def test_follow_up(self):
+        update = self._create_update(11, text="What is your name?")
+        await bot.message_handle(update, self.context)
+        self.assertEqual(self.ai.question, "What is your name?")
+        self.assertEqual(self.ai.history, [])
+
+        update = self._create_update(12, text="+ And why is that?")
+        await bot.message_handle(update, self.context)
+        self.assertEqual(self.ai.question, "And why is that?")
+        self.assertEqual(self.ai.history, [("What is your name?", "What is your name?")])
+
+        update = self._create_update(13, text="+ Where are you?")
+        await bot.message_handle(update, self.context)
+        self.assertEqual(self.ai.question, "Where are you?")
+        self.assertEqual(
+            self.ai.history,
+            [
+                ("What is your name?", "What is your name?"),
+                ("+ And why is that?", "And why is that?"),
+            ],
+        )
 
     async def test_forward(self):
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            forward_date=dt.datetime.now(),
-            chat=self.chat,
-            text="What is your name?",
-            from_user=self.user,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11, text="What is your name?", forward_date=dt.datetime.now())
         await bot.message_handle(update, self.context)
         self.assertTrue(self.bot.text.startswith("This is a forwarded message"))
 
     async def test_document(self):
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text="I have so much to say" + "." * 5000,
-            from_user=self.user,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11, text="I have so much to say" + "." * 5000)
         await bot.message_handle(update, self.context)
         self.assertEqual(self.bot.text, "I have so much to... (see attachment for the rest): 11.md")
 
     async def test_exception(self):
-        bot.model = FakeAI(error=Exception("connection timeout"))
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text="What is your name?",
-            from_user=self.user,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        askers.TextAsker.model = FakeGPT(error=Exception("connection timeout"))
+        update = self._create_update(11, text="What is your name?")
         await bot.message_handle(update, self.context)
         self.assertTrue(self.bot.text.startswith("Failed to answer"))
         self.assertTrue("connection timeout" in self.bot.text)
@@ -123,10 +102,22 @@ class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
         await bot.error_handler(update, self.context)
         self.assertEqual(self.bot.text, "⚠️ Something went wrong")
 
+    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
+        message = Message(
+            message_id=update_id,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text=text,
+            from_user=self.user,
+            **kwargs,
+        )
+        message.set_bot(self.bot)
+        return Update(update_id=update_id, message=message)
+
 
 class GroupChatTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        bot.model = FakeAI()
+        askers.TextAsker.model = FakeGPT()
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.GROUP)
         self.chat.set_bot(self.bot)
@@ -140,27 +131,23 @@ class GroupChatTest(unittest.IsolatedAsyncioTestCase):
         config.telegram_usernames = ["alice"]
 
     async def test_message(self):
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text="@bot What is your name?",
-            from_user=self.user_alice,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11, text="@bot What is your name?")
         await bot.message_handle(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 
     async def test_no_mention(self):
-        message = Message(
-            message_id=11,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text="What is your name?",
-            from_user=self.user_alice,
-        )
-        message.set_bot(self.bot)
-        update = Update(update_id=11, message=message)
+        update = self._create_update(11, text="What is your name?")
         await bot.message_handle(update, self.context)
         self.assertEqual(self.bot.text, "")
+
+    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
+        message = Message(
+            message_id=update_id,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text=text,
+            from_user=self.user_alice,
+            **kwargs,
+        )
+        message.set_bot(self.bot)
+        return Update(update_id=update_id, message=message)

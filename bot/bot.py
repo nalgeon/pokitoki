@@ -2,9 +2,7 @@
 
 import datetime as dt
 import logging
-import io
 import sys
-import textwrap
 
 from telegram import Chat, Message, Update
 from telegram.ext import (
@@ -16,11 +14,11 @@ from telegram.ext import (
     PicklePersistence,
     filters,
 )
-from telegram.constants import MessageLimit, ParseMode
+from telegram.constants import ParseMode
 
 from bot import config
-from bot import markdown
 from bot import questions
+from bot import askers
 from bot.ai.chatgpt import Model
 from bot.fetcher import Fetcher
 from bot.models import UserData
@@ -41,8 +39,9 @@ PRIVACY_MESSAGE = (
 )
 
 BOT_COMMANDS = [
-    ("retry", "retry the last question"),
     ("help", "show help"),
+    ("imagine", "generate described image"),
+    ("retry", "retry the last question"),
     ("version", "show debug information"),
 ]
 
@@ -92,6 +91,7 @@ def main():
     application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("version", version_handle, filters=user_filter))
+    application.add_handler(CommandHandler("imagine", imagine_handle, filters=user_filter))
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_filter))
     # default action is to reply to a message
     message_filter = filters.TEXT & ~filters.COMMAND & (user_filter | chat_filter)
@@ -179,10 +179,28 @@ async def version_handle(update: Update, context: CallbackContext):
         "AI information:\n"
         f"- model: {config.openai_model}\n"
         f"- history depth: {config.max_history_depth}\n"
+        f"- imagine: {config.imagine}\n"
         f"- shortcuts: {list(config.shortcuts.keys())}"
         "</pre>"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
+
+
+async def imagine_handle(update: Update, context: CallbackContext):
+    """Generates an image according to the description."""
+    if not config.imagine:
+        await update.message.reply_text(
+            "The `imagine` command is disabled. You can enable it in the `config.yml` file.",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+    if not context.args:
+        await update.message.reply_text(
+            "Please describe an image. For example:\n<code>/imagine a lazy cat on a sunny day</code>",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+    await message_handle(update, context)
 
 
 async def retry_handle(update: Update, context: CallbackContext):
@@ -234,16 +252,17 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
     await message.chat.send_action(action="typing")
 
     try:
+        asker = askers.create(question)
         if message.chat.type == Chat.PRIVATE and message.forward_date:
             # this is a forwarded message, don't answer yet
             answer = "This is a forwarded message. What should I do with it?"
         else:
-            answer = await _ask_question(message, context, question)
+            answer = await _ask_question(message, context, question, asker)
 
         user = UserData(context.user_data)
         user.messages.add(question, answer)
         logger.debug(user.messages)
-        await _send_answer(message, context, answer)
+        await asker.reply(message, context, answer)
 
     except Exception as exc:
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
@@ -252,41 +271,34 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         await message.reply_text(error_text)
 
 
-async def _ask_question(message: Message, context: CallbackContext, question: str) -> str:
+async def _ask_question(
+    message: Message, context: CallbackContext, question: str, asker: askers.Asker
+) -> str:
     """Answers a question using the OpenAI model."""
-    question = question or message.text
-    prep_question, history = questions.prepare(question, context)
-    prep_question = await fetcher.substitute_urls(prep_question)
-    logger.debug(f"Prepared question: {prep_question}")
+    question, is_follow_up = questions.prepare(question)
+    question = await fetcher.substitute_urls(question)
+    logger.debug(f"Prepared question: {question}")
+
+    user = UserData(context.user_data)
+    if is_follow_up:
+        # this is a follow-up question,
+        # so the bot should retain the previous history
+        history = user.messages.as_list()
+    else:
+        # user is asking a question 'from scratch',
+        # so the bot should forget the previous history
+        user.messages.clear()
+        history = []
 
     start = dt.datetime.now()
-    answer = await model.ask(prep_question, history)
+    answer = await asker.ask(question, history)
     elapsed = int((dt.datetime.now() - start).total_seconds() * 1000)
 
     logger.info(
         f"question from user={message.from_user.username}, "
-        f"n_chars={len(prep_question)}, len_history={len(history)}, took={elapsed}ms"
+        f"n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
     )
     return answer
-
-
-async def _send_answer(message: Message, context: CallbackContext, answer: str):
-    """Sends the answer as a text reply or as a document, depending on its size."""
-    if len(answer) <= MessageLimit.MAX_TEXT_LENGTH:
-        answer = markdown.to_html(answer)
-        await message.reply_text(answer, parse_mode=ParseMode.HTML)
-        return
-
-    doc = io.StringIO(answer)
-    caption = (
-        textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"
-    )
-    await context.bot.send_document(
-        chat_id=message.chat_id,
-        caption=caption,
-        filename=f"{message.id}.md",
-        document=doc,
-    )
 
 
 def _generate_help_message() -> str:

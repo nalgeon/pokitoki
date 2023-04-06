@@ -126,25 +126,18 @@ class ExtractGroupTest(unittest.TestCase):
 
 
 class TestPrepare(unittest.TestCase):
-    def setUp(self):
-        self.chat = Chat(id=1, type=ChatType.PRIVATE)
-        bot = FakeBot("bot")
-        self.application = FakeApplication(bot)
-        self.application.user_data[1] = {"messages": [("Hello", "Hi!")]}
-        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
-
     def test_ordinary(self):
-        question, history = questions.prepare("How are you?", self.context)
+        question, is_follow_up = questions.prepare("How are you?")
         self.assertEqual(question, "How are you?")
-        self.assertEqual(history, [])
+        self.assertFalse(is_follow_up)
 
     def test_follow_up(self):
-        question, history = questions.prepare("+ How are you?", self.context)
+        question, is_follow_up = questions.prepare("+ How are you?")
         self.assertEqual(question, "How are you?")
-        self.assertEqual(history, [("Hello", "Hi!")])
+        self.assertTrue(is_follow_up)
 
     def test_shortcut(self):
         config.shortcuts["translate"] = "Translate into English."
-        question, history = questions.prepare("!translate Ciao", self.context)
+        question, is_follow_up = questions.prepare("!translate Ciao")
         self.assertEqual(question, "Translate into English.\n\nCiao")
-        self.assertEqual(history, [])
+        self.assertFalse(is_follow_up)

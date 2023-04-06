@@ -1,14 +1,32 @@
 from typing import Optional
 
 
-class FakeAI:
+class FakeGPT:
     def __init__(self, error: Optional[Exception] = None):
         self.error = error
+        self.question = None
+        self.history = None
 
     async def ask(self, question: str, history: list) -> str:
+        self.question = question
+        self.history = history
         if self.error:
             raise self.error
         return question
+
+
+class FakeDalle:
+    def __init__(self, error: Optional[Exception] = None):
+        self.error = error
+        self.prompt = None
+        self.size = None
+
+    async def imagine(self, prompt: str, size: str) -> str:
+        self.prompt = prompt
+        self.size = size
+        if self.error:
+            raise self.error
+        return "image"
 
 
 class FakeBot:
@@ -31,6 +49,9 @@ class FakeBot:
         self, chat_id: int, document: object, caption: str, filename: str, **kwargs
     ) -> None:
         self.text = f"{caption}: {filename}"
+
+    async def send_photo(self, chat_id: int, photo: str, caption: str = None, **kwargs) -> None:
+        self.text = f"{caption}: {photo}"
 
 
 class FakeApplication:

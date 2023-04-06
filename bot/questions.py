@@ -1,15 +1,8 @@
-"""Working with questions in chat messages."""
+"""Extracts questions from chat messages."""
 
-import logging
 from telegram import Message
-from telegram.ext import (
-    CallbackContext,
-)
-
+from telegram.ext import CallbackContext
 from bot import shortcuts
-from bot.models import UserData
-
-logger = logging.getLogger(__name__)
 
 
 def extract_private(message: Message, context: CallbackContext) -> str:
@@ -53,26 +46,28 @@ def extract_group(message: Message, context: CallbackContext) -> tuple[str, Mess
     return question, message
 
 
-def prepare(question: str, context: CallbackContext) -> tuple[str, list]:
-    """Returns the question along with the previous messages (for follow-up questions)."""
-    user = UserData(context.user_data)
-    history = []
-    if question[0] == "+":
-        # this is a follow-up question,
-        # so the bot should retain the previous history
-        question = question.strip("+ ")
-        history = user.messages.as_list()
+def prepare(question: str) -> tuple[str, bool]:
+    """
+    Returns the question without the special commands
+    and indicates whether it is a follow-up.
+    """
 
-    elif question[0] == "!":
+    if question[0] == "+":
+        question = question.strip("+ ")
+        is_follow_up = True
+    else:
+        is_follow_up = False
+
+    if question[0] == "!":
         # this is a shortcut, so the bot should
         # process the question before asking it
         shortcut, question = shortcuts.extract(question)
         question = shortcuts.apply(shortcut, question)
-        # questions with shortcuts clear the previous history
-        user.messages.clear()
 
-    else:
-        # user is asking a question 'from scratch',
-        # so the bot should forget the previous history
-        user.messages.clear()
-    return question, history
+    elif question[0] == "/":
+        # this is a command, so the bot should
+        # strip it from the question before asking
+        _, _, question = question.partition(" ")
+        question = question.strip()
+
+    return question, is_follow_up

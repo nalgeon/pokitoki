@@ -22,6 +22,9 @@ openai_model: "gpt-3.5-turbo"
 # the bot will remember when talking to a user.
 max_history_depth: 3
 
+# Enable/disable image generation.
+imagine: yes
+
 # Where to store the chat context file.
 persistence_path: "./data/persistence.pkl"
 

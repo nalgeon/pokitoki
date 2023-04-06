@@ -6,7 +6,7 @@ with open("config.yml", "r") as f:
     config = yaml.safe_load(f)
 
 # Bot version.
-version = 93
+version = 99
 
 # Telegram Bot API token.
 telegram_token = config["telegram_token"]
@@ -29,6 +29,9 @@ openai_model = config.get("openai_model", "gpt-3.5-turbo")
 # The maximum number of previous messages
 # the bot will remember when talking to a user.
 max_history_depth = config.get("max_history_depth", 3)
+
+# Enable/disable image generation.
+imagine = config.get("imagine", True)
 
 # Where to store the chat context file.
 persistence_path = config["persistence_path"]
