@@ -26,9 +26,15 @@ HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please
 
 I don't remember chat context by default. To ask follow-up questions, reply to my messages or start your questions with a '+' sign.
 
-Supported commands:
+Built-in commands:
 
 {commands}
+
+AI shortcuts:
+
+{shortcuts}
+
+[More features →](https://github.com/nalgeon/pokitoki#readme)
 """
 
 PRIVACY_MESSAGE = (
@@ -133,7 +139,9 @@ async def start_handle(update: Update, context: CallbackContext):
 async def help_handle(update: Update, context: CallbackContext):
     """Answers the `help` command."""
     message = _generate_help_message()
-    await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
+    )
 
 
 async def version_handle(update: Update, context: CallbackContext):
@@ -175,7 +183,7 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- model: {config.openai_model}\n"
         f"- history depth: {config.max_history_depth}\n"
         f"- imagine: {config.imagine}\n"
-        f"- shortcuts: {list(config.shortcuts.keys())}"
+        f"- shortcuts: {', '.join(config.shortcuts.keys())}"
         "</pre>"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
@@ -299,7 +307,8 @@ async def _ask_question(
 def _generate_help_message() -> str:
     """Generates a help message, including a list of allowed commands."""
     commands = "\n".join(f"/{cmd} - {descr}" for cmd, descr in BOT_COMMANDS)
-    return HELP_MESSAGE.format(commands=commands)
+    shortcuts = "\n".join(f"`!{shortcut}`" for shortcut in config.shortcuts)
+    return HELP_MESSAGE.format(commands=commands, shortcuts=shortcuts)
 
 
 if __name__ == "__main__":
