@@ -27,13 +27,11 @@ from bot.models import UserData
 
 HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please be specific, as I'm not very clever.
 
-I have a terrible memory, so don't expect me to remember any chat context (unless you put a '+' sign in front of the question).
+I don't remember chat context by default. To ask follow-up questions, reply to my messages or start your questions with a '+' sign.
 
 Supported commands:
 
-/retry – retry answering the last question
-/help – show help
-/version – show debug information
+{commands}
 """
 
 PRIVACY_MESSAGE = (
@@ -130,16 +128,17 @@ async def start_handle(update: Update, context: CallbackContext):
         return
 
     text = "Hi! I'm a humble AI-driven chat bot.\n\n"
-    text += HELP_MESSAGE
+    text += _generate_help_message()
     text += "\nLet's go!"
     if not context.bot.can_read_all_group_messages:
         text += f"\n\n{PRIVACY_MESSAGE}"
-    await update.message.reply_text(text)
+    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
 
 async def help_handle(update: Update, context: CallbackContext):
     """Answers the `help` command."""
-    await update.message.reply_text(HELP_MESSAGE, parse_mode=ParseMode.HTML)
+    message = _generate_help_message()
+    await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
 
 
 async def version_handle(update: Update, context: CallbackContext):
@@ -286,6 +285,12 @@ async def _send_answer(message: Message, context: CallbackContext, answer: str):
         filename=f"{message.id}.md",
         document=doc,
     )
+
+
+def _generate_help_message() -> str:
+    """Generates a help message, including a list of allowed commands."""
+    commands = "\n".join(f"/{cmd} - {descr}" for cmd, descr in BOT_COMMANDS)
+    return HELP_MESSAGE.format(commands=commands)
 
 
 if __name__ == "__main__":
