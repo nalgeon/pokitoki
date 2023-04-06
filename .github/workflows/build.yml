@@ -3,6 +3,10 @@ name: build
 on:
     push:
         branches: [main]
+        paths:
+            - .github/**
+            - bot/**
+            - test/**
     pull_request:
         branches: [main]
     workflow_dispatch:
