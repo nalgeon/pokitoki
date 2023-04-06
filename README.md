@@ -8,6 +8,7 @@ Notable features:
 -   Direct questions, mentions, follow-ups.
 -   Access external links (articles, code, data).
 -   Shortcuts (custom AI commands).
+-   Image generation.
 
 ## Personal chats
 
