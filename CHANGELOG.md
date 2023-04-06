@@ -1,3 +1,8 @@
+### v104 - 2023-04-06
+
+-   Count question length in tokens instead of characters (#12).
+-   Truncate questions that exceed the maximum number of tokens allowed by ChatGPT.
+
 ### v99 - 2023-04-06
 
 -   [Image generation](https://github.com/nalgeon/pokitoki#image-generation) via DALL-E 2.
