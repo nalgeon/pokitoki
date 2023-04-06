@@ -105,7 +105,7 @@ The default image size is 512×512 px. Other supported sizes are 256×256 and 10
 
 > /imagine a lazy cat on a sunny day 256x256
 >
-> /imagine a lazy cat on a sunny day 1024x1024
+> /imagine a lazy cat on a sunny day 1024px
 
 Image generation is quite pricey ($0.016-$0.020 per image). You can disable it by setting the `imagine` config property to `no` if you like.
 

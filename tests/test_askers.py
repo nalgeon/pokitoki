@@ -44,6 +44,36 @@ class ImagineAskerTest(unittest.IsolatedAsyncioTestCase):
         await asker.reply(message, context, answer="https://image.url")
         self.assertEqual(context.bot.text, "a cat: https://image.url")
 
+    def test_extract_size(self):
+        asker = ImagineAsker()
+        size = asker._extract_size(question="a cat 256x256")
+        self.assertEqual(size, "256x256")
+        size = asker._extract_size(question="a cat 512x512")
+        self.assertEqual(size, "512x512")
+        size = asker._extract_size(question="a cat 1024x1024")
+        self.assertEqual(size, "1024x1024")
+        size = asker._extract_size(question="a cat 256")
+        self.assertEqual(size, "256x256")
+        size = asker._extract_size(question="a cat 256px")
+        self.assertEqual(size, "256x256")
+        size = asker._extract_size(question="a cat 384")
+        self.assertEqual(size, "512x512")
+
+    def test_extract_caption(self):
+        asker = ImagineAsker()
+        caption = asker._extract_caption(question="a cat 256x256")
+        self.assertEqual(caption, "a cat")
+        caption = asker._extract_caption(question="a cat 512x512")
+        self.assertEqual(caption, "a cat")
+        caption = asker._extract_caption(question="a cat 1024x1024")
+        self.assertEqual(caption, "a cat")
+        caption = asker._extract_caption(question="a cat 256")
+        self.assertEqual(caption, "a cat")
+        caption = asker._extract_caption(question="a cat 256px")
+        self.assertEqual(caption, "a cat")
+        caption = asker._extract_caption(question="a cat 384")
+        self.assertEqual(caption, "a cat 384")
+
 
 class CreateTest(unittest.TestCase):
     def test_text_asker(self):

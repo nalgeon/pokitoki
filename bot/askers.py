@@ -60,7 +60,8 @@ class ImagineAsker(Asker):
     """Works with image generation AI."""
 
     model = ai.dalle.Model()
-    size_re = re.compile(r"(256|512|1024)x\1")
+    size_re = re.compile(r"(256|512|1024)(?:x\1)?\s?(?:px)?")
+    sizes = {"256": "256x256", "512": "512x512", "1024": "1024x1024"}
     default_size = "512x512"
 
     def __init__(self) -> None:
@@ -77,9 +78,11 @@ class ImagineAsker(Asker):
         await message.reply_photo(answer, caption=self.caption)
 
     def _extract_size(self, question: str) -> str:
-        size_match = self.size_re.search(question)
-        size = size_match.group(0) if size_match else self.default_size
-        return size
+        match = self.size_re.search(question)
+        if not match:
+            return self.default_size
+        width = match.group(1)
+        return self.sizes[width]
 
     def _extract_caption(self, question: str) -> str:
         caption = self.size_re.sub("", question).strip()
