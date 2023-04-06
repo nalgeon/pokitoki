@@ -1,3 +1,7 @@
+### v99 - 2023-04-06
+
+-   [Image generation](https://github.com/nalgeon/pokitoki#image-generation) via DALL-E 2.
+
 ### v93 - 2023-04-04
 
 -   Switched back to HTML parse mode instead of Markdown, but with code formatting.

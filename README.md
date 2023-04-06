@@ -94,6 +94,20 @@ There are several built-in shortcuts:
 
 You can add your own shortcuts. See `config.example.yml` for details.
 
+## Image generation
+
+Use the `/imagine` command to generate an image using the DALL-E 2 model from OpenAI:
+
+<img src="docs/chat-11.jpg" alt="Generated image" width="400">
+
+The default image size is 512×512 px. Other supported sizes are 256×256 and 1024×1024:
+
+> /imagine a lazy cat on a sunny day 256x256
+>
+> /imagine a lazy cat on a sunny day 1024x1024
+
+Image generation is quite pricey ($0.016-$0.020 per image). You can disable it by setting the `imagine` config property to `no` if you like.
+
 ## Other useful features
 
 The convenience of working with a bot is made up of small details. Here are some situations where it can save you time and effort.
@@ -125,7 +139,7 @@ To rephrase or add to the last question, edit it (`↑` shortcut). The bot will 
 
 ## Bot information
 
-Use the `/version` commands to print detailed information about the current chat, bot, and AI model:
+Use the `/version` command to print detailed information about the current chat, bot, and AI model:
 
 ```
 Chat information:
@@ -136,7 +150,7 @@ Chat information:
 Bot information:
 - id: 5930739038
 - name: @pokitokibot
-- version: 70
+- version: 99
 - usernames: 6 users
 - chat IDs: []
 - access to messages: True
@@ -144,6 +158,7 @@ Bot information:
 AI information:
 - model: gpt-3.5-turbo
 - history depth: 3
+- imagine: True
 - shortcuts: ['bugfix', 'proofread', 'summarize', 'translate']
 ```
 
