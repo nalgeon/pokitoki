@@ -19,7 +19,6 @@ from telegram.constants import ParseMode
 from bot import config
 from bot import questions
 from bot import askers
-from bot.ai.chatgpt import Model
 from bot.fetcher import Fetcher
 from bot.models import UserData
 
@@ -59,11 +58,6 @@ logger = logging.getLogger(__name__)
 
 # retrieves remote content
 fetcher = Fetcher()
-
-# We are using the latest and greatest OpenAI model.
-# There is also a previous generation (GPT-3)
-# available via davinci.Model class, but who needs it?
-model = Model(config.openai_model)
 
 
 def main():
