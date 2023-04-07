@@ -102,6 +102,7 @@ def main():
     # start the bot
     bot_id, _, _ = config.telegram_token.partition(":")
     logging.info(f"bot id: {bot_id}, version: {config.version}")
+    logging.info(f"config file: {config.filename}")
     logging.info(f"allowed users: {config.telegram_usernames}")
     logging.info(f"allowed chats: {config.telegram_chat_ids}")
     logging.info(f"model name: {config.openai_model}")

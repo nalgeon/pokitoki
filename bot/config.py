@@ -1,8 +1,10 @@
 """Bot configuration parameters."""
 
+import os
 import yaml
 
-with open("config.yml", "r") as f:
+filename = os.getenv("CONFIG", "config.yml")
+with open(filename, "r") as f:
     config = yaml.safe_load(f)
 
 # Bot version.
