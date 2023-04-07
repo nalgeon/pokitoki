@@ -10,6 +10,10 @@ Notable features:
 -   Shortcuts (custom AI commands).
 -   Image generation.
 
+> **Free hosting**. I'd like to test PokiToki on larger groups. So if you have an active group with 500+ members and want to try the bot, I'll host it for you for free. You'll still have to sign up with OpenAI and pay its bills though.
+>
+> If you are interested, contact me on Telegram [@nalgeon](https://t.me/nalgeon)
+
 ## Personal chats
 
 The bot acts as your personal assistant:
