@@ -9,7 +9,7 @@ services:
             context: .
             dockerfile: Dockerfile
         volumes:
-            - ./config.yml:/code/config.yml:ro
+            - ./config.yml:/code/config.yml
             - data:/code/data
 
 volumes:

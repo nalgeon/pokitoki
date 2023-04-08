@@ -4,7 +4,7 @@ import re
 import openai
 from bot import config
 
-openai.api_key = config.openai_api_key
+openai.api_key = config.openai.api_key
 
 DEFAULT_STOP = "###"
 PRE_RE = re.compile(r"&lt;(/?pre)")

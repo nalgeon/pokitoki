@@ -30,7 +30,7 @@ async def main(question):
 
 
 def init_model():
-    name = os.getenv("OPENAI_MODEL") or config.openai_model
+    name = os.getenv("OPENAI_MODEL") or config.openai.model
     if name.startswith("gpt"):
         return bot.ai.chatgpt.Model(name)
     if name == "davinci":

@@ -3,7 +3,7 @@
 import openai
 from bot import config
 
-openai.api_key = config.openai_api_key
+openai.api_key = config.openai.api_key
 
 
 class Model:

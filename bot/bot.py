@@ -71,7 +71,7 @@ def main():
     persistence = PicklePersistence(filepath=config.persistence_path)
     application = (
         ApplicationBuilder()
-        .token(config.telegram_token)
+        .token(config.telegram.token)
         .post_init(post_init)
         .post_shutdown(post_shutdown)
         .persistence(persistence)
@@ -81,12 +81,12 @@ def main():
     )
 
     # allow bot only for the selected users
-    if len(config.telegram_usernames) == 0:
+    if len(config.telegram.usernames) == 0:
         user_filter = filters.ALL
         chat_filter = filters.ALL
     else:
-        user_filter = filters.User(username=config.telegram_usernames)
-        chat_filter = filters.Chat(chat_id=config.telegram_chat_ids)
+        user_filter = filters.User(username=config.telegram.usernames)
+        chat_filter = filters.Chat(chat_id=config.telegram.chat_ids)
 
     # available commands: start, help, retry
     application.add_handler(CommandHandler("start", start_handle))
@@ -107,9 +107,9 @@ async def post_init(application: Application) -> None:
     """Defines bot settings."""
     bot = application.bot
     logging.info(f"config: file={config.filename}, version={config.version}")
-    logging.info(f"allowed users: {config.telegram_usernames}")
-    logging.info(f"allowed chats: {config.telegram_chat_ids}")
-    logging.info(f"model name: {config.openai_model}")
+    logging.info(f"allowed users: {config.telegram.usernames}")
+    logging.info(f"allowed chats: {config.telegram.chat_ids}")
+    logging.info(f"model name: {config.openai.model}")
     logging.info(f"bot: username={bot.username}, id={bot.id}")
     await bot.set_my_commands(BOT_COMMANDS)
 
@@ -121,7 +121,7 @@ async def post_shutdown(application: Application) -> None:
 
 async def start_handle(update: Update, context: CallbackContext):
     """Answers the `start` command."""
-    if update.effective_user.username not in config.telegram_usernames:
+    if update.effective_user.username not in config.telegram.usernames:
         text = (
             "Sorry, I don't know you. To setup your own bot, "
             "visit https://github.com/nalgeon/pokitoki"
@@ -160,7 +160,7 @@ async def version_handle(update: Update, context: CallbackContext):
     )
     bot = await context.bot.get_me()
     usernames = (
-        "all" if not config.telegram_usernames else f"{len(config.telegram_usernames)} users"
+        "all" if not config.telegram.usernames else f"{len(config.telegram.usernames)} users"
     )
 
     # bot information
@@ -171,7 +171,7 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- name: {bot.name}\n"
         f"- version: {config.version}\n"
         f"- usernames: {usernames}\n"
-        f"- chat IDs: {config.telegram_chat_ids}\n"
+        f"- chat IDs: {config.telegram.chat_ids}\n"
         f"- access to messages: {bot.can_read_all_group_messages}"
         "</pre>"
     )
@@ -182,7 +182,7 @@ async def version_handle(update: Update, context: CallbackContext):
     text += (
         "\n\n<pre>"
         "AI information:\n"
-        f"- model: {config.openai_model}\n"
+        f"- model: {config.openai.model}\n"
         f"- history depth: {config.max_history_depth}\n"
         f"- imagine: {config.imagine}\n"
         f"- shortcuts: {', '.join(config.shortcuts.keys())}"

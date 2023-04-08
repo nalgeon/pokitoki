@@ -4,7 +4,7 @@ import re
 import openai
 from bot import config
 
-openai.api_key = config.openai_api_key
+openai.api_key = config.openai.api_key
 
 BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses. Write code inside <pre>, </pre> tags."
 

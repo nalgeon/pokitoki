@@ -22,7 +22,7 @@ class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
         self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
-        config.telegram_usernames = ["alice"]
+        config.telegram.usernames = ["alice"]
 
     async def test_start(self):
         update = self._create_update(11)
@@ -128,7 +128,7 @@ class GroupChatTest(unittest.IsolatedAsyncioTestCase):
         self.user_alice = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.user_erik = User(id=2, first_name="Erik", is_bot=False, username="erik")
         self.user_bot = User(id=42, first_name="Bot", is_bot=True, username="bot")
-        config.telegram_usernames = ["alice"]
+        config.telegram.usernames = ["alice"]
 
     async def test_message(self):
         update = self._create_update(11, text="@bot What is your name?")
