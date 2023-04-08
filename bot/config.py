@@ -69,7 +69,7 @@ filename = os.getenv("CONFIG", "config.yml")
 _config = load(filename)
 
 # Bot version.
-version = 104
+version = 116
 
 # Telegram settings.
 telegram = Telegram(

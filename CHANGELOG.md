@@ -1,11 +1,19 @@
+### v116 - 2023-04-08
+
+-   Relaxed image size parsing ([#13](https://github.com/nalgeon/pokitoki/issues/13)).
+-   Allow shortcuts without prompt.
+-   Show shortcuts in help.
+-   Changed config file access mode from read-only to read-write.
+-   Nested config properties.
+
 ### v104 - 2023-04-06
 
--   Count question length in tokens instead of characters (#12).
+-   Count question length in tokens instead of characters ([#12](https://github.com/nalgeon/pokitoki/issues/12)).
 -   Truncate questions that exceed the maximum number of tokens allowed by ChatGPT.
 
 ### v99 - 2023-04-06
 
--   [Image generation](https://github.com/nalgeon/pokitoki#image-generation) via DALL-E 2.
+-   [Image generation](https://github.com/nalgeon/pokitoki#image-generation) via DALL-E ([#13](https://github.com/nalgeon/pokitoki/issues/13)).
 
 ### v93 - 2023-04-04
 

@@ -20,7 +20,7 @@ The bot acts as your personal assistant:
 
 <img src="docs/chat-1.png" alt="Sample chat" width="400">
 
-To allow other users to use the bot, list them in the `telegram_usernames` config property.
+To allow other users to use the bot, list them in the `telegram.usernames` config property.
 
 The bot has a terrible memory, so don't expect it to remember any chat context by default. You can, however, reply with a follow-up question (`Ctrl/Cmd + ↑`). Alternatively, use a plus sign to follow up:
 
@@ -58,7 +58,7 @@ To get an answer from the bot in a group, mention it in a reply to a question, o
     </tr>
 </table>
 
-To make the bot reply to group members, list the group id in the `telegram_chat_ids` config property. Otherwise, the bot will ignore questions from group members unless they are listed in the `telegram_usernames` config property.
+To make the bot reply to group members, list the group id in the `telegram.chat_ids` config property. Otherwise, the bot will ignore questions from group members unless they are listed in the `telegram.usernames` config property.
 
 If you don't know the group id, run the `/version` bot command in a group to find it:
 
