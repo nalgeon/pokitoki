@@ -100,18 +100,18 @@ def main():
     application.add_error_handler(error_handler)
 
     # start the bot
-    bot_id, _, _ = config.telegram_token.partition(":")
-    logging.info(f"bot id: {bot_id}, version: {config.version}")
-    logging.info(f"config file: {config.filename}")
-    logging.info(f"allowed users: {config.telegram_usernames}")
-    logging.info(f"allowed chats: {config.telegram_chat_ids}")
-    logging.info(f"model name: {config.openai_model}")
     application.run_polling()
 
 
 async def post_init(application: Application) -> None:
     """Defines bot settings."""
-    await application.bot.set_my_commands(BOT_COMMANDS)
+    bot = application.bot
+    logging.info(f"config: file={config.filename}, version={config.version}")
+    logging.info(f"allowed users: {config.telegram_usernames}")
+    logging.info(f"allowed chats: {config.telegram_chat_ids}")
+    logging.info(f"model name: {config.openai_model}")
+    logging.info(f"bot: username={bot.username}, id={bot.id}")
+    await bot.set_my_commands(BOT_COMMANDS)
 
 
 async def post_shutdown(application: Application) -> None:
@@ -134,7 +134,9 @@ async def start_handle(update: Update, context: CallbackContext):
     text += "\nLet's go!"
     if not context.bot.can_read_all_group_messages:
         text += f"\n\n{PRIVACY_MESSAGE}"
-    await update.message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+    await update.message.reply_text(
+        text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
+    )
 
 
 async def help_handle(update: Update, context: CallbackContext):
