@@ -76,6 +76,7 @@ def main():
         .post_init(post_init)
         .post_shutdown(post_shutdown)
         .persistence(persistence)
+        .concurrent_updates(True)
         .get_updates_http_version("1.1")
         .http_version("1.1")
         .build()
@@ -258,7 +259,6 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
 
 async def _reply_to(message: Message, context: CallbackContext, question: str):
     """Replies to a specific question."""
-    logger.debug(f"question: {question}")
     await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
 
     try:
@@ -285,6 +285,10 @@ async def _ask_question(
     message: Message, context: CallbackContext, question: str, asker: askers.Asker
 ) -> str:
     """Answers a question using the OpenAI model."""
+    logger.info(
+        f"-> question id={message.id}, user={message.from_user.username}, n_chars={len(question)}"
+    )
+
     question, is_follow_up = questions.prepare(question)
     question = await fetcher.substitute_urls(question)
     logger.debug(f"Prepared question: {question}")
@@ -305,7 +309,7 @@ async def _ask_question(
     elapsed = int((time.perf_counter_ns() - start) / 1e6)
 
     logger.info(
-        f"question from user={message.from_user.username}, "
+        f"<- answer id={message.id}, user={message.from_user.username}, "
         f"n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
     )
     return answer
