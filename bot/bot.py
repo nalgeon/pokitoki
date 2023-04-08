@@ -142,9 +142,12 @@ async def start_handle(update: Update, context: CallbackContext):
 
 async def help_handle(update: Update, context: CallbackContext):
     """Answers the `help` command."""
-    message = _generate_help_message()
+    text = _generate_help_message()
     await update.message.reply_text(
-        message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
+        text,
+        parse_mode=ParseMode.MARKDOWN,
+        disable_web_page_preview=True,
+        message_thread_id=update.message.message_thread_id,
     )
 
 
@@ -190,7 +193,9 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- shortcuts: {', '.join(config.shortcuts.keys())}"
         "</pre>"
     )
-    await update.message.reply_text(text, parse_mode=ParseMode.HTML)
+    await update.message.reply_text(
+        text, parse_mode=ParseMode.HTML, message_thread_id=update.message.message_thread_id
+    )
 
 
 async def imagine_handle(update: Update, context: CallbackContext):
@@ -199,12 +204,14 @@ async def imagine_handle(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "The `imagine` command is disabled. You can enable it in the `config.yml` file.",
             parse_mode=ParseMode.MARKDOWN,
+            message_thread_id=update.message.message_thread_id,
         )
         return
     if not context.args:
         await update.message.reply_text(
             "Please describe an image. For example:\n<code>/imagine a lazy cat on a sunny day</code>",
             parse_mode=ParseMode.HTML,
+            message_thread_id=update.message.message_thread_id,
         )
         return
     await message_handle(update, context)
@@ -215,7 +222,9 @@ async def retry_handle(update: Update, context: CallbackContext):
     user = UserData(context.user_data)
     last_message = user.messages.pop()
     if not last_message:
-        await update.message.reply_text("No message to retry 🤷‍♂️")
+        await update.message.reply_text(
+            "No message to retry 🤷‍♂️", message_thread_id=update.message.message_thread_id
+        )
         return
     await _reply_to(update.message, context, question=last_message.question)
 
@@ -249,14 +258,17 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
     class_name = f"{context.error.__class__.__module__}.{context.error.__class__.__qualname__}"
     error_text = f"{class_name}: {context.error}"
     logger.warning("Exception while handling an update %s: %s", update, error_text)
-    message = f"⚠️ {context.error}"
-    await context.bot.send_message(update.effective_chat.id, message)
+    text = f"⚠️ {context.error}"
+    message_thread_id = update.message.message_thread_id if update.message else None
+    await context.bot.send_message(
+        update.effective_chat.id, text, message_thread_id=message_thread_id
+    )
 
 
 async def _reply_to(message: Message, context: CallbackContext, question: str):
     """Replies to a specific question."""
     logger.debug(f"question: {question}")
-    await message.chat.send_action(action="typing")
+    await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
 
     try:
         asker = askers.create(question)
@@ -275,7 +287,7 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
         error_text = f"Failed to answer. Reason: {class_name}: {exc}"
         logger.error(error_text)
-        await message.reply_text(error_text)
+        await message.reply_text(error_text, message_thread_id=message.message_thread_id)
 
 
 async def _ask_question(

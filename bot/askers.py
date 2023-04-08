@@ -41,7 +41,9 @@ class TextAsker(Asker):
         """Replies with an answer from AI."""
         if len(answer) <= MessageLimit.MAX_TEXT_LENGTH:
             answer = markdown.to_html(answer)
-            await message.reply_text(answer, parse_mode=ParseMode.HTML)
+            await message.reply_text(
+                answer, parse_mode=ParseMode.HTML, message_thread_id=message.message_thread_id
+            )
             return
 
         doc = io.StringIO(answer)
@@ -53,6 +55,7 @@ class TextAsker(Asker):
             caption=caption,
             filename=f"{message.id}.md",
             document=doc,
+            message_thread_id=message.message_thread_id,
         )
 
 
@@ -75,7 +78,9 @@ class ImagineAsker(Asker):
 
     async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
-        await message.reply_photo(answer, caption=self.caption)
+        await message.reply_photo(
+            answer, caption=self.caption, message_thread_id=message.message_thread_id
+        )
 
     def _extract_size(self, question: str) -> str:
         match = self.size_re.search(question)

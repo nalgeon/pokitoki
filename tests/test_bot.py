@@ -97,7 +97,7 @@ class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_error(self):
         self.context.error = Exception("Something went wrong")
-        update = Update(update_id=11)
+        update = self._create_update(11, "Something went wrong")
         update._effective_chat = self.chat
         await bot.error_handler(update, self.context)
         self.assertEqual(self.bot.text, "⚠️ Something went wrong")
