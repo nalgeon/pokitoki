@@ -42,23 +42,20 @@ class TextAsker(Asker):
         """Replies with an answer from AI."""
         html_answer = markdown.to_html(answer)
         if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
-            await message.reply_text(
-                html_answer,
-                parse_mode=ParseMode.HTML,
-                reply_to_message_id=_get_reply_message_id(message),
-            )
+            await message.reply_text(html_answer, parse_mode=ParseMode.HTML)
             return
 
         doc = io.StringIO(answer)
         caption = (
             textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"
         )
+        reply_to_message_id = message.id if message.chat.type != Chat.PRIVATE else None
         await context.bot.send_document(
             chat_id=message.chat_id,
             caption=caption,
             filename=f"{message.id}.md",
             document=doc,
-            reply_to_message_id=_get_reply_message_id(message),
+            reply_to_message_id=reply_to_message_id,
         )
 
 
@@ -81,9 +78,7 @@ class ImagineAsker(Asker):
 
     async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
-        await message.reply_photo(
-            answer, caption=self.caption, reply_to_message_id=_get_reply_message_id(message)
-        )
+        await message.reply_photo(answer, caption=self.caption)
 
     def _extract_size(self, question: str) -> str:
         match = self.size_re.search(question)
@@ -102,10 +97,3 @@ def create(question: str) -> Asker:
     if question.startswith("/imagine"):
         return ImagineAsker()
     return TextAsker()
-
-
-def _get_reply_message_id(message: Message) -> Optional[int]:
-    """Returns message id for group chats and None for private chats."""
-    if not message or message.chat.type == Chat.PRIVATE:
-        return None
-    return message.id

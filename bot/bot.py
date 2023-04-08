@@ -200,14 +200,12 @@ async def imagine_handle(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "The `imagine` command is disabled. You can enable it in the `config.yml` file.",
             parse_mode=ParseMode.MARKDOWN,
-            reply_to_message_id=_get_reply_message_id(update.message),
         )
         return
     if not context.args:
         await update.message.reply_text(
             "Please describe an image. For example:\n<code>/imagine a lazy cat on a sunny day</code>",
             parse_mode=ParseMode.HTML,
-            reply_to_message_id=_get_reply_message_id(update.message),
         )
         return
     await message_handle(update, context)
@@ -218,9 +216,7 @@ async def retry_handle(update: Update, context: CallbackContext):
     user = UserData(context.user_data)
     last_message = user.messages.pop()
     if not last_message:
-        await update.message.reply_text(
-            "No message to retry 🤷‍♂️", reply_to_message_id=_get_reply_message_id(update.message)
-        )
+        await update.message.reply_text("No message to retry 🤷‍♂️")
         return
     await _reply_to(update.message, context, question=last_message.question)
 
@@ -282,7 +278,7 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
         error_text = f"Failed to answer. Reason: {class_name}: {exc}"
         logger.error(error_text)
-        await message.reply_text(error_text, reply_to_message_id=_get_reply_message_id(message))
+        await message.reply_text(error_text)
 
 
 async def _ask_question(
