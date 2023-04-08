@@ -39,10 +39,10 @@ class TextAsker(Asker):
 
     async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
-        if len(answer) <= MessageLimit.MAX_TEXT_LENGTH:
-            answer = markdown.to_html(answer)
+        html_answer = markdown.to_html(answer)
+        if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
             await message.reply_text(
-                answer, parse_mode=ParseMode.HTML, message_thread_id=message.message_thread_id
+                html_answer, parse_mode=ParseMode.HTML, message_thread_id=message.message_thread_id
             )
             return
 
