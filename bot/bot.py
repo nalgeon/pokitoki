@@ -131,7 +131,6 @@ async def start_handle(update: Update, context: CallbackContext):
 
     text = "Hi! I'm a humble AI-driven chat bot.\n\n"
     text += _generate_help_message()
-    text += "\nLet's go!"
     if not context.bot.can_read_all_group_messages:
         text += f"\n\n{PRIVACY_MESSAGE}"
     await update.message.reply_text(
@@ -310,7 +309,10 @@ async def _ask_question(
 def _generate_help_message() -> str:
     """Generates a help message, including a list of allowed commands."""
     commands = "\n".join(f"/{cmd} - {descr}" for cmd, descr in BOT_COMMANDS)
-    shortcuts = "\n".join(f"`!{shortcut}`" for shortcut in config.shortcuts)
+    if config.shortcuts:
+        shortcuts = "\n".join(f"`!{shortcut}`" for shortcut in config.shortcuts)
+    else:
+        shortcuts = "none"
     return HELP_MESSAGE.format(commands=commands, shortcuts=shortcuts)
 
 
