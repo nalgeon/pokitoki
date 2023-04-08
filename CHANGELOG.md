@@ -1,3 +1,9 @@
+### v125 - 2023-04-09
+
+-   OpenAI `prompt` and `params` configuration properties.
+-   Allow `/imagine` and `/reply` commands in groups.
+-   Concurrent updates from Telegram.
+
 ### v116 - 2023-04-08
 
 -   Relaxed image size parsing ([#13](https://github.com/nalgeon/pokitoki/issues/13)).
