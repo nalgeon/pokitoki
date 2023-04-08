@@ -3,6 +3,7 @@
 import logging
 import sys
 import time
+from typing import Optional
 
 from telegram import Chat, Message, Update
 from telegram.ext import (
@@ -144,10 +145,7 @@ async def help_handle(update: Update, context: CallbackContext):
     """Answers the `help` command."""
     text = _generate_help_message()
     await update.message.reply_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-        disable_web_page_preview=True,
-        message_thread_id=update.message.message_thread_id,
+        text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
     )
 
 
@@ -193,9 +191,7 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- shortcuts: {', '.join(config.shortcuts.keys())}"
         "</pre>"
     )
-    await update.message.reply_text(
-        text, parse_mode=ParseMode.HTML, message_thread_id=update.message.message_thread_id
-    )
+    await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
 
 async def imagine_handle(update: Update, context: CallbackContext):
@@ -204,14 +200,14 @@ async def imagine_handle(update: Update, context: CallbackContext):
         await update.message.reply_text(
             "The `imagine` command is disabled. You can enable it in the `config.yml` file.",
             parse_mode=ParseMode.MARKDOWN,
-            message_thread_id=update.message.message_thread_id,
+            reply_to_message_id=_get_reply_message_id(update.message),
         )
         return
     if not context.args:
         await update.message.reply_text(
             "Please describe an image. For example:\n<code>/imagine a lazy cat on a sunny day</code>",
             parse_mode=ParseMode.HTML,
-            message_thread_id=update.message.message_thread_id,
+            reply_to_message_id=_get_reply_message_id(update.message),
         )
         return
     await message_handle(update, context)
@@ -223,7 +219,7 @@ async def retry_handle(update: Update, context: CallbackContext):
     last_message = user.messages.pop()
     if not last_message:
         await update.message.reply_text(
-            "No message to retry 🤷‍♂️", message_thread_id=update.message.message_thread_id
+            "No message to retry 🤷‍♂️", reply_to_message_id=_get_reply_message_id(update.message)
         )
         return
     await _reply_to(update.message, context, question=last_message.question)
@@ -259,9 +255,8 @@ async def error_handler(update: Update, context: CallbackContext) -> None:
     error_text = f"{class_name}: {context.error}"
     logger.warning("Exception while handling an update %s: %s", update, error_text)
     text = f"⚠️ {context.error}"
-    message_thread_id = update.message.message_thread_id if update.message else None
     await context.bot.send_message(
-        update.effective_chat.id, text, message_thread_id=message_thread_id
+        update.effective_chat.id, text, reply_to_message_id=_get_reply_message_id(update.message)
     )
 
 
@@ -287,7 +282,7 @@ async def _reply_to(message: Message, context: CallbackContext, question: str):
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
         error_text = f"Failed to answer. Reason: {class_name}: {exc}"
         logger.error(error_text)
-        await message.reply_text(error_text, message_thread_id=message.message_thread_id)
+        await message.reply_text(error_text, reply_to_message_id=_get_reply_message_id(message))
 
 
 async def _ask_question(
@@ -328,6 +323,13 @@ def _generate_help_message() -> str:
     else:
         shortcuts = "none"
     return HELP_MESSAGE.format(commands=commands, shortcuts=shortcuts)
+
+
+def _get_reply_message_id(message: Message) -> Optional[int]:
+    """Returns message id for group chats and None for private chats."""
+    if not message or message.chat.type == Chat.PRIVATE:
+        return None
+    return message.id
 
 
 if __name__ == "__main__":

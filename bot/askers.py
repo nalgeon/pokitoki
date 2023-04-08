@@ -6,8 +6,9 @@ and responds to the user with answers provided by the AI.
 import io
 import re
 import textwrap
+from typing import Optional
 
-from telegram import Message
+from telegram import Chat, Message
 from telegram.constants import MessageLimit, ParseMode
 from telegram.ext import CallbackContext
 
@@ -42,7 +43,9 @@ class TextAsker(Asker):
         html_answer = markdown.to_html(answer)
         if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
             await message.reply_text(
-                html_answer, parse_mode=ParseMode.HTML, message_thread_id=message.message_thread_id
+                html_answer,
+                parse_mode=ParseMode.HTML,
+                reply_to_message_id=_get_reply_message_id(message),
             )
             return
 
@@ -55,7 +58,7 @@ class TextAsker(Asker):
             caption=caption,
             filename=f"{message.id}.md",
             document=doc,
-            message_thread_id=message.message_thread_id,
+            reply_to_message_id=_get_reply_message_id(message),
         )
 
 
@@ -79,7 +82,7 @@ class ImagineAsker(Asker):
     async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
         await message.reply_photo(
-            answer, caption=self.caption, message_thread_id=message.message_thread_id
+            answer, caption=self.caption, reply_to_message_id=_get_reply_message_id(message)
         )
 
     def _extract_size(self, question: str) -> str:
@@ -99,3 +102,10 @@ def create(question: str) -> Asker:
     if question.startswith("/imagine"):
         return ImagineAsker()
     return TextAsker()
+
+
+def _get_reply_message_id(message: Message) -> Optional[int]:
+    """Returns message id for group chats and None for private chats."""
+    if not message or message.chat.type == Chat.PRIVATE:
+        return None
+    return message.id
