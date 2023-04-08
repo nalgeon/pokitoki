@@ -63,6 +63,24 @@ class Telegram:
 class OpenAI:
     api_key: str
     model: str
+    prompt: str
+    params: dict
+
+    default_model = "gpt-3.5-turbo"
+    default_prompt = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
+    default_params = {
+        "temperature": 0.7,
+        "presence_penalty": 0,
+        "frequency_penalty": 0,
+        "max_tokens": 1000,
+    }
+
+    def __init__(self, api_key: str, model: str, prompt: str, params: dict) -> None:
+        self.api_key = api_key
+        self.model = model or self.default_model
+        self.prompt = prompt or self.default_prompt
+        self.params = self.default_params.copy()
+        self.params.update(params)
 
 
 filename = os.getenv("CONFIG", "config.yml")
@@ -81,7 +99,9 @@ telegram = Telegram(
 # OpenAI settings.
 openai = OpenAI(
     api_key=_config["openai"]["api_key"],
-    model=_config["openai"].get("model") or "gpt-3.5-turbo",
+    model=_config["openai"].get("model"),
+    prompt=_config["openai"].get("prompt"),
+    params=_config["openai"].get("params") or {},
 )
 
 # The maximum number of previous messages

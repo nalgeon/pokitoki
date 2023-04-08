@@ -14,7 +14,7 @@ class ModelTest(unittest.TestCase):
         self.assertEqual(len(messages), 6)
 
         self.assertEqual(messages[0]["role"], "system")
-        self.assertEqual(messages[0]["content"], chatgpt.BASE_PROMPT)
+        self.assertEqual(messages[0]["content"], config.openai.prompt)
 
         self.assertEqual(messages[1]["role"], "user")
         self.assertEqual(messages[1]["content"], "Hello")

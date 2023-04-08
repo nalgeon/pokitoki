@@ -10,8 +10,6 @@ logger = logging.getLogger(__name__)
 openai.api_key = config.openai.api_key
 encoding = tiktoken.get_encoding("cl100k_base")
 
-BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
-
 # OpenAI counts length in tokens, not charactes.
 # We also leave some tokens reserved for the output.
 MAX_LENGTHS = {
@@ -21,14 +19,6 @@ MAX_LENGTHS = {
     "gpt-4": int(7 * 1024),
 }
 
-# What sampling temperature to use, between 0 and 2.
-# Higher values like 0.8 will make the output more random,
-# while lower values like 0.2 will make it more focused and deterministic.
-SAMPLING_TEMPERATURE = 0.7
-
-# The maximum number of tokens to generate
-MAX_OUTPUT_TOKENS = 1000
-
 
 class Model:
     """OpenAI API wrapper."""
@@ -36,6 +26,8 @@ class Model:
     def __init__(self, name: str) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
+        self.prompt = config.openai.prompt
+        self.params = config.openai.params
         self.maxlen = MAX_LENGTHS[name]
 
     async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
@@ -45,8 +37,7 @@ class Model:
         resp = await openai.ChatCompletion.acreate(
             model=self.name,
             messages=messages,
-            temperature=SAMPLING_TEMPERATURE,
-            max_tokens=MAX_OUTPUT_TOKENS,
+            **self.params,
         )
         logger.debug(
             "prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
@@ -59,7 +50,7 @@ class Model:
 
     def _generate_messages(self, question: str, history: list[tuple[str, str]]) -> list[dict]:
         """Builds message history to provide context for the language model."""
-        messages = [{"role": "system", "content": BASE_PROMPT}]
+        messages = [{"role": "system", "content": self.prompt}]
         for prev_question, prev_answer in history:
             messages.append({"role": "user", "content": prev_question})
             messages.append({"role": "assistant", "content": prev_answer})
