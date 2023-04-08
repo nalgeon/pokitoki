@@ -109,7 +109,7 @@ openai = OpenAI(
 max_history_depth = _config.get("max_history_depth") or 3
 
 # Enable/disable image generation.
-imagine = _config.get("imagine") or True
+imagine = _config.get("imagine", True)
 
 # Where to store the chat context file.
 persistence_path = _config["persistence_path"]
