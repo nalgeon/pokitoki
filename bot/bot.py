@@ -199,7 +199,7 @@ async def imagine_handle(update: Update, context: CallbackContext):
     """Generates an image according to the description."""
     if not config.imagine:
         await update.message.reply_text(
-            "The `imagine` command is disabled. You can enable it in the `config.yml` file.",
+            f"The `imagine` command is disabled. You can enable it in the `{config.filename}` file.",
             parse_mode=ParseMode.MARKDOWN,
         )
         return
