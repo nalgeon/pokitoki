@@ -176,7 +176,7 @@ AI information:
 Use the `/config` command to change settings on the fly, without restarting the bot. You can change almost all config properties, such as:
 
 -   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
--   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.model.params`).
+-   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
 -   Enable or disable image generation (`imagine`).
 -   Add or change AI shortcuts (`shortcuts`).
 
