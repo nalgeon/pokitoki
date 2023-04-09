@@ -90,16 +90,16 @@ def main():
         user_filter = filters.User(username=config.telegram.usernames)
         chat_filter = filters.Chat(chat_id=config.telegram.chat_ids)
 
-    user_or_char_filter = user_filter | chat_filter
+    user_or_chat_filter = user_filter | chat_filter
     # these commands are only allowed for selected users
     application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("version", version_handle, filters=user_filter))
     # these commands are allowed for both selected users and group members
-    application.add_handler(CommandHandler("retry", retry_handle, filters=user_or_char_filter))
-    application.add_handler(CommandHandler("imagine", imagine_handle, filters=user_or_char_filter))
+    application.add_handler(CommandHandler("retry", retry_handle, filters=user_or_chat_filter))
+    application.add_handler(CommandHandler("imagine", imagine_handle, filters=user_or_chat_filter))
     # default action is to reply to a message
-    message_filter = filters.TEXT & ~filters.COMMAND & user_or_char_filter
+    message_filter = filters.TEXT & ~filters.COMMAND & user_or_chat_filter
     application.add_handler(MessageHandler(message_filter, message_handle))
     application.add_error_handler(error_handler)
 
