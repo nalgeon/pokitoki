@@ -1,6 +1,10 @@
+### v129 - 2023-04-10
+
+-   On-the-fly [configuration](https://github.com/nalgeon/pokitoki#configuration) ([#4](https://github.com/nalgeon/pokitoki/issues/4)).
+
 ### v125 - 2023-04-09
 
--   OpenAI `prompt` and `params` configuration properties.
+-   OpenAI `prompt` and `params` config properties.
 -   Allow `/imagine` and `/reply` commands in groups.
 -   Concurrent updates from Telegram.
 

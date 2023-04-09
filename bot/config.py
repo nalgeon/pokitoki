@@ -88,6 +88,9 @@ class Config:
 
     # Config schema version. Increments for backward-incompatible changes.
     schema_version = 2
+    # Bot version.
+    version = 129
+
     # Readonly properties.
     readonly = [
         "schema_version",
@@ -105,8 +108,6 @@ class Config:
     def __init__(self, filename: str, src: dict) -> None:
         # Config filename.
         self.filename = filename
-        # Bot version.
-        self.version = 125
 
         # Telegram settings.
         self.telegram = Telegram(
