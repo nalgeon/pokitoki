@@ -6,7 +6,7 @@ from telegram.ext import CallbackContext
 
 from bot import askers
 from bot import bot
-from bot import config
+from bot.config import config
 from bot import models
 from tests.mocks import FakeGPT, FakeApplication, FakeBot
 

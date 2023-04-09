@@ -5,7 +5,7 @@ from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 
 from bot import questions
-from bot import config
+from bot.config import config
 from tests.mocks import FakeApplication, FakeBot
 
 

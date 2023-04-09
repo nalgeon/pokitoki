@@ -9,6 +9,9 @@ Notable features:
 -   Access external links (articles, code, data).
 -   Shortcuts (custom AI commands).
 -   Image generation.
+-   On-the-fly configuration.
+
+Read on for a detailed feature description or jump to [setup](#setup).
 
 > **Free hosting**. I'd like to test PokiToki on larger groups. So if you have an active group with 500+ members and want to try the bot, I'll host it for you for free. You'll still have to sign up with OpenAI and pay its bills though.
 >
@@ -155,8 +158,9 @@ Chat information:
 Bot information:
 - id: 5930739038
 - name: @pokitokibot
-- version: 99
+- version: 129
 - usernames: 6 users
+- admins: 1 users
 - chat IDs: []
 - access to messages: True
 
@@ -164,8 +168,42 @@ AI information:
 - model: gpt-3.5-turbo
 - history depth: 3
 - imagine: True
-- shortcuts: ['bugfix', 'proofread', 'summarize', 'translate']
+- shortcuts: bugfix, proofread, summarize, translate
 ```
+
+## Configuration
+
+Use the `/config` command to change settings on the fly, without restarting the bot. You can change almost all config properties, such as:
+
+-   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
+-   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.model.params`).
+-   Enable or disable image generation (`imagine`).
+-   Add or change AI shortcuts (`shortcuts`).
+
+To view a specific config property, put its name after `/config`:
+
+```
+/config telegram.usernames
+/config openai.prompt
+/config imagine
+```
+
+To change a specific config property, put its name and value after `/config`:
+
+```
+/config telegram.usernames ["alice", "bob", "cindy"]
+/config openai.prompt "You are an evil AI bot"
+/config imagine off
+```
+
+The following settings cannot be changed with the `/config` command. To change them, edit `config.yml` and restart the bot:
+
+```
+max_history_depth
+persistence_path
+```
+
+The `/config` command is only available to admins - users listed in the `telegram.admins` property.
 
 ## Setup
 

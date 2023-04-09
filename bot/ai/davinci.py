@@ -2,7 +2,7 @@
 
 import re
 import openai
-from bot import config
+from bot.config import config
 
 openai.api_key = config.openai.api_key
 

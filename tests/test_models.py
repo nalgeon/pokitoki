@@ -1,7 +1,7 @@
 from collections import deque
 import unittest
 
-from bot import config
+from bot.config import config
 from bot.models import UserMessage, UserMessages
 
 

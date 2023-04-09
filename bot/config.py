@@ -1,11 +1,10 @@
 """Bot configuration parameters."""
 
 import os
+from typing import Any
 import yaml
+import dataclasses
 from dataclasses import dataclass
-
-# Config schema version. Increments for backward-incompatible changes.
-SCHEMA_VERSION = 2
 
 
 def load(filename) -> dict:
@@ -37,12 +36,12 @@ def _migrate_v1(old: dict) -> dict:
         "openai": None,
         "max_history_depth": old.get("max_history_depth"),
         "imagine": old.get("imagine"),
-        "persistence_path": old["persistence_path"],
+        "persistence_path": old.get("persistence_path"),
         "shortcuts": old.get("shortcuts"),
     }
     config["telegram"] = {
         "token": old["telegram_token"],
-        "usernames": old["telegram_usernames"],
+        "usernames": old.get("telegram_usernames"),
         "chat_ids": old.get("telegram_chat_ids"),
     }
     config["openai"] = {
@@ -55,7 +54,8 @@ def _migrate_v1(old: dict) -> dict:
 @dataclass
 class Telegram:
     token: str
-    usernames: set
+    usernames: list
+    admins: list
     chat_ids: list
 
 
@@ -83,37 +83,133 @@ class OpenAI:
         self.params.update(params)
 
 
+class Config:
+    """Config properties."""
+
+    # Config schema version. Increments for backward-incompatible changes.
+    schema_version = 2
+    # Readonly properties.
+    readonly = [
+        "schema_version",
+        "max_history_depth",
+        "persistence_path",
+    ]
+    # Editable properties.
+    editable = [
+        "telegram",
+        "openai",
+        "imagine",
+        "shortcuts",
+    ]
+
+    def __init__(self, filename: str, src: dict) -> None:
+        # Config filename.
+        self.filename = filename
+        # Bot version.
+        self.version = 125
+
+        # Telegram settings.
+        self.telegram = Telegram(
+            token=src["telegram"]["token"],
+            usernames=src["telegram"].get("usernames") or [],
+            admins=src["telegram"].get("admins") or [],
+            chat_ids=src["telegram"].get("chat_ids") or [],
+        )
+
+        # OpenAI settings.
+        self.openai = OpenAI(
+            api_key=src["openai"]["api_key"],
+            model=src["openai"].get("model"),
+            prompt=src["openai"].get("prompt"),
+            params=src["openai"].get("params") or {},
+        )
+
+        # The maximum number of previous messages
+        # the bot will remember when talking to a user.
+        self.max_history_depth = src.get("max_history_depth") or 3
+
+        # Enable/disable image generation.
+        imagine = src.get("imagine", True)
+        self.imagine = True if imagine is None else imagine
+
+        # Where to store the chat context file.
+        self.persistence_path = src.get("persistence_path") or "./data/persistence.pkl"
+
+        # Custom AI commands (additional prompts).
+        self.shortcuts = src.get("shortcuts") or {}
+
+    def get_value(self, property: str) -> Any:
+        """Returns a config property value."""
+        names = property.split(".")
+        if names[0] not in self.readonly and names[0] not in self.editable:
+            raise ValueError(f"No such property: {property}")
+
+        obj = self
+        for name in names[:-1]:
+            if not hasattr(obj, name):
+                raise ValueError(f"No such property: {property}")
+            obj = getattr(obj, name)
+
+        name = names[-1]
+        if isinstance(obj, dict):
+            if name not in obj:
+                raise ValueError(f"No such property: {property}")
+            return obj[name]
+
+        if isinstance(obj, object):
+            if not hasattr(obj, name):
+                raise ValueError(f"No such property: {property}")
+            val = getattr(obj, name)
+            if dataclasses.is_dataclass(val):
+                return dataclasses.asdict(val)
+            return val
+
+        raise ValueError(f"No such property: {property}")
+
+    def set_value(self, property: str, value: str) -> None:
+        """Changes a config property value."""
+        val = yaml.safe_load(value)
+        if not isinstance(val, (list, str, int, float, bool)):
+            raise ValueError("Cannot set composite value")
+
+        names = property.split(".")
+        if names[0] not in self.editable:
+            raise ValueError(f"Property {property} is not editable")
+
+        obj = self
+        for name in names[:-1]:
+            if not hasattr(obj, name):
+                raise ValueError(f"No such property: {property}")
+            obj = getattr(obj, name, val)
+
+        name = names[-1]
+        if isinstance(obj, dict):
+            obj[name] = val
+            return
+
+        if isinstance(obj, object):
+            if not hasattr(obj, name):
+                raise ValueError(f"No such property: {property}")
+            setattr(obj, name, val)
+            return
+
+        raise ValueError(f"No such property: {property}")
+
+    def save(self) -> None:
+        """Saves the config to disk."""
+        data = {
+            "schema_version": self.schema_version,
+            "telegram": dataclasses.asdict(self.telegram),
+            "openai": dataclasses.asdict(self.openai),
+            "max_history_depth": self.max_history_depth,
+            "imagine": self.imagine,
+            "persistence_path": self.persistence_path,
+            "shortcuts": self.shortcuts,
+        }
+        with open(self.filename, "w") as file:
+            yaml.safe_dump(data, file, indent=4, allow_unicode=True)
+
+
 filename = os.getenv("CONFIG", "config.yml")
 _config = load(filename)
-
-# Bot version.
-version = 125
-
-# Telegram settings.
-telegram = Telegram(
-    token=_config["telegram"]["token"],
-    usernames=set(_config["telegram"]["usernames"]),
-    chat_ids=_config["telegram"].get("chat_ids") or [],
-)
-
-# OpenAI settings.
-openai = OpenAI(
-    api_key=_config["openai"]["api_key"],
-    model=_config["openai"].get("model"),
-    prompt=_config["openai"].get("prompt"),
-    params=_config["openai"].get("params") or {},
-)
-
-# The maximum number of previous messages
-# the bot will remember when talking to a user.
-max_history_depth = _config.get("max_history_depth") or 3
-
-# Enable/disable image generation.
-imagine = _config.get("imagine", True)
-imagine = True if imagine is None else imagine
-
-# Where to store the chat context file.
-persistence_path = _config["persistence_path"]
-
-# Custom AI commands (additional prompts)
-shortcuts = _config.get("shortcuts") or {}
+config = Config(filename, _config)

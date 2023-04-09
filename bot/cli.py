@@ -10,7 +10,7 @@ import os
 import sys
 import textwrap
 
-from bot import config
+from bot.config import config
 from bot.fetcher import Fetcher
 import bot.ai.chatgpt
 import bot.ai.custom

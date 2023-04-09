@@ -12,8 +12,12 @@ telegram:
     # If empty, the bot will be available to anyone.
     usernames: []
 
+    # The list of Telegram usernames allowed to change bot settings.
+    # If empty, then no one is allowed to change the settings.
+    admins: []
+
     # The list of Telegram group ids, whose members are allowed to chat with the bot.
-    # If empty, the bot will only be available to `telegram_usernames`.
+    # If empty, the bot will only be available to `telegram.usernames`.
     chat_ids: []
 
 # OpenAI settings.

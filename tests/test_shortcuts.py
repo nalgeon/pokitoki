@@ -1,6 +1,6 @@
 import unittest
 
-from bot import config
+from bot.config import config
 from bot import shortcuts
 
 

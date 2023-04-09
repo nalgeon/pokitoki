@@ -2,7 +2,7 @@
 
 from collections import deque
 from typing import Mapping, NamedTuple, Optional
-from bot import config
+from bot.config import config
 
 
 class UserMessage(NamedTuple):

@@ -1,7 +1,7 @@
 """DALL-E model from OpenAI."""
 
 import openai
-from bot import config
+from bot.config import config
 
 openai.api_key = config.openai.api_key
 

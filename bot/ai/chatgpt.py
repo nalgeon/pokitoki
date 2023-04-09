@@ -3,7 +3,7 @@
 import logging
 import openai
 import tiktoken
-from bot import config
+from bot.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,6 @@ class Model:
     def __init__(self, name: str) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
-        self.prompt = config.openai.prompt
-        self.params = config.openai.params
         self.maxlen = MAX_LENGTHS[name]
 
     async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
@@ -37,7 +35,7 @@ class Model:
         resp = await openai.ChatCompletion.acreate(
             model=self.name,
             messages=messages,
-            **self.params,
+            **config.openai.params,
         )
         logger.debug(
             "prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
@@ -50,7 +48,7 @@ class Model:
 
     def _generate_messages(self, question: str, history: list[tuple[str, str]]) -> list[dict]:
         """Builds message history to provide context for the language model."""
-        messages = [{"role": "system", "content": self.prompt}]
+        messages = [{"role": "system", "content": config.openai.prompt}]
         for prev_question, prev_answer in history:
             messages.append({"role": "user", "content": prev_question})
             messages.append({"role": "assistant", "content": prev_answer})

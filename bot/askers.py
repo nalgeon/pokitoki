@@ -13,7 +13,7 @@ from telegram.constants import MessageLimit, ParseMode
 from telegram.ext import CallbackContext
 
 from bot import ai
-from bot import config
+from bot.config import config
 from bot import markdown
 
 

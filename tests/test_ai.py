@@ -1,5 +1,5 @@
 import unittest
-from bot import config
+from bot.config import config
 from bot.ai import chatgpt
 from bot.models import UserMessage
 

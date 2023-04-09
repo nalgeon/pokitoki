@@ -17,7 +17,7 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
-from bot import config
+from bot.config import config
 from bot import questions
 from bot import askers
 from bot.fetcher import Fetcher
@@ -45,10 +45,11 @@ PRIVACY_MESSAGE = (
 )
 
 BOT_COMMANDS = [
-    ("help", "show help"),
-    ("imagine", "generate described image"),
     ("retry", "retry the last question"),
+    ("imagine", "generate described image"),
     ("version", "show debug information"),
+    ("config", "view or edit the config"),
+    ("help", "show help"),
 ]
 
 logging.basicConfig(
@@ -83,18 +84,25 @@ def main():
     )
 
     # allow bot only for the selected users
-    if len(config.telegram.usernames) == 0:
-        user_filter = filters.ALL
-        chat_filter = filters.ALL
-    else:
+    if config.telegram.usernames:
         user_filter = filters.User(username=config.telegram.usernames)
         chat_filter = filters.Chat(chat_id=config.telegram.chat_ids)
+    else:
+        user_filter = filters.ALL
+        chat_filter = filters.ALL
 
     user_or_chat_filter = user_filter | chat_filter
+
+    if config.telegram.admins:
+        admin_filter = filters.User(username=config.telegram.admins)
+    else:
+        admin_filter = filters.User(username=[])
+
     # these commands are only allowed for selected users
     application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("version", version_handle, filters=user_filter))
+    application.add_handler(CommandHandler("config", config_handle, filters=admin_filter))
     # these commands are allowed for both selected users and group members
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_or_chat_filter))
     application.add_handler(CommandHandler("imagine", imagine_handle, filters=user_or_chat_filter))
@@ -113,6 +121,7 @@ async def post_init(application: Application) -> None:
     logging.info(f"config: file={config.filename}, version={config.version}")
     logging.info(f"allowed users: {config.telegram.usernames}")
     logging.info(f"allowed chats: {config.telegram.chat_ids}")
+    logging.info(f"admins: {config.telegram.admins}")
     logging.info(f"model name: {config.openai.model}")
     logging.info(f"bot: username={bot.username}, id={bot.id}")
     await bot.set_my_commands(BOT_COMMANDS)
@@ -166,6 +175,7 @@ async def version_handle(update: Update, context: CallbackContext):
     usernames = (
         "all" if not config.telegram.usernames else f"{len(config.telegram.usernames)} users"
     )
+    admins = "none" if not config.telegram.admins else f"{len(config.telegram.admins)} users"
 
     # bot information
     text += (
@@ -175,6 +185,7 @@ async def version_handle(update: Update, context: CallbackContext):
         f"- name: {bot.name}\n"
         f"- version: {config.version}\n"
         f"- usernames: {usernames}\n"
+        f"- admins: {admins}\n"
         f"- chat IDs: {config.telegram.chat_ids}\n"
         f"- access to messages: {bot.can_read_all_group_messages}"
         "</pre>"
@@ -193,6 +204,38 @@ async def version_handle(update: Update, context: CallbackContext):
         "</pre>"
     )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
+
+
+async def config_handle(update: Update, context: CallbackContext):
+    """Displays or changes config properties."""
+    message = update.message or update.edited_message
+    parts = message.text.split()
+
+    if len(parts) == 1:
+        # /config without arguments
+        await message.reply_text(
+            "Syntax:\n<code>/config property [value]</code>\n\n"
+            "E.g. to view the property value:\n<code>/config openai.prompt</code>\n\n"
+            "E.g. to change the property value:\n<code>/config openai.prompt You are an AI assistant</code>",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
+    if len(parts) == 2:
+        # view config property
+        # /config {property}
+        property = parts[1]
+        value = config.get_value(property)
+        await message.reply_text(f"`{property}\n{value}`", parse_mode=ParseMode.MARKDOWN)
+        return
+
+    # change config property
+    # /config {property} {value}
+    property = parts[1]
+    value = " ".join(parts[2:])
+    config.set_value(property, value)
+    config.save()
+    await message.reply_text(f"✓ Changed `{property}` value.", parse_mode=ParseMode.MARKDOWN)
 
 
 async def imagine_handle(update: Update, context: CallbackContext):
