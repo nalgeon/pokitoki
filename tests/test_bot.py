@@ -201,10 +201,10 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase):
         self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
-        self.filters = Filters()
-        self.command = commands.Config(self.filters)
         config.telegram.usernames = ["alice"]
         config.telegram.admins = ["alice"]
+        self.filters = Filters()
+        self.command = commands.Config(self.filters)
 
     async def test_help(self):
         update = self._create_update(11, "/config")
