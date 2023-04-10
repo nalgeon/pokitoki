@@ -251,27 +251,27 @@ async def config_handle(update: Update, context: CallbackContext):
         await message.reply_text(text, parse_mode=ParseMode.HTML)
         return
 
+    property = parts[1]
+    value = config.get_value(property)
+    value = value if value is not None else "(empty)"
+
     if len(parts) == 2:
         # view config property (`/config {property}`)
-        property = parts[1]
-        value = config.get_value(property) or "(empty)"
         await message.reply_text(f"`{value}`", parse_mode=ParseMode.MARKDOWN)
         return
 
-    # change config property (`/config {property} {value}`)
-    property = parts[1]
-    old_value = config.get_value(property) or "(empty)"
-    value = " ".join(parts[2:])
-    has_changed, is_immediate = config.set_value(property, value)
+    # change config property (`/config {property} {new_value}`)
+    new_value = " ".join(parts[2:])
+    has_changed, is_immediate = config.set_value(property, new_value)
 
     if not has_changed:
-        text = f"✗ The `{property}` property already equals to `{value}`"
+        text = f"✗ The `{property}` property already equals to `{new_value}`"
         await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
         return
 
     config.save()
     Filters.reload()
-    text = f"✓ Changed the `{property}` property: `{old_value}` → `{value}`"
+    text = f"✓ Changed the `{property}` property: `{value}` → `{new_value}`"
     if not is_immediate:
         text += "\n❗️Restart the bot for changes to take effect."
     await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)

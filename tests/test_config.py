@@ -171,6 +171,10 @@ class SetValueTest(unittest.TestCase):
         value = self.config.get_value("shortcuts.bugfix")
         self.assertEqual(value, "Fix bugs in the code")
 
+    def test_invalid_value(self):
+        with self.assertRaises(ValueError):
+            self.config.set_value("imagine", '"on')
+
     def test_has_changed(self):
         has_changed, _ = self.config.set_value("imagine", "on")
         self.assertTrue(has_changed)

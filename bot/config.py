@@ -183,8 +183,11 @@ class Config:
           - `has_changed` = True if the value has actually changed, False otherwise.
           - `is_immediate` = True if the change takes effect immediately, False otherwise.
         """
+        try:
+            val = yaml.safe_load(value)
+        except Exception:
+            raise ValueError(f"Invalid value: {value}")
 
-        val = yaml.safe_load(value)
         old_val = self.get_value(property)
         if val == old_val:
             return False, False
