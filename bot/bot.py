@@ -211,6 +211,11 @@ async def version_handle(update: Update, context: CallbackContext):
 async def config_handle(update: Update, context: CallbackContext):
     """Displays or changes config properties."""
     message = update.message or update.edited_message
+
+    if message.chat.type != Chat.PRIVATE:
+        await message.reply_text("Admin commands are only available in private chats.")
+        return
+
     parts = message.text.split()
     if len(parts) == 1:
         # /config without arguments
