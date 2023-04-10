@@ -6,7 +6,7 @@ on:
         paths:
             - .github/**
             - bot/**
-            - test/**
+            - tests/**
     pull_request:
         branches: [main]
     workflow_dispatch:
