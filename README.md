@@ -259,7 +259,7 @@ Use [Black](https://black.readthedocs.io/en/stable/) for code formatting and [Co
 
 ## Changelog
 
-For feature history, see the [changelog](CHANGELOG.md).
+For feature history, see [releases](https://github.com/nalgeon/pokitoki/releases).
 
 ## Credits
 
