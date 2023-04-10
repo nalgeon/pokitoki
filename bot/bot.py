@@ -28,11 +28,9 @@ HELP_MESSAGE = """Send me a question, and I will do my best to answer it. Please
 I don't remember chat context by default. To ask follow-up questions, reply to my messages or start your questions with a '+' sign.
 
 Built-in commands:
-
-{commands}
+{commands}{admin_commands}
 
 AI shortcuts:
-
 {shortcuts}
 
 [More features →](https://github.com/nalgeon/pokitoki#readme)
@@ -48,9 +46,12 @@ BOT_COMMANDS = [
     ("retry", "retry the last question"),
     ("imagine", "generate described image"),
     ("version", "show debug information"),
-    ("config", "view or edit the config"),
     ("help", "show help"),
 ]
+
+ADMIN_COMMANDS = {
+    "config": "view or edit the config",
+}
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -102,10 +103,11 @@ def main():
     application.add_handler(CommandHandler("start", start_handle))
     application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
     application.add_handler(CommandHandler("version", version_handle, filters=user_filter))
-    application.add_handler(CommandHandler("config", config_handle, filters=admin_filter))
     # these commands are allowed for both selected users and group members
     application.add_handler(CommandHandler("retry", retry_handle, filters=user_or_chat_filter))
     application.add_handler(CommandHandler("imagine", imagine_handle, filters=user_or_chat_filter))
+    # admin-only commands
+    application.add_handler(CommandHandler("config", config_handle, filters=admin_filter))
     # default action is to reply to a message
     message_filter = filters.TEXT & ~filters.COMMAND & user_or_chat_filter
     application.add_handler(MessageHandler(message_filter, message_handle))
@@ -143,7 +145,7 @@ async def start_handle(update: Update, context: CallbackContext):
         return
 
     text = "Hi! I'm a humble AI-driven chat bot.\n\n"
-    text += _generate_help_message()
+    text += _generate_help_message(update.effective_user.username)
     if not context.bot.can_read_all_group_messages:
         text += f"\n\n{PRIVACY_MESSAGE}"
     await update.message.reply_text(
@@ -153,7 +155,7 @@ async def start_handle(update: Update, context: CallbackContext):
 
 async def help_handle(update: Update, context: CallbackContext):
     """Answers the `help` command."""
-    text = _generate_help_message()
+    text = _generate_help_message(update.effective_user.username)
     await update.message.reply_text(
         text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
     )
@@ -210,7 +212,6 @@ async def config_handle(update: Update, context: CallbackContext):
     """Displays or changes config properties."""
     message = update.message or update.edited_message
     parts = message.text.split()
-
     if len(parts) == 1:
         # /config without arguments
         await message.reply_text(
@@ -358,14 +359,27 @@ async def _ask_question(
     return answer
 
 
-def _generate_help_message() -> str:
+def _generate_help_message(username) -> str:
     """Generates a help message, including a list of allowed commands."""
+    # user commands
     commands = "\n".join(f"/{cmd} - {descr}" for cmd, descr in BOT_COMMANDS)
+
+    # admin commands
+    admin_commands = ""
+    if username in config.telegram.admins:
+        admin_commands += "\n\nAdmin-only commads:\n"
+        admin_commands += f'/config - {ADMIN_COMMANDS["config"]}\n'
+    admin_commands = admin_commands.rstrip()
+
+    # shortcuts
     if config.shortcuts:
         shortcuts = "\n".join(f"`!{shortcut}`" for shortcut in config.shortcuts)
     else:
         shortcuts = "none"
-    return HELP_MESSAGE.format(commands=commands, shortcuts=shortcuts)
+
+    return HELP_MESSAGE.format(
+        commands=commands, admin_commands=admin_commands, shortcuts=shortcuts
+    )
 
 
 def _get_reply_message_id(message: Message) -> Optional[int]:
