@@ -179,10 +179,18 @@ class SetValueTest(unittest.TestCase):
         has_changed, _ = self.config.set_value("imagine", "off")
         self.assertFalse(has_changed)
 
-    def test_is_immediate(self):
+    def test_is_immediate_1(self):
         _, is_immediate = self.config.set_value("imagine", "on")
         self.assertTrue(is_immediate)
 
-    def test_is_delayed(self):
+    def test_is_immediate_2(self):
+        _, is_immediate = self.config.set_value("telegram.usernames", '["alice", "bob"]')
+        self.assertTrue(is_immediate)
+
+    def test_is_delayed_1(self):
         _, is_immediate = self.config.set_value("max_history_depth", "10")
+        self.assertFalse(is_immediate)
+
+    def test_is_delayed_2(self):
+        _, is_immediate = self.config.set_value("telegram.token", "tg-5678")
         self.assertFalse(is_immediate)

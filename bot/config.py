@@ -106,6 +106,8 @@ class Config:
     ]
     # Changes made to these properties take effect after a restart.
     delayed = [
+        "telegram.token",
+        "openai.api_key",
         "max_history_depth",
         "persistence_path",
     ]
