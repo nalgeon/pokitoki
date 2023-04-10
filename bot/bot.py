@@ -228,20 +228,22 @@ async def config_handle(update: Update, context: CallbackContext):
         return
 
     if len(parts) == 2:
-        # view config property
-        # /config {property}
+        # view config property (`/config {property}`)
         property = parts[1]
-        value = config.get_value(property)
-        await message.reply_text(f"`{property}\n{value}`", parse_mode=ParseMode.MARKDOWN)
+        value = config.get_value(property) or "(empty)"
+        await message.reply_text(f"`{value}`", parse_mode=ParseMode.MARKDOWN)
         return
 
-    # change config property
-    # /config {property} {value}
+    # change config property (`/config {property} {value}`)
     property = parts[1]
+    old_value = config.get_value(property) or "(empty)"
     value = " ".join(parts[2:])
     config.set_value(property, value)
     config.save()
-    await message.reply_text(f"✓ Changed `{property}` value.", parse_mode=ParseMode.MARKDOWN)
+    await message.reply_text(
+        f"✓ Changed the `{property}` property:\n`{old_value}`\n→\n`{value}`",
+        parse_mode=ParseMode.MARKDOWN,
+    )
 
 
 async def imagine_handle(update: Update, context: CallbackContext):
