@@ -93,8 +93,8 @@ class GetValueTest(unittest.TestCase):
             self.config.get_value("telegram.godmode")
 
     def test_dict_value_does_not_exist(self):
-        with self.assertRaises(ValueError):
-            self.config.get_value("shortcuts.bugfix")
+        value = self.config.get_value("shortcuts.bugfix")
+        self.assertIsNone(value)
 
 
 class SetValueTest(unittest.TestCase):

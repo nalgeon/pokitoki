@@ -153,9 +153,7 @@ class Config:
 
         name = names[-1]
         if isinstance(obj, dict):
-            if name not in obj:
-                raise ValueError(f"No such property: {property}")
-            return obj[name]
+            return obj.get(name)
 
         if isinstance(obj, object):
             if not hasattr(obj, name):
@@ -165,13 +163,21 @@ class Config:
                 return dataclasses.asdict(val)
             return val
 
-        raise ValueError(f"No such property: {property}")
+        raise ValueError(f"Failed to get property: {property}")
 
-    def set_value(self, property: str, value: str) -> None:
-        """Changes a config property value."""
+    def set_value(self, property: str, value: str) -> bool:
+        """
+        Changes a config property value.
+        Returns True if the value has actually changed, False otherwise.
+        """
+
         val = yaml.safe_load(value)
+        old_val = self.get_value(property)
+        if val == old_val:
+            return False
+
         if not isinstance(val, (list, str, int, float, bool)):
-            raise ValueError("Cannot set composite value")
+            raise ValueError(f"Cannot set composite value for property: {property}")
 
         names = property.split(".")
         if names[0] not in self.editable:
@@ -179,22 +185,20 @@ class Config:
 
         obj = self
         for name in names[:-1]:
-            if not hasattr(obj, name):
-                raise ValueError(f"No such property: {property}")
             obj = getattr(obj, name, val)
 
         name = names[-1]
         if isinstance(obj, dict):
             obj[name] = val
-            return
+            return True
 
         if isinstance(obj, object):
             if not hasattr(obj, name):
                 raise ValueError(f"No such property: {property}")
             setattr(obj, name, val)
-            return
+            return True
 
-        raise ValueError(f"No such property: {property}")
+        raise ValueError(f"Failed to set property: {property}")
 
     def save(self) -> None:
         """Saves the config to disk."""

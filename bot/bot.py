@@ -238,7 +238,15 @@ async def config_handle(update: Update, context: CallbackContext):
     property = parts[1]
     old_value = config.get_value(property) or "(empty)"
     value = " ".join(parts[2:])
-    config.set_value(property, value)
+    has_changed = config.set_value(property, value)
+
+    if not has_changed:
+        await message.reply_text(
+            f"✗ The `{property}` property already equals to `{value}`",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        return
+
     config.save()
     await message.reply_text(
         f"✓ Changed the `{property}` property:\n`{old_value}`\n→\n`{value}`",
