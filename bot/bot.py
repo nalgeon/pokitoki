@@ -95,7 +95,7 @@ def main():
     user_or_chat_filter = user_filter | chat_filter
 
     if config.telegram.admins:
-        admin_filter = filters.User(username=config.telegram.admins)
+        admin_filter = filters.User(username=config.telegram.admins) & filters.ChatType.PRIVATE
     else:
         admin_filter = filters.User(username=[])
 
@@ -212,19 +212,15 @@ async def config_handle(update: Update, context: CallbackContext):
     """Displays or changes config properties."""
     message = update.message or update.edited_message
 
-    if message.chat.type != Chat.PRIVATE:
-        await message.reply_text("Admin commands are only available in private chats.")
-        return
-
     parts = message.text.split()
     if len(parts) == 1:
         # /config without arguments
-        await message.reply_text(
+        text = (
             "Syntax:\n<code>/config property [value]</code>\n\n"
             "E.g. to view the property value:\n<code>/config openai.prompt</code>\n\n"
-            "E.g. to change the property value:\n<code>/config openai.prompt You are an AI assistant</code>",
-            parse_mode=ParseMode.HTML,
+            "E.g. to change the property value:\n<code>/config openai.prompt You are an AI assistant</code>"
         )
+        await message.reply_text(text, parse_mode=ParseMode.HTML)
         return
 
     if len(parts) == 2:
@@ -241,20 +237,15 @@ async def config_handle(update: Update, context: CallbackContext):
     has_changed, is_immediate = config.set_value(property, value)
 
     if not has_changed:
-        await message.reply_text(
-            f"✗ The `{property}` property already equals to `{value}`",
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        text = f"✗ The `{property}` property already equals to `{value}`"
+        await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
         return
 
     config.save()
     text = f"✓ Changed the `{property}` property: `{old_value}` → `{value}`"
     if not is_immediate:
         text += "\n❗️Restart the bot for changes to take effect."
-    await message.reply_text(
-        text,
-        parse_mode=ParseMode.MARKDOWN,
-    )
+    await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
 
 
 async def imagine_handle(update: Update, context: CallbackContext):

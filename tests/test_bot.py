@@ -151,3 +151,64 @@ class GroupChatTest(unittest.IsolatedAsyncioTestCase):
         )
         message.set_bot(self.bot)
         return Update(update_id=update_id, message=message)
+
+
+class ConfigTest(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.ai = FakeGPT()
+        askers.TextAsker.model = self.ai
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.PRIVATE)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.application.user_data[1] = {}
+        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
+        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        config.telegram.usernames = ["alice"]
+        config.telegram.admins = ["alice"]
+
+    async def test_help(self):
+        update = self._create_update(11, "/config")
+        await bot.config_handle(update, self.context)
+        self.assertTrue(self.bot.text.startswith("Syntax:"))
+
+    async def test_view(self):
+        config.openai.model = "gpt-3.5-turbo"
+        update = self._create_update(11, "/config openai.model")
+        await bot.config_handle(update, self.context)
+        self.assertEqual(self.bot.text, "`gpt-3.5-turbo`")
+
+    async def test_change(self):
+        config.save = lambda: None
+        config.openai.model = "gpt-3.5-turbo"
+        update = self._create_update(11, "/config openai.model gpt-4")
+        await bot.config_handle(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Changed the `openai.model` property"))
+
+    async def test_not_changed(self):
+        config.save = lambda: None
+        config.openai.model = "gpt-3.5-turbo"
+        update = self._create_update(11, "/config openai.model gpt-3.5-turbo")
+        await bot.config_handle(update, self.context)
+        self.assertEqual(
+            self.bot.text, "✗ The `openai.model` property already equals to `gpt-3.5-turbo`"
+        )
+
+    async def test_delayed(self):
+        config.save = lambda: None
+        config.max_history_depth = 3
+        update = self._create_update(11, "/config max_history_depth 5")
+        await bot.config_handle(update, self.context)
+        self.assertTrue("Restart the bot" in self.bot.text)
+
+    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
+        message = Message(
+            message_id=update_id,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text=text,
+            from_user=self.user,
+            **kwargs,
+        )
+        message.set_bot(self.bot)
+        return Update(update_id=update_id, message=message)
