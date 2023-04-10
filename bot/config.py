@@ -89,7 +89,7 @@ class Config:
     # Config schema version. Increments for backward-incompatible changes.
     schema_version = 2
     # Bot version.
-    version = 129
+    version = 139
 
     # Readonly properties.
     readonly = [

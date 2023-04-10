@@ -1,3 +1,8 @@
+### v130 - 2023-04-10
+
+-   Allow changing `telegram.usernames` and `telegram.chat_ids` on the fly.
+-   Allow `/config` only for admins in private chats.
+
 ### v129 - 2023-04-10
 
 -   On-the-fly [configuration](https://github.com/nalgeon/pokitoki#configuration) ([#4](https://github.com/nalgeon/pokitoki/issues/4)).
