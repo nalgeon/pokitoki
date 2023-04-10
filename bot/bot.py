@@ -238,7 +238,7 @@ async def config_handle(update: Update, context: CallbackContext):
     property = parts[1]
     old_value = config.get_value(property) or "(empty)"
     value = " ".join(parts[2:])
-    has_changed = config.set_value(property, value)
+    has_changed, is_immediate = config.set_value(property, value)
 
     if not has_changed:
         await message.reply_text(
@@ -248,8 +248,11 @@ async def config_handle(update: Update, context: CallbackContext):
         return
 
     config.save()
+    text = f"✓ Changed the `{property}` property: `{old_value}` → `{value}`"
+    if not is_immediate:
+        text += "\n❗️Restart the bot for changes to take effect."
     await message.reply_text(
-        f"✓ Changed the `{property}` property:\n`{old_value}`\n→\n`{value}`",
+        text,
         parse_mode=ParseMode.MARKDOWN,
     )
 

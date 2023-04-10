@@ -94,16 +94,25 @@ class Config:
     # Readonly properties.
     readonly = [
         "schema_version",
-        "max_history_depth",
-        "persistence_path",
+        "version",
+        "filename",
     ]
-    # Editable properties.
-    editable = [
+    # Changes made to these properties take effect immediately.
+    immediate = [
         "telegram",
         "openai",
         "imagine",
         "shortcuts",
     ]
+    # Changes made to these properties take effect after a restart.
+    delayed = [
+        "max_history_depth",
+        "persistence_path",
+    ]
+    # All editable properties.
+    editable = immediate + delayed
+    # All known properties.
+    known = readonly + immediate + delayed
 
     def __init__(self, filename: str, src: dict) -> None:
         # Config filename.
@@ -142,7 +151,7 @@ class Config:
     def get_value(self, property: str) -> Any:
         """Returns a config property value."""
         names = property.split(".")
-        if names[0] not in self.readonly and names[0] not in self.editable:
+        if names[0] not in self.known:
             raise ValueError(f"No such property: {property}")
 
         obj = self
@@ -165,16 +174,18 @@ class Config:
 
         raise ValueError(f"Failed to get property: {property}")
 
-    def set_value(self, property: str, value: str) -> bool:
+    def set_value(self, property: str, value: str) -> tuple[bool, bool]:
         """
         Changes a config property value.
-        Returns True if the value has actually changed, False otherwise.
+        Returns a tuple `(has_changed, is_immediate)`
+          - `has_changed` = True if the value has actually changed, False otherwise.
+          - `is_immediate` = True if the change takes effect immediately, False otherwise.
         """
 
         val = yaml.safe_load(value)
         old_val = self.get_value(property)
         if val == old_val:
-            return False
+            return False, False
 
         if not isinstance(val, (list, str, int, float, bool)):
             raise ValueError(f"Cannot set composite value for property: {property}")
@@ -183,6 +194,8 @@ class Config:
         if names[0] not in self.editable:
             raise ValueError(f"Property {property} is not editable")
 
+        is_immediate = property in self.immediate
+
         obj = self
         for name in names[:-1]:
             obj = getattr(obj, name, val)
@@ -190,13 +203,13 @@ class Config:
         name = names[-1]
         if isinstance(obj, dict):
             obj[name] = val
-            return True
+            return True, is_immediate
 
         if isinstance(obj, object):
             if not hasattr(obj, name):
                 raise ValueError(f"No such property: {property}")
             setattr(obj, name, val)
-            return True
+            return True, is_immediate
 
         raise ValueError(f"Failed to set property: {property}")
 

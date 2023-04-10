@@ -156,7 +156,7 @@ class SetValueTest(unittest.TestCase):
 
     def test_readonly(self):
         with self.assertRaises(ValueError):
-            self.config.set_value("max_history_depth", "10")
+            self.config.set_value("version", "10")
 
     def test_does_not_exist(self):
         with self.assertRaises(ValueError):
@@ -170,3 +170,19 @@ class SetValueTest(unittest.TestCase):
         self.config.set_value("shortcuts.bugfix", "Fix bugs in the code")
         value = self.config.get_value("shortcuts.bugfix")
         self.assertEqual(value, "Fix bugs in the code")
+
+    def test_has_changed(self):
+        has_changed, _ = self.config.set_value("imagine", "on")
+        self.assertTrue(has_changed)
+
+    def test_has_not_changed(self):
+        has_changed, _ = self.config.set_value("imagine", "off")
+        self.assertFalse(has_changed)
+
+    def test_is_immediate(self):
+        _, is_immediate = self.config.set_value("imagine", "on")
+        self.assertTrue(is_immediate)
+
+    def test_is_delayed(self):
+        _, is_immediate = self.config.set_value("max_history_depth", "10")
+        self.assertFalse(is_immediate)

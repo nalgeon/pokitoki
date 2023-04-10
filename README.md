@@ -173,7 +173,7 @@ AI information:
 
 ## Configuration
 
-Use the `/config` command to change settings on the fly, without restarting the bot. You can change almost all config properties, such as:
+Use the `/config` command to change almost any setting on the fly, without restarting the bot.
 
 -   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
 -   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
@@ -196,7 +196,7 @@ To change a specific config property, put its name and value after `/config`:
 /config imagine off
 ```
 
-The following settings cannot be changed with the `/config` command. To change them, edit `config.yml` and restart the bot:
+Changes made to the following settings only take effect after restarting the bot:
 
 ```
 max_history_depth
