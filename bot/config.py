@@ -194,7 +194,7 @@ class Config:
         if names[0] not in self.editable:
             raise ValueError(f"Property {property} is not editable")
 
-        is_immediate = property in self.immediate
+        is_immediate = property not in self.delayed
 
         obj = self
         for name in names[:-1]:

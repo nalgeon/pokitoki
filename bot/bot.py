@@ -69,6 +69,47 @@ logger = logging.getLogger(__name__)
 fetcher = Fetcher()
 
 
+class Filters:
+    """Filters for the incoming Telegram messages."""
+
+    user: filters.BaseFilter
+    admin: filters.BaseFilter
+    chat: filters.BaseFilter
+
+    user_or_chat: filters.BaseFilter
+    admin_private: filters.BaseFilter
+    message: filters.BaseFilter
+
+    @classmethod
+    def init(cls):
+        """Defines users and chats that are allowed to use the bot."""
+        if config.telegram.usernames:
+            cls.user = filters.User(username=config.telegram.usernames)
+            cls.chat = filters.Chat(chat_id=config.telegram.chat_ids)
+        else:
+            cls.user = filters.ALL
+            cls.chat = filters.ALL
+
+        if config.telegram.admins:
+            cls.admin = filters.User(username=config.telegram.admins)
+        else:
+            cls.admin = filters.User(username=[])
+
+        cls.user_or_chat = cls.user | cls.chat
+        cls.admin_private = cls.admin & filters.ChatType.PRIVATE
+        cls.message = filters.TEXT & ~filters.COMMAND & cls.user_or_chat
+
+    @classmethod
+    def reload(cls):
+        """Reloads users and chats from config."""
+        if cls.user == filters.ALL and config.telegram.usernames:
+            # cannot update the filter from ALL to specific usernames without a restart
+            raise Exception("Restart the bot for changes to take effect")
+        cls.user.usernames = config.telegram.usernames
+        cls.chat.chat_ids = config.telegram.chat_ids
+        cls.admin.usernames = config.telegram.admins
+
+
 def main():
     # chat context persistence
     persistence = PicklePersistence(filepath=config.persistence_path)
@@ -85,32 +126,19 @@ def main():
     )
 
     # allow bot only for the selected users
-    if config.telegram.usernames:
-        user_filter = filters.User(username=config.telegram.usernames)
-        chat_filter = filters.Chat(chat_id=config.telegram.chat_ids)
-    else:
-        user_filter = filters.ALL
-        chat_filter = filters.ALL
-
-    user_or_chat_filter = user_filter | chat_filter
-
-    if config.telegram.admins:
-        admin_filter = filters.User(username=config.telegram.admins) & filters.ChatType.PRIVATE
-    else:
-        admin_filter = filters.User(username=[])
+    Filters.init()
 
     # these commands are only allowed for selected users
     application.add_handler(CommandHandler("start", start_handle))
-    application.add_handler(CommandHandler("help", help_handle, filters=user_filter))
-    application.add_handler(CommandHandler("version", version_handle, filters=user_filter))
+    application.add_handler(CommandHandler("help", help_handle, filters=Filters.user))
+    application.add_handler(CommandHandler("version", version_handle, filters=Filters.user))
     # these commands are allowed for both selected users and group members
-    application.add_handler(CommandHandler("retry", retry_handle, filters=user_or_chat_filter))
-    application.add_handler(CommandHandler("imagine", imagine_handle, filters=user_or_chat_filter))
+    application.add_handler(CommandHandler("retry", retry_handle, filters=Filters.user_or_chat))
+    application.add_handler(CommandHandler("imagine", imagine_handle, filters=Filters.user_or_chat))
     # admin-only commands
-    application.add_handler(CommandHandler("config", config_handle, filters=admin_filter))
+    application.add_handler(CommandHandler("config", config_handle, filters=Filters.admin_private))
     # default action is to reply to a message
-    message_filter = filters.TEXT & ~filters.COMMAND & user_or_chat_filter
-    application.add_handler(MessageHandler(message_filter, message_handle))
+    application.add_handler(MessageHandler(Filters.message, message_handle))
     application.add_error_handler(error_handler)
 
     # start the bot
@@ -242,6 +270,7 @@ async def config_handle(update: Update, context: CallbackContext):
         return
 
     config.save()
+    Filters.reload()
     text = f"✓ Changed the `{property}` property: `{old_value}` → `{value}`"
     if not is_immediate:
         text += "\n❗️Restart the bot for changes to take effect."

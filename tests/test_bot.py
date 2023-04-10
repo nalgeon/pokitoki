@@ -6,6 +6,7 @@ from telegram.ext import CallbackContext
 
 from bot import askers
 from bot import bot
+from bot.bot import Filters
 from bot.config import config
 from bot import models
 from tests.mocks import FakeGPT, FakeApplication, FakeBot
@@ -166,6 +167,7 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase):
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         config.telegram.usernames = ["alice"]
         config.telegram.admins = ["alice"]
+        Filters.init()
 
     async def test_help(self):
         update = self._create_update(11, "/config")
@@ -200,6 +202,21 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase):
         update = self._create_update(11, "/config max_history_depth 5")
         await bot.config_handle(update, self.context)
         self.assertTrue("Restart the bot" in self.bot.text)
+
+    async def test_telegram_usernames(self):
+        update = self._create_update(11, '/config telegram.usernames ["alice", "bob"]')
+        await bot.config_handle(update, self.context)
+        self.assertEqual(Filters.user.usernames, frozenset(["alice", "bob"]))
+
+    async def test_telegram_admins(self):
+        update = self._create_update(11, '/config telegram.admins ["alice", "bob"]')
+        await bot.config_handle(update, self.context)
+        self.assertEqual(Filters.admin.usernames, frozenset(["alice", "bob"]))
+
+    async def test_telegram_chat_ids(self):
+        update = self._create_update(11, "/config telegram.chat_ids [-100500]")
+        await bot.config_handle(update, self.context)
+        self.assertEqual(Filters.chat.chat_ids, frozenset([-100500]))
 
     def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
         message = Message(
