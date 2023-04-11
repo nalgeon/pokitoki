@@ -61,18 +61,22 @@ def main():
 def add_handlers(application: Application):
     """Adds command handlers."""
 
-    # command handlers
+    # info commands
     application.add_handler(CommandHandler("start", commands.Start()))
     application.add_handler(CommandHandler("help", commands.Help(), filters=filters.users))
     application.add_handler(CommandHandler("version", commands.Version(), filters=filters.users))
+
+    # admin commands
+    application.add_handler(
+        CommandHandler("config", commands.Config(filters), filters=filters.admins_private)
+    )
+
+    # message-related commands
     application.add_handler(
         CommandHandler("retry", commands.Retry(reply_to), filters=filters.users_or_chats)
     )
     application.add_handler(
         CommandHandler("imagine", commands.Imagine(reply_to), filters=filters.users_or_chats)
-    )
-    application.add_handler(
-        CommandHandler("config", commands.Config(filters), filters=filters.admins_private)
     )
 
     # non-command handler: the default action is to reply to a message

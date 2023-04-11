@@ -1,4 +1,5 @@
 from typing import Optional
+from telegram import User
 
 
 class FakeGPT:
@@ -31,13 +32,26 @@ class FakeDalle:
 
 class FakeBot:
     def __init__(self, username: str) -> None:
-        self.username = username
-        self.can_read_all_group_messages = True
+        self.user = User(
+            id=42,
+            first_name=username,
+            is_bot=True,
+            username=username,
+            can_read_all_group_messages=True,
+        )
         self.text = ""
+
+    @property
+    def username(self) -> str:
+        return self.user.username
 
     @property
     def name(self) -> str:
         return f"@{self.username}"
+
+    @property
+    def can_read_all_group_messages(self) -> bool:
+        return self.user.can_read_all_group_messages
 
     async def send_chat_action(self, **kwargs) -> None:
         pass
@@ -52,6 +66,9 @@ class FakeBot:
 
     async def send_photo(self, chat_id: int, photo: str, caption: str = None, **kwargs) -> None:
         self.text = f"{caption}: {photo}"
+
+    async def get_me(self, **kwargs) -> User:
+        return self.user
 
 
 class FakeApplication:
