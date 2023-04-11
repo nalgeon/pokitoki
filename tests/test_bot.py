@@ -9,12 +9,25 @@ from bot import bot
 from bot import commands
 from bot import models
 from bot.config import config
-from bot.fetcher import Fetcher
 from bot.filters import Filters
 from tests.mocks import FakeGPT, FakeApplication, FakeBot
 
 
-class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
+class Helper:
+    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
+        message = Message(
+            message_id=update_id,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text=text,
+            from_user=self.user,
+            **kwargs,
+        )
+        message.set_bot(self.bot)
+        return Update(update_id=update_id, message=message)
+
+
+class PrivateChatTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
         askers.TextAsker.model = self.ai
@@ -55,20 +68,8 @@ class PrivateChatTest(unittest.IsolatedAsyncioTestCase):
         await command(update, self.context)
         self.assertEqual(self.bot.text, "⚠️ Something went wrong")
 
-    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
-        message = Message(
-            message_id=update_id,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text=text,
-            from_user=self.user,
-            **kwargs,
-        )
-        message.set_bot(self.bot)
-        return Update(update_id=update_id, message=message)
 
-
-class MessageTest(unittest.IsolatedAsyncioTestCase):
+class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
         askers.TextAsker.model = self.ai
@@ -79,8 +80,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase):
         self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
-        self.fetcher = Fetcher()
-        self.command = commands.Message(self.fetcher)
+        self.command = commands.Message(bot.reply_to)
         config.telegram.usernames = ["alice"]
 
     async def test_message(self):
@@ -132,25 +132,13 @@ class MessageTest(unittest.IsolatedAsyncioTestCase):
     async def test_retry(self):
         user_data = models.UserData(self.context.user_data)
         user_data.messages.add("What is your name?", "My name is AI.")
-        command = commands.Retry(self.command)
+        command = commands.Retry(bot.reply_to)
         update = self._create_update(11)
         await command(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 
-    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
-        message = Message(
-            message_id=update_id,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text=text,
-            from_user=self.user,
-            **kwargs,
-        )
-        message.set_bot(self.bot)
-        return Update(update_id=update_id, message=message)
 
-
-class GroupChatTest(unittest.IsolatedAsyncioTestCase):
+class GroupChatTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         askers.TextAsker.model = FakeGPT()
         self.bot = FakeBot("bot")
@@ -160,11 +148,10 @@ class GroupChatTest(unittest.IsolatedAsyncioTestCase):
         self.application.user_data[1] = {}
         self.application.user_data[2] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
-        self.user_alice = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.user_erik = User(id=2, first_name="Erik", is_bot=False, username="erik")
         self.user_bot = User(id=42, first_name="Bot", is_bot=True, username="bot")
-        self.fetcher = Fetcher()
-        self.command = commands.Message(self.fetcher)
+        self.command = commands.Message(bot.reply_to)
         config.telegram.usernames = ["alice"]
 
     async def test_message(self):
@@ -177,20 +164,8 @@ class GroupChatTest(unittest.IsolatedAsyncioTestCase):
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "")
 
-    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
-        message = Message(
-            message_id=update_id,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text=text,
-            from_user=self.user_alice,
-            **kwargs,
-        )
-        message.set_bot(self.bot)
-        return Update(update_id=update_id, message=message)
 
-
-class ConfigTest(unittest.IsolatedAsyncioTestCase):
+class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
         askers.TextAsker.model = self.ai
@@ -254,15 +229,3 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase):
         update = self._create_update(11, "/config telegram.chat_ids [-100500]")
         await self.command(update, self.context)
         self.assertEqual(self.filters.chats.chat_ids, frozenset([-100500]))
-
-    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
-        message = Message(
-            message_id=update_id,
-            date=dt.datetime.now(),
-            chat=self.chat,
-            text=text,
-            from_user=self.user,
-            **kwargs,
-        )
-        message.set_bot(self.bot)
-        return Update(update_id=update_id, message=message)

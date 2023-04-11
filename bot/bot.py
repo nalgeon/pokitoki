@@ -2,18 +2,24 @@
 
 import logging
 import sys
+import time
 
+from telegram import Chat, Message
 from telegram.ext import (
     Application,
     ApplicationBuilder,
+    CallbackContext,
     CommandHandler,
     MessageHandler,
     PicklePersistence,
 )
+from bot import askers
 from bot import commands
+from bot import questions
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
+from bot.models import UserData
 
 
 logging.basicConfig(
@@ -55,25 +61,22 @@ def main():
 def add_handlers(application: Application):
     """Adds command handlers."""
 
-    # the message command is reused by others
-    message_cmd = commands.Message(fetcher)
-
     # command handlers
     application.add_handler(CommandHandler("start", commands.Start()))
     application.add_handler(CommandHandler("help", commands.Help(), filters=filters.users))
     application.add_handler(CommandHandler("version", commands.Version(), filters=filters.users))
     application.add_handler(
-        CommandHandler("retry", commands.Retry(message_cmd), filters=filters.users_or_chats)
+        CommandHandler("retry", commands.Retry(reply_to), filters=filters.users_or_chats)
     )
     application.add_handler(
-        CommandHandler("imagine", commands.Imagine(message_cmd), filters=filters.users_or_chats)
+        CommandHandler("imagine", commands.Imagine(reply_to), filters=filters.users_or_chats)
     )
     application.add_handler(
         CommandHandler("config", commands.Config(filters), filters=filters.admins_private)
     )
 
     # non-command handler: the default action is to reply to a message
-    application.add_handler(MessageHandler(filters.messages, message_cmd))
+    application.add_handler(MessageHandler(filters.messages, commands.Message(reply_to)))
 
     # generic error handler
     application.add_error_handler(commands.Error())
@@ -94,6 +97,64 @@ async def post_init(application: Application) -> None:
 async def post_shutdown(application: Application) -> None:
     """Frees acquired resources."""
     await fetcher.close()
+
+
+async def reply_to(message: Message, context: CallbackContext, question: str) -> None:
+    """Replies to a specific question."""
+    await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
+
+    try:
+        asker = askers.create(question)
+        if message.chat.type == Chat.PRIVATE and message.forward_date:
+            # this is a forwarded message, don't answer yet
+            answer = "This is a forwarded message. What should I do with it?"
+        else:
+            answer = await _ask_question(message, context, question, asker)
+
+        user = UserData(context.user_data)
+        user.messages.add(question, answer)
+        logger.debug(user.messages)
+        await asker.reply(message, context, answer)
+
+    except Exception as exc:
+        class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
+        error_text = f"Failed to answer. Reason: {class_name}: {exc}"
+        logger.error(error_text)
+        await message.reply_text(error_text)
+
+
+async def _ask_question(
+    message: Message, context: CallbackContext, question: str, asker: askers.Asker
+) -> str:
+    """Answers a question using the OpenAI model."""
+    logger.info(
+        f"-> question id={message.id}, user={message.from_user.username}, n_chars={len(question)}"
+    )
+
+    question, is_follow_up = questions.prepare(question)
+    question = await fetcher.substitute_urls(question)
+    logger.debug(f"Prepared question: {question}")
+
+    user = UserData(context.user_data)
+    if is_follow_up:
+        # this is a follow-up question,
+        # so the bot should retain the previous history
+        history = user.messages.as_list()
+    else:
+        # user is asking a question 'from scratch',
+        # so the bot should forget the previous history
+        user.messages.clear()
+        history = []
+
+    start = time.perf_counter_ns()
+    answer = await asker.ask(question, history)
+    elapsed = int((time.perf_counter_ns() - start) / 1e6)
+
+    logger.info(
+        f"<- answer id={message.id}, user={message.from_user.username}, "
+        f"n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
+    )
+    return answer
 
 
 if __name__ == "__main__":

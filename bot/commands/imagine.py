@@ -1,17 +1,17 @@
 """/imagine command."""
 
+from typing import Awaitable
 from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
 from bot.config import config
-from .message import MessageCommand
 
 
 class ImagineCommand:
     """Generates an image according to the description."""
 
-    def __init__(self, message_cmd: MessageCommand) -> None:
-        self.message_cmd = message_cmd
+    def __init__(self, reply_func: Awaitable) -> None:
+        self.reply_func = reply_func
 
     async def __call__(self, update: Update, context: CallbackContext) -> None:
         message = update.message or update.edited_message
@@ -30,4 +30,4 @@ class ImagineCommand:
                 parse_mode=ParseMode.HTML,
             )
             return
-        await self.message_cmd.reply_to(update.message, context, question=message.text)
+        await self.reply_func(update.message, context, question=message.text)
