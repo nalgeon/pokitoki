@@ -51,8 +51,17 @@ class ConfigCommand:
             return
 
         config.save()
-        self.filters.reload()
+        if self._should_reload_filters(property):
+            self.filters.reload()
+
         text = f"✓ Changed the `{property}` property: `{value}` → `{new_value}`"
         if not is_immediate:
             text += "\n❗️Restart the bot for changes to take effect."
         await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
+
+    def _should_reload_filters(self, property: str) -> bool:
+        return property in (
+            "telegram.usernames",
+            "telegram.chat_ids",
+            "telegram.admins",
+        )
