@@ -5,7 +5,7 @@ from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
 
 from bot.config import config
-from . import common
+from . import constants
 
 
 class VersionCommand:
@@ -42,7 +42,7 @@ class VersionCommand:
             "</pre>"
         )
         if not bot.can_read_all_group_messages:
-            text += f"\n\n{common.PRIVACY_MESSAGE}"
+            text += f"\n\n{constants.PRIVACY_MESSAGE}"
 
         # AI information
         text += (

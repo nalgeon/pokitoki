@@ -1,4 +1,4 @@
-from .common import BOT_COMMANDS
+from .constants import BOT_COMMANDS
 from .config import ConfigCommand as Config
 from .error import ErrorCommand as Error
 from .help import HelpCommand as Help
