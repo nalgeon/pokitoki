@@ -91,7 +91,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.admins = ["alice"]
         config.telegram.chat_ids = [-100500]
         config.openai.model = "gpt-4"
-        config.max_history_depth = 10
+        config.conversation.depth = 10
         config.imagine = False
         config.shortcuts = {
             "translate_en": "Translate into English",
@@ -160,8 +160,8 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_delayed(self):
         config.save = lambda: None
-        config.max_history_depth = 3
-        update = self._create_update(11, "/config max_history_depth 5")
+        config.conversation.depth = 3
+        update = self._create_update(11, "/config conversation.depth 5")
         await self.command(update, self.context)
         self.assertTrue("Restart the bot" in self.bot.text)
 

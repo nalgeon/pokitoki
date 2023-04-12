@@ -7,7 +7,7 @@ class ConfigTest(unittest.TestCase):
         src = {
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
-            "max_history_depth": 5,
+            "conversation": {"depth": 5},
             "imagine": False,
         }
         config = Config("config.test.yml", src)
@@ -25,7 +25,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.openai.params["frequency_penalty"], 0)
         self.assertEqual(config.openai.params["max_tokens"], 1000)
 
-        self.assertEqual(config.max_history_depth, 5)
+        self.assertEqual(config.conversation.depth, 5)
         self.assertFalse(config.imagine)
         self.assertEqual(config.persistence_path, "./data/persistence.pkl")
         self.assertEqual(config.shortcuts, {})
@@ -36,7 +36,7 @@ class GetValueTest(unittest.TestCase):
         src = {
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
-            "max_history_depth": 5,
+            "conversation": {"depth": 5},
             "imagine": False,
             "shortcuts": {"translate": "Translate into English"},
         }
@@ -69,7 +69,7 @@ class GetValueTest(unittest.TestCase):
         self.assertEqual(value, "./data/persistence.pkl")
 
     def test_int(self):
-        value = self.config.get_value("max_history_depth")
+        value = self.config.get_value("conversation.depth")
         self.assertEqual(value, 5)
 
     def test_float(self):
@@ -106,7 +106,7 @@ class SetValueTest(unittest.TestCase):
                 "admins": ["botfather"],
             },
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
-            "max_history_depth": 5,
+            "conversation": {"depth": 5},
             "imagine": False,
             "shortcuts": {"translate": "Translate into English"},
         }
@@ -192,7 +192,7 @@ class SetValueTest(unittest.TestCase):
         self.assertTrue(is_immediate)
 
     def test_is_delayed_1(self):
-        _, is_immediate = self.config.set_value("max_history_depth", "10")
+        _, is_immediate = self.config.set_value("conversation.depth", "10")
         self.assertFalse(is_immediate)
 
     def test_is_delayed_2(self):

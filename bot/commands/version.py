@@ -49,7 +49,7 @@ class VersionCommand:
             "\n\n<pre>"
             "AI information:\n"
             f"- model: {config.openai.model}\n"
-            f"- history depth: {config.max_history_depth}\n"
+            f"- history depth: {config.conversation.depth}\n"
             f"- imagine: {config.imagine}\n"
             f"- shortcuts: {', '.join(config.shortcuts.keys())}"
             "</pre>"

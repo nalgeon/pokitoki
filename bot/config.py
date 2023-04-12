@@ -21,11 +21,13 @@ def load(filename) -> dict:
 
 def migrate(config: dict) -> tuple[dict, bool]:
     """Migrates the configuration to the latest schema version."""
-    schema_version = config.get("schema_version", 1)
     has_changed = False
-    if schema_version == 1:
-        has_changed = True
+    if config.get("schema_version", 1) == 1:
         config = _migrate_v1(config)
+        has_changed = True
+    if config["schema_version"] == 2:
+        config = _migrate_v2(config)
+        has_changed = True
     return config, has_changed
 
 
@@ -48,6 +50,19 @@ def _migrate_v1(old: dict) -> dict:
         "api_key": old["openai_api_key"],
         "model": old.get("openai_model"),
     }
+    return config
+
+
+def _migrate_v2(old: dict) -> dict:
+    config = {
+        "schema_version": 3,
+        "telegram": old["telegram"],
+        "openai": old["openai"],
+        "imagine": old.get("imagine"),
+        "persistence_path": old.get("persistence_path"),
+        "shortcuts": old.get("shortcuts"),
+    }
+    config["conversation"] = {"depth": old.get("max_history_depth")}
     return config
 
 
@@ -83,11 +98,20 @@ class OpenAI:
         self.params.update(params)
 
 
+@dataclass
+class Conversation:
+    depth: int
+    default_depth = 3
+
+    def __init__(self, depth: int) -> None:
+        self.depth = depth or self.default_depth
+
+
 class Config:
     """Config properties."""
 
     # Config schema version. Increments for backward-incompatible changes.
-    schema_version = 2
+    schema_version = 3
     # Bot version.
     version = 139
 
@@ -101,6 +125,7 @@ class Config:
     immediate = [
         "telegram",
         "openai",
+        "conversation",
         "imagine",
         "shortcuts",
     ]
@@ -108,7 +133,7 @@ class Config:
     delayed = [
         "telegram.token",
         "openai.api_key",
-        "max_history_depth",
+        "conversation.depth",
         "persistence_path",
     ]
     # All editable properties.
@@ -136,9 +161,8 @@ class Config:
             params=src["openai"].get("params") or {},
         )
 
-        # The maximum number of previous messages
-        # the bot will remember when talking to a user.
-        self.max_history_depth = src.get("max_history_depth") or 3
+        # Conversation settings.
+        self.conversation = Conversation(depth=src["conversation"].get("depth"))
 
         # Enable/disable image generation.
         imagine = src.get("imagine", True)
@@ -224,7 +248,7 @@ class Config:
             "schema_version": self.schema_version,
             "telegram": dataclasses.asdict(self.telegram),
             "openai": dataclasses.asdict(self.openai),
-            "max_history_depth": self.max_history_depth,
+            "conversation": dataclasses.asdict(self.conversation),
             "imagine": self.imagine,
             "persistence_path": self.persistence_path,
             "shortcuts": self.shortcuts,

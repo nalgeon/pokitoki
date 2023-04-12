@@ -9,7 +9,7 @@ class UserMessagesTest(unittest.TestCase):
     def test_init(self):
         um = UserMessages({})
         self.assertIsInstance(um.messages, deque)
-        self.assertEqual(um.messages.maxlen, config.max_history_depth)
+        self.assertEqual(um.messages.maxlen, config.conversation.depth)
 
         data = {"messages": deque([UserMessage("Hello", "Hi")])}
         um = UserMessages(data)

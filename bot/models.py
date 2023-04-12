@@ -26,7 +26,7 @@ class UserMessages:
 
     def __init__(self, data: Mapping) -> None:
         if "messages" not in data:
-            data["messages"] = deque([], config.max_history_depth)
+            data["messages"] = deque([], config.conversation.depth)
         self.messages = data["messages"]
 
     @property
