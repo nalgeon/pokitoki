@@ -177,7 +177,7 @@ Use the `/config` command to change almost any setting on the fly, without resta
 
 -   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
 -   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
--   Enable or disable image generation (`imagine`).
+-   Enable or disable image generation (`imagine.enabled`).
 -   Add or change AI shortcuts (`shortcuts`).
 
 To view a specific config property, put its name after `/config`:
@@ -185,7 +185,7 @@ To view a specific config property, put its name after `/config`:
 ```
 /config telegram.usernames
 /config openai.prompt
-/config imagine
+/config imagine.enabled
 ```
 
 To change a specific config property, put its name and value after `/config`:
@@ -193,17 +193,47 @@ To change a specific config property, put its name and value after `/config`:
 ```
 /config telegram.usernames ["alice", "bob", "cindy"]
 /config openai.prompt "You are an evil AI bot"
-/config imagine off
+/config imagine.enabled none
 ```
 
 Changes made to the following settings only take effect after restarting the bot:
 
 ```
-max_history_depth
+conversation.depth
 persistence_path
 ```
 
 The `/config` command is only available to admins - users listed in the `telegram.admins` property.
+
+## Message limits
+
+Heated discussions with the bot in large groups can lead to high usage of the OpenAI API. To avoid spending your entire budget, set message limits for groups with the `conversation.message_limit` config property.
+
+You can limit the number of messages from a user over a period of time. For example:
+
+-   10 messages per user per hour:
+
+```yaml
+message_limit:
+    count: 10
+    period: hour
+```
+
+-   1 message per user per minute:
+
+```yaml
+message_limit:
+    count: 1
+    period: minute
+```
+
+-   30 messages per user per day:
+
+```yaml
+message_limit:
+    count: 30
+    period: day
+```
 
 ## Setup
 
