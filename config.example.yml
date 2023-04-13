@@ -45,6 +45,14 @@ conversation:
     # the bot will remember when talking to a user.
     depth: 3
 
+    # The maximum number of messages a user can send during the specified time period.
+    # Only applies to users who are not listed in `telegram.usernames`.
+    #   `count`  = an integer number of messages (0 = unlimited)
+    #   `period` = minute | hour | day
+    message_limit:
+        count: 0
+        period: hour
+
 # Enable/disable image generation.
 imagine: yes
 

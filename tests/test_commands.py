@@ -3,6 +3,7 @@ import unittest
 from telegram import Chat, Message, Update, User
 from telegram.constants import ChatType
 from telegram.ext import CallbackContext
+from telegram.ext import filters as tg_filters
 
 from bot import askers
 from bot import bot
@@ -15,12 +16,17 @@ from tests.mocks import FakeGPT, FakeDalle, FakeApplication, FakeBot
 
 class Helper:
     def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
+        if "user" in kwargs:
+            user = kwargs["user"]
+            del kwargs["user"]
+        else:
+            user = self.user
         message = Message(
             message_id=update_id,
             date=dt.datetime.now(),
             chat=self.chat,
             text=text,
-            from_user=self.user,
+            from_user=user,
             **kwargs,
         )
         message.set_bot(self.bot)
@@ -308,6 +314,57 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, text="What is your name?")
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "")
+
+
+class UserMessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
+    def setUp(self):
+        self.ai = FakeGPT()
+        askers.TextAsker.model = self.ai
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.PRIVATE)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.application.user_data[1] = {}
+        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
+        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        self.command = commands.Message(bot.reply_to)
+        config.telegram.usernames = ["alice"]
+        config.conversation.message_limit.count = 1
+        config.conversation.message_limit.period = "minute"
+        # a hack for testing purposes only
+        bot.filters.users = tg_filters.User(username=config.telegram.usernames)
+
+    async def test_known_user(self):
+        update = self._create_update(11, text="What is your name?")
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "What is your name?")
+
+        update = self._create_update(12, text="Where are you from?")
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "Where are you from?")
+
+    async def test_unknown_user(self):
+        other_user = User(id=2, first_name="Bob", is_bot=False, username="bob")
+
+        update = self._create_update(11, text="What is your name?", user=other_user)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "What is your name?")
+
+        update = self._create_update(12, text="Where are you from?", user=other_user)
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("Please wait"))
+
+    async def test_unlimited(self):
+        config.conversation.message_limit.count = 0
+        other_user = User(id=2, first_name="Bob", is_bot=False, username="bob")
+
+        update = self._create_update(11, text="What is your name?", user=other_user)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "What is your name?")
+
+        update = self._create_update(12, text="Where are you from?", user=other_user)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "Where are you from?")
 
 
 class ErrorTest(unittest.IsolatedAsyncioTestCase, Helper):

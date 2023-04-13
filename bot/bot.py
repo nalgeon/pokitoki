@@ -16,6 +16,7 @@ from telegram.ext import (
 from bot import askers
 from bot import commands
 from bot import questions
+from bot import models
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
@@ -103,6 +104,35 @@ async def post_shutdown(application: Application) -> None:
     await fetcher.close()
 
 
+def with_message_limit(func):
+    """Refuses to reply if the user has exceeded the message limit."""
+
+    async def wrapper(message: Message, context: CallbackContext, question: str) -> None:
+        username = message.from_user.username
+        user = UserData(context.user_data)
+
+        # check if the message counter exceeds the message limit
+        if (
+            not filters.is_known_user(username)
+            and user.message_counter.value >= config.conversation.message_limit.count > 0
+        ):
+            # this is a group user and they have exceeded the message limit
+            wait_for = models.format_timedelta(user.message_counter.expires_after())
+            await message.reply_text(f"Please wait {wait_for} before asking a new question.")
+            return
+
+        # this is a known user or they have not exceeded the message limit,
+        # so proceed to the actual message handler
+        await func(message, context, question)
+
+        # increment the message counter
+        message_count = user.message_counter.increment()
+        logger.debug(f"user={message.from_user.username}, n_messages={message_count}")
+
+    return wrapper
+
+
+@with_message_limit
 async def reply_to(message: Message, context: CallbackContext, question: str) -> None:
     """Replies to a specific question."""
     await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)

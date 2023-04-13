@@ -99,12 +99,33 @@ class OpenAI:
 
 
 @dataclass
+class RateLimit:
+    count: int
+    period: str
+
+    allowed_periods = ("minute", "hour", "day")
+    default_period = "hour"
+
+    def __init__(self, count: int = 0, period: str = default_period) -> None:
+        self.count = count
+        if period not in self.allowed_periods:
+            period = self.default_period
+        self.period = period
+
+    def __bool__(self) -> bool:
+        return self.count > 0
+
+
+@dataclass
 class Conversation:
     depth: int
+    message_limit: RateLimit
+
     default_depth = 3
 
-    def __init__(self, depth: int) -> None:
+    def __init__(self, depth: int, message_limit: dict) -> None:
         self.depth = depth or self.default_depth
+        self.message_limit = RateLimit(**message_limit)
 
 
 class Config:
@@ -162,7 +183,10 @@ class Config:
         )
 
         # Conversation settings.
-        self.conversation = Conversation(depth=src["conversation"].get("depth"))
+        self.conversation = Conversation(
+            depth=src["conversation"].get("depth"),
+            message_limit=src["conversation"].get("message_limit") or {},
+        )
 
         # Enable/disable image generation.
         imagine = src.get("imagine", True)

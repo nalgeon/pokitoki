@@ -1,5 +1,5 @@
 """Bot message filters."""
-
+from typing import Union
 from dataclasses import dataclass
 from telegram.ext import filters
 from bot.config import config
@@ -9,9 +9,9 @@ from bot.config import config
 class Filters:
     """Filters for the incoming Telegram messages."""
 
-    users: filters.BaseFilter
-    admins: filters.BaseFilter
-    chats: filters.BaseFilter
+    users: Union[filters.MessageFilter, filters.User]
+    admins: filters.User
+    chats: Union[filters.MessageFilter, filters.Chat]
 
     users_or_chats: filters.BaseFilter
     admins_private: filters.BaseFilter
@@ -43,3 +43,9 @@ class Filters:
         self.users.usernames = config.telegram.usernames
         self.chats.chat_ids = config.telegram.chat_ids
         self.admins.usernames = config.telegram.admins
+
+    def is_known_user(self, username: str) -> bool:
+        """Checks if the username is included in the `users` filter."""
+        if self.users == filters.ALL:
+            return False
+        return username in self.users.usernames
