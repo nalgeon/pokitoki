@@ -50,7 +50,7 @@ class VersionCommand:
             "AI information:\n"
             f"- model: {config.openai.model}\n"
             f"- history depth: {config.conversation.depth}\n"
-            f"- imagine: {config.imagine}\n"
+            f"- imagine: {config.imagine.enabled}\n"
             f"- shortcuts: {', '.join(config.shortcuts.keys())}"
             "</pre>"
         )

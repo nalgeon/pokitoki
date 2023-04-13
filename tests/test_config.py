@@ -8,7 +8,7 @@ class ConfigTest(unittest.TestCase):
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": False,
+            "imagine": {"enabled": "none"},
         }
         config = Config("config.test.yml", src)
 
@@ -26,7 +26,7 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.openai.params["max_tokens"], 1000)
 
         self.assertEqual(config.conversation.depth, 5)
-        self.assertFalse(config.imagine)
+        self.assertEqual(config.imagine.enabled, "none")
         self.assertEqual(config.persistence_path, "./data/persistence.pkl")
         self.assertEqual(config.shortcuts, {})
 
@@ -37,7 +37,7 @@ class GetValueTest(unittest.TestCase):
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": False,
+            "imagine": {"enabled": "none"},
             "shortcuts": {"translate": "Translate into English"},
         }
         self.config = Config("config.test.yml", src)
@@ -76,10 +76,6 @@ class GetValueTest(unittest.TestCase):
         value = self.config.get_value("openai.params.temperature")
         self.assertEqual(value, 0.7)
 
-    def test_bool(self):
-        value = self.config.get_value("imagine")
-        self.assertFalse(value)
-
     def test_not_allowed(self):
         with self.assertRaises(ValueError):
             self.config.get_value("__class__")
@@ -107,7 +103,7 @@ class SetValueTest(unittest.TestCase):
             },
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": False,
+            "imagine": {"enabled": "none"},
             "shortcuts": {"translate": "Translate into English"},
         }
         self.config = Config("config.test.yml", src)
@@ -145,11 +141,6 @@ class SetValueTest(unittest.TestCase):
         value = self.config.get_value("openai.params.temperature")
         self.assertEqual(value, 0.5)
 
-    def test_bool(self):
-        self.config.set_value("imagine", "on")
-        value = self.config.get_value("imagine")
-        self.assertTrue(value)
-
     def test_not_allowed(self):
         with self.assertRaises(ValueError):
             self.config.set_value("__class__", "{}")
@@ -173,18 +164,18 @@ class SetValueTest(unittest.TestCase):
 
     def test_invalid_value(self):
         with self.assertRaises(ValueError):
-            self.config.set_value("imagine", '"on')
+            self.config.set_value("imagine.enabled", '"users_only')
 
     def test_has_changed(self):
-        has_changed, _ = self.config.set_value("imagine", "on")
+        has_changed, _ = self.config.set_value("imagine.enabled", "users_only")
         self.assertTrue(has_changed)
 
     def test_has_not_changed(self):
-        has_changed, _ = self.config.set_value("imagine", "off")
+        has_changed, _ = self.config.set_value("imagine.enabled", "none")
         self.assertFalse(has_changed)
 
     def test_is_immediate_1(self):
-        _, is_immediate = self.config.set_value("imagine", "on")
+        _, is_immediate = self.config.set_value("imagine.enabled", "users_only")
         self.assertTrue(is_immediate)
 
     def test_is_immediate_2(self):

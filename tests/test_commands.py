@@ -98,7 +98,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.chat_ids = [-100500]
         config.openai.model = "gpt-4"
         config.conversation.depth = 10
-        config.imagine = False
+        config.imagine.enabled = "none"
         config.shortcuts = {
             "translate_en": "Translate into English",
             "translate_fr": "Translate into French",
@@ -119,7 +119,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertTrue("<pre>AI information:" in self.bot.text)
         self.assertTrue("- model: gpt-4" in self.bot.text)
         self.assertTrue("- history depth: 10" in self.bot.text)
-        self.assertTrue("- imagine: False" in self.bot.text)
+        self.assertTrue("- imagine: none" in self.bot.text)
         self.assertTrue("- shortcuts: translate_en, translate_fr" in self.bot.text)
 
 
@@ -222,7 +222,31 @@ class ImagineTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.usernames = ["alice"]
 
     async def test_imagine(self):
+        config.imagine.enabled = "users_only"
         update = self._create_update(11, "/imagine a cat")
+        self.context.args = ["a", "cat"]
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "a cat: image")
+
+    async def test_disabled(self):
+        config.imagine.enabled = "none"
+        update = self._create_update(11, "/imagine a cat")
+        self.context.args = ["a", "cat"]
+        await self.command(update, self.context)
+        self.assertTrue("command is disabled" in self.bot.text)
+
+    async def test_users_only(self):
+        config.imagine.enabled = "users_only"
+        user = User(id=2, first_name="Bob", is_bot=False, username="bob")
+        update = self._create_update(11, "/imagine a cat", user=user)
+        self.context.args = ["a", "cat"]
+        await self.command(update, self.context)
+        self.assertTrue("command is disabled" in self.bot.text)
+
+    async def test_users_and_groups(self):
+        config.imagine.enabled = "users_and_groups"
+        user = User(id=2, first_name="Bob", is_bot=False, username="bob")
+        update = self._create_update(11, "/imagine a cat", user=user)
         self.context.args = ["a", "cat"]
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "a cat: image")

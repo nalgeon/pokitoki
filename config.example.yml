@@ -53,8 +53,14 @@ conversation:
         count: 0
         period: hour
 
-# Enable/disable image generation.
-imagine: yes
+# Image generation settings.
+imagine:
+    # Enable/disable image generation:
+    #   - none             = disabled for everyone
+    #   - users_only       = enabled only for users listed in `telegram.usernames`
+    #   - users_and_groups = enabled for both users listed in `telegram.usernames`
+    #                        and members of `telegrams.chat_ids`
+    enabled: users_only
 
 # Where to store the chat context file.
 persistence_path: "./data/persistence.pkl"

@@ -1,5 +1,6 @@
 """Bot configuration parameters."""
 
+import enum
 import os
 from typing import Any
 import yaml
@@ -27,6 +28,9 @@ def migrate(config: dict) -> tuple[dict, bool]:
         has_changed = True
     if config["schema_version"] == 2:
         config = _migrate_v2(config)
+        has_changed = True
+    if config["schema_version"] == 3:
+        config = _migrate_v3(config)
         has_changed = True
     return config, has_changed
 
@@ -63,6 +67,21 @@ def _migrate_v2(old: dict) -> dict:
         "shortcuts": old.get("shortcuts"),
     }
     config["conversation"] = {"depth": old.get("max_history_depth")}
+    return config
+
+
+def _migrate_v3(old: dict) -> dict:
+    config = {
+        "schema_version": 4,
+        "telegram": old["telegram"],
+        "openai": old["openai"],
+        "conversation": old["conversation"],
+        "persistence_path": old.get("persistence_path"),
+        "shortcuts": old.get("shortcuts"),
+    }
+    imagine_enabled = old.get("imagine")
+    imagine_enabled = True if imagine_enabled is None else imagine_enabled
+    config["imagine"] = {"enabled": "users_only" if imagine_enabled else "none"}
     return config
 
 
@@ -128,11 +147,21 @@ class Conversation:
         self.message_limit = RateLimit(**message_limit)
 
 
+@dataclass
+class Imagine:
+    enabled: str
+
+    def __init__(self, enabled: str) -> None:
+        self.enabled = (
+            enabled if enabled in ("none", "users_only", "users_and_groups") else "users_only"
+        )
+
+
 class Config:
     """Config properties."""
 
     # Config schema version. Increments for backward-incompatible changes.
-    schema_version = 3
+    schema_version = 4
     # Bot version.
     version = 139
 
@@ -188,9 +217,8 @@ class Config:
             message_limit=src["conversation"].get("message_limit") or {},
         )
 
-        # Enable/disable image generation.
-        imagine = src.get("imagine", True)
-        self.imagine = True if imagine is None else imagine
+        # Image generation settings.
+        self.imagine = Imagine(enabled=src["imagine"].get("enabled") or "")
 
         # Where to store the chat context file.
         self.persistence_path = src.get("persistence_path") or "./data/persistence.pkl"
@@ -273,7 +301,7 @@ class Config:
             "telegram": dataclasses.asdict(self.telegram),
             "openai": dataclasses.asdict(self.openai),
             "conversation": dataclasses.asdict(self.conversation),
-            "imagine": self.imagine,
+            "imagine": dataclasses.asdict(self.imagine),
             "persistence_path": self.persistence_path,
             "shortcuts": self.shortcuts,
         }
