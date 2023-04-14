@@ -32,10 +32,11 @@ class Model:
         """Asks the language model a question and returns an answer."""
         messages = self._generate_messages(question, history)
         messages = shorten(messages, length=self.maxlen)
+        params = self._prepare_params()
         resp = await openai.ChatCompletion.acreate(
             model=self.name,
             messages=messages,
-            **config.openai.params,
+            **params,
         )
         logger.debug(
             "prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
@@ -45,6 +46,15 @@ class Model:
         )
         answer = self._prepare_answer(resp)
         return answer
+
+    def _prepare_params(self) -> dict:
+        params = config.openai.params.copy()
+        if config.openai.azure:
+            params["api_type"] = "azure"
+            params["api_base"] = config.openai.azure["endpoint"]
+            params["api_version"] = config.openai.azure["version"]
+            params["deployment_id"] = config.openai.azure["deployment"]
+        return params
 
     def _generate_messages(self, question: str, history: list[tuple[str, str]]) -> list[dict]:
         """Builds message history to provide context for the language model."""
