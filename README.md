@@ -267,6 +267,15 @@ python3 -m venv env
 pip install -r requirements.txt
 ```
 
+Prepare the config and data directory:
+
+```
+cp config.example.yml config.yml
+mkdir ./data
+```
+
+Set tokens and other settings in `config.yml`.
+
 Run tests:
 
 ```
