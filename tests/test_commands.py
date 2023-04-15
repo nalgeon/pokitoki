@@ -149,14 +149,14 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertEqual(self.bot.text, "`gpt-3.5-turbo`")
 
     async def test_change(self):
-        config.save = lambda: None
+        commands.config.editor.save = lambda: None
         config.openai.model = "gpt-3.5-turbo"
         update = self._create_update(11, "/config openai.model gpt-4")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Changed the `openai.model` property"))
 
     async def test_not_changed(self):
-        config.save = lambda: None
+        commands.config.editor.save = lambda: None
         config.openai.model = "gpt-3.5-turbo"
         update = self._create_update(11, "/config openai.model gpt-3.5-turbo")
         await self.command(update, self.context)
@@ -165,7 +165,7 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         )
 
     async def test_delayed(self):
-        config.save = lambda: None
+        commands.config.editor.save = lambda: None
         config.conversation.depth = 3
         update = self._create_update(11, "/config conversation.depth 5")
         await self.command(update, self.context)

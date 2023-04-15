@@ -45,7 +45,7 @@ class ConfigCommand:
 
         # change config property (`/config {property} {new_value}`)
         new_value = " ".join(parts[2:])
-        has_changed, is_immediate = editor.set_value(property, new_value)
+        has_changed, is_immediate, new_val = editor.set_value(property, new_value)
 
         if not has_changed:
             text = f"✗ The `{property}` property already equals to `{new_value}`"
@@ -56,7 +56,7 @@ class ConfigCommand:
         if self._should_reload_filters(property):
             self.filters.reload()
 
-        text = f"✓ Changed the `{property}` property: `{value}` → `{new_value}`"
+        text = f"✓ Changed the `{property}` property: `{value}` → `{new_val}`"
         if not is_immediate:
             text += "\n❗️Restart the bot for changes to take effect."
         await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)

@@ -205,9 +205,10 @@ class ConfigEditor:
     def set_value(self, property: str, value: str) -> tuple[bool, bool]:
         """
         Changes a config property value.
-        Returns a tuple `(has_changed, is_immediate)`
-          - `has_changed` = True if the value has actually changed, False otherwise.
+        Returns a tuple `(has_changed, is_immediate, new_val)`
+          - `has_changed`  = True if the value has actually changed, False otherwise.
           - `is_immediate` = True if the change takes effect immediately, False otherwise.
+          - `new_val`        is the new value
         """
         try:
             val = yaml.safe_load(value)
@@ -216,18 +217,18 @@ class ConfigEditor:
 
         old_val = self.get_value(property)
         if val == old_val:
-            return False, False
+            return False, False, old_val
 
         if isinstance(old_val, list) and isinstance(val, str):
             # allow changing list properties by adding or removing individual items
             # e.g. /config telegram.usernames +bob
             # or   /config telegram.usernames -alice
             if val[0] == "+":
-                item = val[1:]
+                item = yaml.safe_load(val[1:])
                 val = old_val.copy()
                 val.append(item)
             elif val[0] == "-":
-                item = val[1:]
+                item = yaml.safe_load(val[1:])
                 val = old_val.copy()
                 val.remove(item)
 
@@ -254,13 +255,13 @@ class ConfigEditor:
         name = names[-1]
         if isinstance(obj, dict):
             obj[name] = val
-            return True, is_immediate
+            return True, is_immediate, val
 
         if isinstance(obj, object):
             if not hasattr(obj, name):
                 raise ValueError(f"No such property: {property}")
             setattr(obj, name, val)
-            return True, is_immediate
+            return True, is_immediate, val
 
         raise ValueError(f"Failed to set property: {property}")
 

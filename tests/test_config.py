@@ -125,6 +125,7 @@ class SetValueTest(unittest.TestCase):
             "shortcuts": {"translate": "Translate into English"},
         }
         self.editor = ConfigEditor(Config("config.test.yml", src))
+        self.editor.save = lambda: None
 
     def test_object(self):
         with self.assertRaises(ValueError):
@@ -207,27 +208,29 @@ class SetValueTest(unittest.TestCase):
             self.editor.set_value("imagine.enabled", '"users_only')
 
     def test_has_changed(self):
-        has_changed, _ = self.editor.set_value("imagine.enabled", "users_only")
+        has_changed, _, new_val = self.editor.set_value("imagine.enabled", "users_only")
         self.assertTrue(has_changed)
+        self.assertEqual(new_val, "users_only")
 
     def test_has_not_changed(self):
-        has_changed, _ = self.editor.set_value("imagine.enabled", "none")
+        has_changed, _, new_val = self.editor.set_value("imagine.enabled", "none")
         self.assertFalse(has_changed)
+        self.assertEqual(new_val, "none")
 
     def test_is_immediate_1(self):
-        _, is_immediate = self.editor.set_value("imagine.enabled", "users_only")
+        _, is_immediate, _ = self.editor.set_value("imagine.enabled", "users_only")
         self.assertTrue(is_immediate)
 
     def test_is_immediate_2(self):
-        _, is_immediate = self.editor.set_value("telegram.usernames", '["cindy", "dave"]')
+        _, is_immediate, _ = self.editor.set_value("telegram.usernames", '["cindy", "dave"]')
         self.assertTrue(is_immediate)
 
     def test_is_delayed_1(self):
-        _, is_immediate = self.editor.set_value("conversation.depth", "10")
+        _, is_immediate, _ = self.editor.set_value("conversation.depth", "10")
         self.assertFalse(is_immediate)
 
     def test_is_delayed_2(self):
-        _, is_immediate = self.editor.set_value("telegram.token", "tg-5678")
+        _, is_immediate, _ = self.editor.set_value("telegram.token", "tg-5678")
         self.assertFalse(is_immediate)
 
 
