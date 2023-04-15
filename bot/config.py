@@ -168,32 +168,6 @@ class Config:
     # Bot version.
     version = 153
 
-    # Readonly properties.
-    readonly = [
-        "schema_version",
-        "version",
-        "filename",
-    ]
-    # Changes made to these properties take effect immediately.
-    immediate = [
-        "telegram",
-        "openai",
-        "conversation",
-        "imagine",
-        "shortcuts",
-    ]
-    # Changes made to these properties take effect after a restart.
-    delayed = [
-        "telegram.token",
-        "openai.api_key",
-        "conversation.depth",
-        "persistence_path",
-    ]
-    # All editable properties.
-    editable = immediate + delayed
-    # All known properties.
-    known = readonly + immediate + delayed
-
     def __init__(self, filename: str, src: dict) -> None:
         # Config filename.
         self.filename = filename
@@ -230,13 +204,62 @@ class Config:
         # Custom AI commands (additional prompts).
         self.shortcuts = src.get("shortcuts") or {}
 
+    def as_dict(self) -> dict:
+        """Converts the config into a dictionary."""
+        return {
+            "schema_version": self.schema_version,
+            "telegram": dataclasses.asdict(self.telegram),
+            "openai": dataclasses.asdict(self.openai),
+            "conversation": dataclasses.asdict(self.conversation),
+            "imagine": dataclasses.asdict(self.imagine),
+            "persistence_path": self.persistence_path,
+            "shortcuts": self.shortcuts,
+        }
+
+
+class ConfigEditor:
+    """
+    Config properties editor.
+    Gets/sets config properties by their 'path',
+    e.g. 'openai.params.temperature' or 'conversation.depth'.
+    """
+
+    # These properties cannot be changed at all.
+    readonly = [
+        "schema_version",
+        "version",
+        "filename",
+    ]
+    # Changes made to these properties take effect immediately.
+    immediate = [
+        "telegram",
+        "openai",
+        "conversation",
+        "imagine",
+        "shortcuts",
+    ]
+    # Changes made to these properties take effect after a restart.
+    delayed = [
+        "telegram.token",
+        "openai.api_key",
+        "conversation.depth",
+        "persistence_path",
+    ]
+    # All editable properties.
+    editable = immediate + delayed
+    # All known properties.
+    known = readonly + immediate + delayed
+
+    def __init__(self, config: Config) -> None:
+        self.config = config
+
     def get_value(self, property: str) -> Any:
         """Returns a config property value."""
         names = property.split(".")
         if names[0] not in self.known:
             raise ValueError(f"No such property: {property}")
 
-        obj = self
+        obj = self.config
         for name in names[:-1]:
             if not hasattr(obj, name):
                 raise ValueError(f"No such property: {property}")
@@ -281,7 +304,7 @@ class Config:
 
         is_immediate = property not in self.delayed
 
-        obj = self
+        obj = self.config
         for name in names[:-1]:
             obj = getattr(obj, name, val)
 
@@ -300,16 +323,8 @@ class Config:
 
     def save(self) -> None:
         """Saves the config to disk."""
-        data = {
-            "schema_version": self.schema_version,
-            "telegram": dataclasses.asdict(self.telegram),
-            "openai": dataclasses.asdict(self.openai),
-            "conversation": dataclasses.asdict(self.conversation),
-            "imagine": dataclasses.asdict(self.imagine),
-            "persistence_path": self.persistence_path,
-            "shortcuts": self.shortcuts,
-        }
-        with open(self.filename, "w") as file:
+        data = self.config.as_dict()
+        with open(self.config.filename, "w") as file:
             yaml.safe_dump(data, file, indent=4, allow_unicode=True)
 
 

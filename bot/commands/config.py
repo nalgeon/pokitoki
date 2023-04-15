@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
 
-from bot.config import config
+from bot.config import config, ConfigEditor
 from bot.filters import Filters
 
 HELP_MESSAGE = """Syntax:
@@ -15,6 +15,8 @@ E.g. to view the property value:
 
 E.g. to change the property value:
 <code>/config openai.prompt You are an AI assistant</code>"""
+
+editor = ConfigEditor(config)
 
 
 class ConfigCommand:
@@ -33,7 +35,7 @@ class ConfigCommand:
             return
 
         property = parts[1]
-        value = config.get_value(property)
+        value = editor.get_value(property)
         value = value if value is not None else "(empty)"
 
         if len(parts) == 2:
@@ -43,14 +45,14 @@ class ConfigCommand:
 
         # change config property (`/config {property} {new_value}`)
         new_value = " ".join(parts[2:])
-        has_changed, is_immediate = config.set_value(property, new_value)
+        has_changed, is_immediate = editor.set_value(property, new_value)
 
         if not has_changed:
             text = f"✗ The `{property}` property already equals to `{new_value}`"
             await message.reply_text(text, parse_mode=ParseMode.MARKDOWN)
             return
 
-        config.save()
+        editor.save()
         if self._should_reload_filters(property):
             self.filters.reload()
 
