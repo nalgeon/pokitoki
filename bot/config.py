@@ -218,6 +218,13 @@ class ConfigEditor:
         if val == old_val:
             return False, False
 
+        old_cls = old_val.__class__
+        val_cls = val.__class__
+        if old_val is not None and old_cls != val_cls:
+            raise ValueError(
+                f"Property {property} should be of type {old_cls.__name__}, not {val_cls.__name__}"
+            )
+
         if not isinstance(val, (list, str, int, float, bool)):
             raise ValueError(f"Cannot set composite value for property: {property}")
 

@@ -159,6 +159,18 @@ class SetValueTest(unittest.TestCase):
         value = self.editor.get_value("openai.params.temperature")
         self.assertEqual(value, 0.5)
 
+    def test_invalid_type_1(self):
+        with self.assertRaises(ValueError):
+            self.editor.set_value("conversation.depth", "five")
+
+    def test_invalid_type_2(self):
+        with self.assertRaises(ValueError):
+            self.editor.set_value("telegram.usernames", "alice")
+
+    def test_invalid_type_3(self):
+        with self.assertRaises(ValueError):
+            self.editor.set_value("imagine", "no")
+
     def test_not_allowed(self):
         with self.assertRaises(ValueError):
             self.editor.set_value("__class__", "{}")
