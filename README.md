@@ -179,6 +179,7 @@ Use the `/config` command to change almost any setting on the fly, without resta
 -   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
 -   Enable or disable image generation (`imagine.enabled`).
 -   Add or change AI shortcuts (`shortcuts`).
+-   Change any other config property.
 
 To view a specific config property, put its name after `/config`:
 
@@ -201,13 +202,6 @@ When working with list properties like `telegram.usernames`, you can add or remo
 ```
 /config telegram.usernames +cindy
 /config telegram.usernames -bob
-```
-
-Changes made to the following settings only take effect after restarting the bot:
-
-```
-conversation.depth
-persistence_path
 ```
 
 The `/config` command is only available to admins - users listed in the `telegram.admins` property.
