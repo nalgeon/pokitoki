@@ -196,6 +196,13 @@ To change a specific config property, put its name and value after `/config`:
 /config imagine.enabled none
 ```
 
+When working with list properties like `telegram.usernames`, you can add or remove individual items instead of redefining the whole list:
+
+```
+/config telegram.usernames +cindy
+/config telegram.usernames -bob
+```
+
 Changes made to the following settings only take effect after restarting the bot:
 
 ```

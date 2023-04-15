@@ -218,6 +218,19 @@ class ConfigEditor:
         if val == old_val:
             return False, False
 
+        if isinstance(old_val, list) and isinstance(val, str):
+            # allow changing list properties by adding or removing individual items
+            # e.g. /config telegram.usernames +bob
+            # or   /config telegram.usernames -alice
+            if val[0] == "+":
+                item = val[1:]
+                val = old_val.copy()
+                val.append(item)
+            elif val[0] == "-":
+                item = val[1:]
+                val = old_val.copy()
+                val.remove(item)
+
         old_cls = old_val.__class__
         val_cls = val.__class__
         if old_val is not None and old_cls != val_cls:

@@ -116,7 +116,7 @@ class SetValueTest(unittest.TestCase):
         src = {
             "telegram": {
                 "token": "tg-1234",
-                "usernames": ["nalgeon"],
+                "usernames": ["alice", "bob"],
                 "admins": ["botfather"],
             },
             "openai": {"api_key": "oa-1234", "model": "gpt-4"},
@@ -128,7 +128,7 @@ class SetValueTest(unittest.TestCase):
 
     def test_object(self):
         with self.assertRaises(ValueError):
-            self.editor.set_value("telegram", '{"token": "tg-1234", "usernames": ["nalgeon"]}')
+            self.editor.set_value("telegram", '{"token": "tg-1234", "usernames": ["alice"]}')
 
     def test_object_attr(self):
         self.editor.set_value("telegram.token", "tg-5678")
@@ -136,9 +136,19 @@ class SetValueTest(unittest.TestCase):
         self.assertEqual(value, "tg-5678")
 
     def test_list(self):
-        self.editor.set_value("telegram.usernames", '["alice", "bob"]')
+        self.editor.set_value("telegram.usernames", '["cindy", "dave"]')
         value = self.editor.get_value("telegram.usernames")
-        self.assertEqual(value, ["alice", "bob"])
+        self.assertEqual(value, ["cindy", "dave"])
+
+    def test_list_add(self):
+        self.editor.set_value("telegram.usernames", "+cindy")
+        value = self.editor.get_value("telegram.usernames")
+        self.assertEqual(value, ["alice", "bob", "cindy"])
+
+    def test_list_remove(self):
+        self.editor.set_value("telegram.usernames", "-bob")
+        value = self.editor.get_value("telegram.usernames")
+        self.assertEqual(value, ["alice"])
 
     def test_dict(self):
         with self.assertRaises(ValueError):
@@ -209,7 +219,7 @@ class SetValueTest(unittest.TestCase):
         self.assertTrue(is_immediate)
 
     def test_is_immediate_2(self):
-        _, is_immediate = self.editor.set_value("telegram.usernames", '["alice", "bob"]')
+        _, is_immediate = self.editor.set_value("telegram.usernames", '["cindy", "dave"]')
         self.assertTrue(is_immediate)
 
     def test_is_delayed_1(self):
