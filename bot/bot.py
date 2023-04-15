@@ -115,6 +115,7 @@ def with_message_limit(func):
         if (
             not filters.is_known_user(username)
             and user.message_counter.value >= config.conversation.message_limit.count > 0
+            and not user.message_counter.is_expired()
         ):
             # this is a group user and they have exceeded the message limit
             wait_for = models.format_timedelta(user.message_counter.expires_after())

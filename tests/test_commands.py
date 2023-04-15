@@ -350,7 +350,7 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertEqual(self.bot.text, "")
 
 
-class UserMessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
+class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
         askers.TextAsker.model = self.ai
@@ -387,6 +387,22 @@ class UserMessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(12, text="Where are you from?", user=other_user)
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("Please wait"))
+
+    async def test_expired(self):
+        config.conversation.message_limit.count = 3
+
+        user = User(id=2, first_name="Bob", is_bot=False, username="bob")
+        # the counter has reached the limit, but the value has expired
+        user_data = {
+            "message_counter": {"value": 3, "timestamp": dt.datetime.now() - dt.timedelta(hours=1)}
+        }
+        self.application.user_data[user.id] = user_data
+        context = CallbackContext(self.application, chat_id=1, user_id=user.id)
+
+        update = self._create_update(11, text="What is your name?", user=user)
+        await self.command(update, context)
+        self.assertEqual(self.bot.text, "What is your name?")
+        self.assertEqual(user_data["message_counter"]["value"], 1)
 
     async def test_unlimited(self):
         config.conversation.message_limit.count = 0
