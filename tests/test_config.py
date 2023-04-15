@@ -1,5 +1,5 @@
 import unittest
-from bot.config import Config, ConfigEditor
+from bot.config import Config, ConfigEditor, SchemaMigrator
 
 
 class ConfigTest(unittest.TestCase):
@@ -207,3 +207,93 @@ class SetValueTest(unittest.TestCase):
     def test_is_delayed_2(self):
         _, is_immediate = self.editor.set_value("telegram.token", "tg-5678")
         self.assertFalse(is_immediate)
+
+
+class MigrateTest(unittest.TestCase):
+    def test_migrate_v1(self):
+        old = {
+            "telegram_token": "tg-1234",
+            "telegram_usernames": ["alice"],
+            "telegram_chat_ids": [-100500],
+            "openai_api_key": "oa-1234",
+            "openai_model": "gpt-3.5-turbo",
+            "persistence_path": "./data/persistence.pkl",
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 4,
+                "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+                "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "conversation": {"depth": 3},
+                "imagine": {"enabled": "users_only"},
+                "persistence_path": "./data/persistence.pkl",
+                "shortcuts": None,
+            },
+        )
+
+    def test_migrate_v2(self):
+        old = {
+            "schema_version": 2,
+            "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+            "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+            "max_history_depth": 5,
+            "imagine": False,
+            "persistence_path": "./data/persistence.pkl",
+            "shortcuts": {"bugfix": "Fix bugs"},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 4,
+                "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+                "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "conversation": {"depth": 5},
+                "imagine": {"enabled": "none"},
+                "persistence_path": "./data/persistence.pkl",
+                "shortcuts": {"bugfix": "Fix bugs"},
+            },
+        )
+
+    def test_migrate_v3(self):
+        old = {
+            "schema_version": 3,
+            "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+            "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+            "conversation": {"depth": 5},
+            "imagine": True,
+            "persistence_path": "./data/persistence.pkl",
+            "shortcuts": {"bugfix": "Fix bugs"},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 4,
+                "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+                "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "conversation": {"depth": 5},
+                "imagine": {"enabled": "users_only"},
+                "persistence_path": "./data/persistence.pkl",
+                "shortcuts": {"bugfix": "Fix bugs"},
+            },
+        )
+
+    def test_not_changed(self):
+        old = {
+            "schema_version": 4,
+            "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+            "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+            "conversation": {"depth": 5},
+            "imagine": {"enabled": "users_only"},
+            "persistence_path": "./data/persistence.pkl",
+            "shortcuts": {"bugfix": "Fix bugs"},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertFalse(has_changed)
+        self.assertEqual(migrated, old)

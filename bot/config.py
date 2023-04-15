@@ -7,83 +7,6 @@ import dataclasses
 from dataclasses import dataclass
 
 
-def load(filename) -> dict:
-    """Loads the cofiguration from a file."""
-    with open(filename, "r") as f:
-        config = yaml.safe_load(f)
-
-    config, has_changed = migrate(config)
-    if has_changed:
-        with open(filename, "w") as f:
-            yaml.safe_dump(config, f, indent=4, allow_unicode=True)
-    return config
-
-
-def migrate(config: dict) -> tuple[dict, bool]:
-    """Migrates the configuration to the latest schema version."""
-    has_changed = False
-    if config.get("schema_version", 1) == 1:
-        config = _migrate_v1(config)
-        has_changed = True
-    if config["schema_version"] == 2:
-        config = _migrate_v2(config)
-        has_changed = True
-    if config["schema_version"] == 3:
-        config = _migrate_v3(config)
-        has_changed = True
-    return config, has_changed
-
-
-def _migrate_v1(old: dict) -> dict:
-    config = {
-        "schema_version": 2,
-        "telegram": None,
-        "openai": None,
-        "max_history_depth": old.get("max_history_depth"),
-        "imagine": old.get("imagine"),
-        "persistence_path": old.get("persistence_path"),
-        "shortcuts": old.get("shortcuts"),
-    }
-    config["telegram"] = {
-        "token": old["telegram_token"],
-        "usernames": old.get("telegram_usernames"),
-        "chat_ids": old.get("telegram_chat_ids"),
-    }
-    config["openai"] = {
-        "api_key": old["openai_api_key"],
-        "model": old.get("openai_model"),
-    }
-    return config
-
-
-def _migrate_v2(old: dict) -> dict:
-    config = {
-        "schema_version": 3,
-        "telegram": old["telegram"],
-        "openai": old["openai"],
-        "imagine": old.get("imagine"),
-        "persistence_path": old.get("persistence_path"),
-        "shortcuts": old.get("shortcuts"),
-    }
-    config["conversation"] = {"depth": old.get("max_history_depth")}
-    return config
-
-
-def _migrate_v3(old: dict) -> dict:
-    config = {
-        "schema_version": 4,
-        "telegram": old["telegram"],
-        "openai": old["openai"],
-        "conversation": old["conversation"],
-        "persistence_path": old.get("persistence_path"),
-        "shortcuts": old.get("shortcuts"),
-    }
-    imagine_enabled = old.get("imagine")
-    imagine_enabled = True if imagine_enabled is None else imagine_enabled
-    config["imagine"] = {"enabled": "users_only" if imagine_enabled else "none"}
-    return config
-
-
 @dataclass
 class Telegram:
     token: str
@@ -326,6 +249,86 @@ class ConfigEditor:
         data = self.config.as_dict()
         with open(self.config.filename, "w") as file:
             yaml.safe_dump(data, file, indent=4, allow_unicode=True)
+
+
+class SchemaMigrator:
+    """Migrates the configuration data dictionary according to the schema version."""
+
+    @classmethod
+    def migrate(cls, data: dict) -> tuple[dict, bool]:
+        """Migrates the configuration to the latest schema version."""
+        has_changed = False
+        if data.get("schema_version", 1) == 1:
+            data = cls._migrate_v1(data)
+            has_changed = True
+        if data["schema_version"] == 2:
+            data = cls._migrate_v2(data)
+            has_changed = True
+        if data["schema_version"] == 3:
+            data = cls._migrate_v3(data)
+            has_changed = True
+        return data, has_changed
+
+    @classmethod
+    def _migrate_v1(cls, old: dict) -> dict:
+        data = {
+            "schema_version": 2,
+            "telegram": None,
+            "openai": None,
+            "max_history_depth": old.get("max_history_depth"),
+            "imagine": old.get("imagine"),
+            "persistence_path": old.get("persistence_path"),
+            "shortcuts": old.get("shortcuts"),
+        }
+        data["telegram"] = {
+            "token": old["telegram_token"],
+            "usernames": old.get("telegram_usernames"),
+            "chat_ids": old.get("telegram_chat_ids"),
+        }
+        data["openai"] = {
+            "api_key": old["openai_api_key"],
+            "model": old.get("openai_model"),
+        }
+        return data
+
+    @classmethod
+    def _migrate_v2(cls, old: dict) -> dict:
+        data = {
+            "schema_version": 3,
+            "telegram": old["telegram"],
+            "openai": old["openai"],
+            "imagine": old.get("imagine"),
+            "persistence_path": old.get("persistence_path"),
+            "shortcuts": old.get("shortcuts"),
+        }
+        data["conversation"] = {"depth": old.get("max_history_depth") or Conversation.default_depth}
+        return data
+
+    def _migrate_v3(old: dict) -> dict:
+        data = {
+            "schema_version": 4,
+            "telegram": old["telegram"],
+            "openai": old["openai"],
+            "conversation": old["conversation"],
+            "persistence_path": old.get("persistence_path"),
+            "shortcuts": old.get("shortcuts"),
+        }
+        imagine_enabled = old.get("imagine")
+        imagine_enabled = True if imagine_enabled is None else imagine_enabled
+        data["imagine"] = {"enabled": "users_only" if imagine_enabled else "none"}
+        return data
+
+
+def load(filename) -> dict:
+    """Loads the configuration data dictionary from a file."""
+    with open(filename, "r") as f:
+        data = yaml.safe_load(f)
+
+    data, has_changed = SchemaMigrator.migrate(data)
+    if has_changed:
+        with open(filename, "w") as f:
+            yaml.safe_dump(data, f, indent=4, allow_unicode=True)
+    return data
 
 
 filename = os.getenv("CONFIG", "config.yml")
