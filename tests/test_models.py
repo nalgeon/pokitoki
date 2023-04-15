@@ -35,16 +35,16 @@ class UserDataTest(unittest.TestCase):
 
 class UserMessagesTest(unittest.TestCase):
     def test_init(self):
-        um = UserMessages({})
+        um = UserMessages({}, maxlen=config.conversation.depth)
         self.assertIsInstance(um.messages, deque)
         self.assertEqual(um.messages.maxlen, config.conversation.depth)
 
         data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data)
+        um = UserMessages(data, maxlen=3)
         self.assertEqual(um.messages, data["messages"])
 
     def test_last(self):
-        um = UserMessages({})
+        um = UserMessages({}, maxlen=3)
         self.assertIsNone(um.last)
 
         data = {
@@ -52,12 +52,12 @@ class UserMessagesTest(unittest.TestCase):
                 [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]
             )
         }
-        um = UserMessages(data)
+        um = UserMessages(data, maxlen=3)
         self.assertEqual(um.last, ("Is it cold today?", "Yep!"))
 
     def test_add(self):
         data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data)
+        um = UserMessages(data, maxlen=3)
         um.add("Is it cold today?", "Yep!")
         self.assertEqual(
             um.messages,
@@ -66,7 +66,7 @@ class UserMessagesTest(unittest.TestCase):
 
     def test_pop(self):
         data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data)
+        um = UserMessages(data, maxlen=3)
         message = um.pop()
         self.assertEqual(message.question, "Hello")
         self.assertEqual(message.answer, "Hi")
@@ -76,7 +76,7 @@ class UserMessagesTest(unittest.TestCase):
 
     def test_clear(self):
         data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data)
+        um = UserMessages(data, maxlen=3)
         um.clear()
         self.assertEqual(len(um.messages), 0)
 
@@ -86,7 +86,7 @@ class UserMessagesTest(unittest.TestCase):
                 [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]
             )
         }
-        um = UserMessages(data)
+        um = UserMessages(data, maxlen=3)
         self.assertEqual(um.as_list(), [("Hello", "Hi"), ("Is it cold today?", "Yep!")])
 
 

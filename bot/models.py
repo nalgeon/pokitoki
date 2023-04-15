@@ -14,7 +14,7 @@ class UserData:
     def __init__(self, data: Mapping):
         # data should be a 'user data' mapping from the chat context
         self.data = data
-        self.messages = UserMessages(data)
+        self.messages = UserMessages(data, maxlen=config.conversation.depth)
         period = parse_period(value=1, period=config.conversation.message_limit.period)
         message_count = TimestampedValue(data, name="message_counter", initial=0)
         self.message_counter = ExpiringCounter(message_count, period=period)
@@ -30,9 +30,10 @@ class UserMessage(NamedTuple):
 class UserMessages:
     """Represents user message history."""
 
-    def __init__(self, data: Mapping) -> None:
-        if "messages" not in data:
-            data["messages"] = deque([], config.conversation.depth)
+    def __init__(self, data: Mapping, maxlen: int) -> None:
+        messages = data.get("messages") or []
+        data["messages"] = deque(messages, maxlen)
+        self.data = data
         self.messages = data["messages"]
 
     @property

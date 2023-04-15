@@ -155,6 +155,16 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Changed the `openai.model` property"))
 
+    async def test_conversation_depth(self):
+        commands.config.editor.save = lambda: None
+        config.conversation.depth = 3
+        user = models.UserData(self.context.user_data)
+        assert user.messages.messages.maxlen == 3
+        update = self._create_update(11, "/config conversation.depth 5")
+        await self.command(update, self.context)
+        user = models.UserData(self.context.user_data)
+        self.assertEqual(user.messages.messages.maxlen, 5)
+
     async def test_not_changed(self):
         commands.config.editor.save = lambda: None
         config.openai.model = "gpt-3.5-turbo"
@@ -166,8 +176,8 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_delayed(self):
         commands.config.editor.save = lambda: None
-        config.conversation.depth = 3
-        update = self._create_update(11, "/config conversation.depth 5")
+        config.persistence_path = "./data/persistence.pkl"
+        update = self._create_update(11, "/config persistence_path /tmp/data.pkl")
         await self.command(update, self.context)
         self.assertTrue("Restart the bot" in self.bot.text)
 

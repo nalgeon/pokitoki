@@ -165,7 +165,6 @@ class ConfigEditor:
     delayed = [
         "telegram.token",
         "openai.api_key",
-        "conversation.depth",
         "persistence_path",
     ]
     # All editable properties.

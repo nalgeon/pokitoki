@@ -225,11 +225,7 @@ class SetValueTest(unittest.TestCase):
         _, is_immediate, _ = self.editor.set_value("telegram.usernames", '["cindy", "dave"]')
         self.assertTrue(is_immediate)
 
-    def test_is_delayed_1(self):
-        _, is_immediate, _ = self.editor.set_value("conversation.depth", "10")
-        self.assertFalse(is_immediate)
-
-    def test_is_delayed_2(self):
+    def test_is_delayed(self):
         _, is_immediate, _ = self.editor.set_value("telegram.token", "tg-5678")
         self.assertFalse(is_immediate)
 
