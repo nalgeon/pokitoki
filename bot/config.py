@@ -89,7 +89,7 @@ class Config:
     # Config schema version. Increments for backward-incompatible changes.
     schema_version = 4
     # Bot version.
-    version = 153
+    version = 165
 
     def __init__(self, filename: str, src: dict) -> None:
         # Config filename.
