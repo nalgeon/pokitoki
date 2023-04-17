@@ -162,9 +162,8 @@ async def _ask_question(
     message: Message, context: CallbackContext, question: str, asker: askers.Asker
 ) -> str:
     """Answers a question using the OpenAI model."""
-    logger.info(
-        f"-> question id={message.id}, user={message.from_user.username}, n_chars={len(question)}"
-    )
+    user_id = message.from_user.username or message.from_user.id
+    logger.info(f"-> question id={message.id}, user={user_id}, n_chars={len(question)}")
 
     question, is_follow_up = questions.prepare(question)
     question = await fetcher.substitute_urls(question)
@@ -186,7 +185,7 @@ async def _ask_question(
     elapsed = int((time.perf_counter_ns() - start) / 1e6)
 
     logger.info(
-        f"<- answer id={message.id}, user={message.from_user.username}, "
+        f"<- answer id={message.id}, user={user_id}, "
         f"n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
     )
     return answer
