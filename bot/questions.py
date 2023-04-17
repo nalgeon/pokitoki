@@ -34,7 +34,9 @@ def extract_group(message: Message, context: CallbackContext) -> tuple[str, Mess
     # so remove the mention to get the question
     question = message.text.removeprefix(context.bot.name).strip()
 
-    if message.reply_to_message:
+    # messages in topics are technically replies to the 'topic created' message
+    # so we should ignore such replies
+    if message.reply_to_message and not message.reply_to_message.forum_topic_created:
         # the real question is in the original message
         question = (
             f"{question}: {message.reply_to_message.text}"
