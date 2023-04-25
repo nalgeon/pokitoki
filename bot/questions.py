@@ -1,6 +1,6 @@
 """Extracts questions from chat messages."""
 
-from telegram import Message
+from telegram import Message, MessageEntity
 from telegram.ext import CallbackContext
 from bot import shortcuts
 
@@ -25,14 +25,25 @@ def extract_group(message: Message, context: CallbackContext) -> tuple[str, Mess
         question = f"+ {message.text}"
         return question, message
 
-    elif not message.text.startswith(context.bot.name):
+    mention = (
+        message.entities[0]
+        if message.entities and message.entities[0].type == MessageEntity.MENTION
+        else None
+    )
+    if not mention:
         # the message is not a reply to the bot,
         # so ignore it unless it's mentioning the bot
         return "", message
 
+    mention_text = message.text[mention.offset : mention.offset + mention.length]
+    if mention_text.lower() != context.bot.name.lower():
+        # the message mentions someone else
+        return "", message
+
     # the message is mentioning the bot,
     # so remove the mention to get the question
-    question = message.text.removeprefix(context.bot.name).strip()
+    question = message.text[: mention.offset] + message.text[mention.offset + mention.length :]
+    question = question.strip()
 
     # messages in topics are technically replies to the 'topic created' message
     # so we should ignore such replies

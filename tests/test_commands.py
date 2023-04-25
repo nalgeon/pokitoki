@@ -1,6 +1,6 @@
 import datetime as dt
 import unittest
-from telegram import Chat, Message, Update, User
+from telegram import Chat, Message, MessageEntity, Update, User
 from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 from telegram.ext import filters as tg_filters
@@ -340,7 +340,8 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.usernames = ["alice"]
 
     async def test_message(self):
-        update = self._create_update(11, text="@bot What is your name?")
+        mention = MessageEntity(type=MessageEntity.MENTION, offset=0, length=4)
+        update = self._create_update(11, text="@bot What is your name?", entities=(mention,))
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 

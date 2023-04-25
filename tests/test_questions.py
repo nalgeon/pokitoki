@@ -1,6 +1,6 @@
 import datetime as dt
 import unittest
-from telegram import Chat, Message, User
+from telegram import Chat, Message, MessageEntity, User
 from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 
@@ -101,10 +101,47 @@ class ExtractGroupTest(unittest.TestCase):
             date=dt.datetime.now(),
             chat=self.chat,
             text="@bot How are you?",
+            entities=(MessageEntity(type=MessageEntity.MENTION, offset=0, length=4),),
             reply_to_message=None,
         )
         result = questions.extract_group(message, self.context)
         self.assertEqual(result, ("How are you?", message))
+
+    def test_mention_case_insensitive(self):
+        message = Message(
+            message_id=11,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text="@Bot How are you?",
+            entities=(MessageEntity(type=MessageEntity.MENTION, offset=0, length=4),),
+            reply_to_message=None,
+        )
+        result = questions.extract_group(message, self.context)
+        self.assertEqual(result, ("How are you?", message))
+
+    def test_mention_in_the_middle(self):
+        message = Message(
+            message_id=11,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text="How are you @bot?",
+            entities=(MessageEntity(type=MessageEntity.MENTION, offset=12, length=4),),
+            reply_to_message=None,
+        )
+        result = questions.extract_group(message, self.context)
+        self.assertEqual(result, ("How are you ?", message))
+
+    def test_mention_other_user(self):
+        message = Message(
+            message_id=11,
+            date=dt.datetime.now(),
+            chat=self.chat,
+            text="@bob How are you?",
+            entities=(MessageEntity(type=MessageEntity.MENTION, offset=0, length=4),),
+            reply_to_message=None,
+        )
+        result = questions.extract_group(message, self.context)
+        self.assertEqual(result, ("", message))
 
     def test_mention_in_reply(self):
         original = Message(
@@ -119,6 +156,7 @@ class ExtractGroupTest(unittest.TestCase):
             date=dt.datetime.now(),
             chat=self.chat,
             text="@bot help",
+            entities=(MessageEntity(type=MessageEntity.MENTION, offset=0, length=4),),
             reply_to_message=original,
         )
         result = questions.extract_group(message, self.context)
