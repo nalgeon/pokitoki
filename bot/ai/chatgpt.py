@@ -10,15 +10,6 @@ logger = logging.getLogger(__name__)
 openai.api_key = config.openai.api_key
 encoding = tiktoken.get_encoding("cl100k_base")
 
-# OpenAI counts length in tokens, not charactes.
-# We also leave some tokens reserved for the output.
-MAX_LENGTHS = {
-    # max 4096 tokens total, max 3072 for the input
-    "gpt-3.5-turbo": int(3 * 1024),
-    # max 8192 tokens total, max 7168 for the input
-    "gpt-4": int(7 * 1024),
-}
-
 
 class Model:
     """OpenAI API wrapper."""
@@ -26,12 +17,13 @@ class Model:
     def __init__(self, name: str) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
-        self.maxlen = MAX_LENGTHS[name]
 
     async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
+        # maximum number of input tokens
+        n_input = _calc_n_input(self.name, n_output=config.openai.params["max_tokens"])
         messages = self._generate_messages(question, history)
-        messages = shorten(messages, length=self.maxlen)
+        messages = shorten(messages, length=n_input)
         params = self._prepare_params()
         resp = await openai.ChatCompletion.acreate(
             model=self.name,
@@ -104,3 +96,16 @@ def shorten(messages: list[dict], length: int) -> list[dict]:
     tokens = tokens[:maxlen]
     messages[1]["content"] = encoding.decode(tokens)
     return messages
+
+
+def _calc_n_input(name: str, n_output: int) -> int:
+    """
+    Calculates the maximum number of input tokens
+    according to the model and the maximum number of output tokens.
+    """
+    # OpenAI counts length in tokens, not charactes.
+    # We need to leave some tokens reserved for the output.
+    n_total = 4096  # max 4096 tokens total by default
+    if name == "gpt-4":
+        n_total = 8192
+    return n_total - n_output
