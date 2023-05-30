@@ -48,3 +48,11 @@ class Test(unittest.TestCase):
     def test_to_html(self):
         text = markdown.to_html(TEXT_MD)
         self.assertEqual(text, TEXT_HTML)
+
+    def test_ticks(self):
+        text = markdown.to_html("one `two` three")
+        self.assertEqual(text, "one <code>two</code> three")
+        text = markdown.to_html("one `two three")
+        self.assertEqual(text, "one `two three")
+        text = markdown.to_html("one `two\n` three")
+        self.assertEqual(text, "one `two\n` three")

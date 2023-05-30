@@ -2,7 +2,7 @@
 
 import re
 
-code_re = re.compile(r"`([^`]+)`")
+code_re = re.compile(r"`([^`\n]+)`")
 pre_re = re.compile(r"^```\w*$(.+?)^```$", re.MULTILINE | re.DOTALL)
 
 
