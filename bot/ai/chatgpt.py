@@ -1,6 +1,7 @@
 """ChatGPT (GPT-3.5+) language model from OpenAI."""
 
 import logging
+from typing import Optional
 from openai import AsyncAzureOpenAI, AsyncOpenAI
 import tiktoken
 from bot.config import config
@@ -33,25 +34,26 @@ MODELS = {
 class Model:
     """OpenAI API wrapper."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: Optional[str]=None) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
 
     async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
         # maximum number of input tokens
-        n_input = _calc_n_input(self.name, n_output=config.openai.params["max_tokens"])
+        model = self.name or config.openai.model
+        n_input = _calc_n_input(model, n_output=config.openai.params["max_tokens"])
         messages = self._generate_messages(question, history)
         messages = shorten(messages, length=n_input)
         params = config.openai.params
         logger.debug(
             f"> chat request: model=%s, params=%s, messages=%s",
-            self.name,
+            model,
             params,
             messages,
         )
         resp = await openai.chat.completions.create(
-            model=self.name,
+            model=model,
             messages=messages,
             **params,
         )

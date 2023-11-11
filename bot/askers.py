@@ -34,7 +34,7 @@ class Asker:
 class TextAsker(Asker):
     """Works with chat completion AI."""
 
-    model = ai.chatgpt.Model(config.openai.model)
+    model = ai.chatgpt.Model()
 
     async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
         """Asks AI a question."""
