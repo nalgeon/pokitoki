@@ -100,17 +100,15 @@ You can add your own shortcuts. See `config.example.yml` for details.
 
 ## Image generation
 
-Use the `/imagine` command to generate an image using the DALL-E 2 model from OpenAI:
+Use the `/imagine` command to generate an image using the DALL-E 3 model from OpenAI:
 
 <img src="docs/chat-11.jpg" alt="Generated image" width="400">
 
-The default image size is 512×512 px. Other supported sizes are 256×256 and 1024×1024:
+The default image size is 1024×1024 px. Other supported sizes are 1792×1024 and 1024×1792:
 
-> /imagine a lazy cat on a sunny day 256x256
->
-> /imagine a lazy cat on a sunny day 1024px
+> /imagine a lazy cat on a sunny day 1792×1024
 
-Image generation is quite pricey ($0.016-$0.020 per image). By default it's only enabled for users listed in `telegram.usernames`, not for group members. You can change this with the `imagine.enabled` config property.
+Image generation is quite pricey. By default it's only enabled for users listed in `telegram.usernames`, not for group members. You can change this with the `imagine.enabled` config property.
 
 ## Other useful features
 
