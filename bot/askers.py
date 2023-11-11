@@ -24,7 +24,9 @@ class Asker:
         """Asks AI a question."""
         pass
 
-    async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
+    async def reply(
+        self, message: Message, context: CallbackContext, answer: str
+    ) -> None:
         """Replies with an answer from AI."""
         pass
 
@@ -38,7 +40,9 @@ class TextAsker(Asker):
         """Asks AI a question."""
         return await self.model.ask(question, history)
 
-    async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
+    async def reply(
+        self, message: Message, context: CallbackContext, answer: str
+    ) -> None:
         """Replies with an answer from AI."""
         html_answer = markdown.to_html(answer)
         if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
@@ -47,7 +51,8 @@ class TextAsker(Asker):
 
         doc = io.StringIO(answer)
         caption = (
-            textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"
+            textwrap.shorten(answer, width=40, placeholder="...")
+            + " (see attachment for the rest)"
         )
         reply_to_message_id = message.id if message.chat.type != Chat.PRIVATE else None
         await context.bot.send_document(
@@ -64,8 +69,13 @@ class ImagineAsker(Asker):
 
     model = ai.dalle.Model()
     size_re = re.compile(r"(256|512|1024)(?:x\1)?\s?(?:px)?")
-    sizes = {"256": "256x256", "512": "512x512", "1024": "1024x1024"}
-    default_size = "512x512"
+    sizes = {
+        "256": "256x256",
+        "512": "512x512",
+        "1024": "1024x1024",
+        "1792": "1792x1024",
+    }
+    default_size = "1024x1024"
 
     def __init__(self) -> None:
         self.caption = ""
@@ -76,7 +86,9 @@ class ImagineAsker(Asker):
         self.caption = self._extract_caption(question)
         return await self.model.imagine(prompt=self.caption, size=size)
 
-    async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
+    async def reply(
+        self, message: Message, context: CallbackContext, answer: str
+    ) -> None:
         """Replies with an answer from AI."""
         await message.reply_photo(answer, caption=self.caption)
 
@@ -85,7 +97,7 @@ class ImagineAsker(Asker):
         if not match:
             return self.default_size
         width = match.group(1)
-        return self.sizes[width]
+        return self.sizes.get(width, width)
 
     def _extract_caption(self, question: str) -> str:
         caption = self.size_re.sub("", question).strip()

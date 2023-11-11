@@ -28,6 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("bot.ai.chatgpt").setLevel(logging.INFO)
 logging.getLogger("bot.commands").setLevel(logging.INFO)
@@ -65,24 +66,36 @@ def add_handlers(application: Application):
 
     # info commands
     application.add_handler(CommandHandler("start", commands.Start()))
-    application.add_handler(CommandHandler("help", commands.Help(), filters=filters.users))
-    application.add_handler(CommandHandler("version", commands.Version(), filters=filters.users))
+    application.add_handler(
+        CommandHandler("help", commands.Help(), filters=filters.users)
+    )
+    application.add_handler(
+        CommandHandler("version", commands.Version(), filters=filters.users)
+    )
 
     # admin commands
     application.add_handler(
-        CommandHandler("config", commands.Config(filters), filters=filters.admins_private)
+        CommandHandler(
+            "config", commands.Config(filters), filters=filters.admins_private
+        )
     )
 
     # message-related commands
     application.add_handler(
-        CommandHandler("retry", commands.Retry(reply_to), filters=filters.users_or_chats)
+        CommandHandler(
+            "retry", commands.Retry(reply_to), filters=filters.users_or_chats
+        )
     )
     application.add_handler(
-        CommandHandler("imagine", commands.Imagine(reply_to), filters=filters.users_or_chats)
+        CommandHandler(
+            "imagine", commands.Imagine(reply_to), filters=filters.users_or_chats
+        )
     )
 
     # non-command handler: the default action is to reply to a message
-    application.add_handler(MessageHandler(filters.messages, commands.Message(reply_to)))
+    application.add_handler(
+        MessageHandler(filters.messages, commands.Message(reply_to))
+    )
 
     # generic error handler
     application.add_error_handler(commands.Error())
@@ -108,19 +121,25 @@ async def post_shutdown(application: Application) -> None:
 def with_message_limit(func):
     """Refuses to reply if the user has exceeded the message limit."""
 
-    async def wrapper(message: Message, context: CallbackContext, question: str) -> None:
+    async def wrapper(
+        message: Message, context: CallbackContext, question: str
+    ) -> None:
         username = message.from_user.username
         user = UserData(context.user_data)
 
         # check if the message counter exceeds the message limit
         if (
             not filters.is_known_user(username)
-            and user.message_counter.value >= config.conversation.message_limit.count > 0
+            and user.message_counter.value
+            >= config.conversation.message_limit.count
+            > 0
             and not user.message_counter.is_expired()
         ):
             # this is a group user and they have exceeded the message limit
             wait_for = models.format_timedelta(user.message_counter.expires_after())
-            await message.reply_text(f"Please wait {wait_for} before asking a new question.")
+            await message.reply_text(
+                f"Please wait {wait_for} before asking a new question."
+            )
             return
 
         # this is a known user or they have not exceeded the message limit,
@@ -137,7 +156,9 @@ def with_message_limit(func):
 @with_message_limit
 async def reply_to(message: Message, context: CallbackContext, question: str) -> None:
     """Replies to a specific question."""
-    await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
+    await message.chat.send_action(
+        action="typing", message_thread_id=message.message_thread_id
+    )
 
     try:
         asker = askers.create(question)

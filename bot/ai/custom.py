@@ -1,10 +1,10 @@
 """Fine-tuned language model from OpenAI."""
 
 import re
-import openai
+from openai import AsyncOpenAI
 from bot.config import config
 
-openai.api_key = config.openai.api_key
+openai = AsyncOpenAI(api_key=config.openai.api_key)
 
 DEFAULT_STOP = "###"
 PRE_RE = re.compile(r"&lt;(/?pre)")
@@ -29,7 +29,7 @@ class Model:
         try:
             history = history or []
             prompt = self._generate_prompt(question, history)
-            resp = await openai.Completion.acreate(
+            resp = await openai.completions.create(
                 model=self.name,
                 prompt=prompt,
                 temperature=0.7,

@@ -57,7 +57,7 @@ class ImagineAskerTest(unittest.IsolatedAsyncioTestCase):
         size = asker._extract_size(question="a cat 256px")
         self.assertEqual(size, "256x256")
         size = asker._extract_size(question="a cat 384")
-        self.assertEqual(size, "512x512")
+        self.assertEqual(size, "1024x1024")
 
     def test_extract_caption(self):
         asker = ImagineAsker()

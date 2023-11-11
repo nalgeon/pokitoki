@@ -1,10 +1,10 @@
 """DaVinci (GPT-3) language model from OpenAI."""
 
 import re
-import openai
+from openai import AsyncOpenAI
 from bot.config import config
 
-openai.api_key = config.openai.api_key
+openai = AsyncOpenAI(api_key=config.openai.api_key)
 
 BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses. Write code inside <pre>, </pre> tags."
 
@@ -18,7 +18,7 @@ class Model:
         """Asks the language model a question and returns an answer."""
         history = history or []
         prompt = self._generate_prompt(question, history)
-        resp = await openai.Completion.acreate(
+        resp = await openai.completions.create(
             model="text-davinci-003",
             prompt=prompt,
             temperature=0.7,
