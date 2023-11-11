@@ -25,12 +25,12 @@ openai:
     # OpenAI API key.
     api_key: ""
 
-    # OpenAI model name. One of the following:
-    # gpt-3.5-turbo | gpt-4
+    # OpenAI model name.
+    # See https://platform.openai.com/docs/models for description.
     model: "gpt-3.5-turbo"
 
     # Model prompt.
-    prompt: "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
+    prompt: "You are an AI assistant."
 
     # Model parameters.
     # See https://platform.openai.com/docs/api-reference/chat/create for description.
