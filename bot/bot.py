@@ -196,15 +196,22 @@ async def _ask_question(
     logger.debug(f"Prepared question: {question}")
 
     user = UserData(context.user_data)
-    if is_follow_up:
-        # this is a follow-up question,
-        # so the bot should retain the previous history
-        history = user.messages.as_list()
+    if message.chat.type == Chat.PRIVATE:
+        # in private chats the bot remembers previous messages
+        if is_follow_up:
+            # this is a follow-up question,
+            # so the bot should retain the previous history
+            history = user.messages.as_list()
+        else:
+            # user is asking a question 'from scratch',
+            # so the bot should forget the previous history
+            user.messages.clear()
+            history = []
     else:
-        # user is asking a question 'from scratch',
-        # so the bot should forget the previous history
-        user.messages.clear()
-        history = []
+        # in group chats the bot only answers direct questions
+        # or follow-up questions to the bot messages
+        prev_message = questions.extract_prev(message, context)
+        history = [("", prev_message)] if prev_message else []
 
     chat = ChatData(context.chat_data)
     start = time.perf_counter_ns()

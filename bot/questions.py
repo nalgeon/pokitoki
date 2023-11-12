@@ -42,7 +42,9 @@ def extract_group(message: Message, context: CallbackContext) -> tuple[str, Mess
 
     # the message is mentioning the bot,
     # so remove the mention to get the question
-    question = message.text[: mention.offset] + message.text[mention.offset + mention.length :]
+    question = (
+        message.text[: mention.offset] + message.text[mention.offset + mention.length :]
+    )
     question = question.strip()
 
     # messages in topics are technically replies to the 'topic created' message
@@ -57,6 +59,19 @@ def extract_group(message: Message, context: CallbackContext) -> tuple[str, Mess
         return question, message.reply_to_message
 
     return question, message
+
+
+def extract_prev(message: Message, context: CallbackContext) -> str:
+    """Extracts the previous message by the bot, if any."""
+    if (
+        message.reply_to_message
+        and message.reply_to_message.from_user.username == context.bot.username
+    ):
+        # treat a reply to the bot as a follow-up question
+        return message.reply_to_message.text
+
+    # otherwise, ignore previous messages
+    return ""
 
 
 def prepare(question: str) -> tuple[str, bool]:
