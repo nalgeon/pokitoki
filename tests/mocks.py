@@ -5,10 +5,12 @@ from telegram import User
 class FakeGPT:
     def __init__(self, error: Optional[Exception] = None):
         self.error = error
+        self.prompt = None
         self.question = None
         self.history = None
 
-    async def ask(self, question: str, history: list) -> str:
+    async def ask(self, prompt: str, question: str, history: list) -> str:
+        self.prompt = prompt
         self.question = question
         self.history = history
         if self.error:
@@ -73,6 +75,6 @@ class FakeBot:
 
 class FakeApplication:
     def __init__(self, bot: FakeBot) -> None:
-        self.chat_data = {}
-        self.user_data = {}
+        self.chat_data = {1: {}}
+        self.user_data = {1: {}}
         self.bot = bot

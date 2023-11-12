@@ -24,7 +24,7 @@ class Model:
         self.name = name
         self.stop = stop
 
-    async def ask(self, question, history=None) -> str:
+    async def ask(self, prompt, question, history=None) -> str:
         """Asks the language model a question and returns an answer."""
         try:
             history = history or []

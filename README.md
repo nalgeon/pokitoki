@@ -8,6 +8,7 @@ Notable features:
 -   Direct questions, mentions, follow-ups.
 -   Access external links (articles, code, data).
 -   Shortcuts (custom AI commands).
+-   Custom chat-wide prompts.
 -   Image generation.
 -   On-the-fly configuration.
 
@@ -97,6 +98,18 @@ There are several built-in shortcuts:
 -   `summarize` gives a two paragraph summary of a text.
 
 You can add your own shortcuts. See `config.example.yml` for details.
+
+## Chat-wide prompts
+
+To set a custom prompt for the current chat, use the `/prompt` command:
+
+```
+/prompt You are an evil genius. Reply with an evil laugh.
+```
+
+To return to the default prompt, use `/prompt reset`.
+
+The `/prompt` command in group chats is only available to admins - users listed in the `telegram.admins` property.
 
 ## Image generation
 

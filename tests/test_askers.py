@@ -5,6 +5,7 @@ from telegram.ext import CallbackContext
 
 from bot import askers
 from bot.askers import ImagineAsker, TextAsker
+from bot.config import config
 from tests.mocks import FakeApplication, FakeBot, FakeDalle, FakeGPT
 
 
@@ -15,7 +16,10 @@ class TextAskerTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_ask(self):
         asker = TextAsker()
-        await asker.ask(question="What is your name?", history=[("Hello", "Hi")])
+        await asker.ask(
+            prompt="Answer me", question="What is your name?", history=[("Hello", "Hi")]
+        )
+        self.assertEqual(self.ai.prompt, "Answer me")
         self.assertEqual(self.ai.question, "What is your name?")
         self.assertEqual(self.ai.history, [("Hello", "Hi")])
 
@@ -33,13 +37,13 @@ class ImagineAskerTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_ask(self):
         asker = ImagineAsker()
-        await asker.ask(question="a cat 256x256", history=[])
+        await asker.ask(prompt="answer me", question="a cat 256x256", history=[])
         self.assertEqual(self.ai.prompt, "a cat")
         self.assertEqual(self.ai.size, "256x256")
 
     async def test_reply(self):
         asker = ImagineAsker()
-        await asker.ask(question="a cat 256x256", history=[])
+        await asker.ask(prompt="answer me", question="a cat 256x256", history=[])
         message, context = _create_message()
         await asker.reply(message, context, answer="https://image.url")
         self.assertEqual(context.bot.text, "a cat: https://image.url")
@@ -90,7 +94,6 @@ def _create_message() -> tuple[Message, CallbackContext]:
     chat = Chat(id=1, type=Chat.PRIVATE)
     chat.set_bot(bot)
     application = FakeApplication(bot)
-    application.user_data[1] = {}
     context = CallbackContext(application, chat_id=1, user_id=1)
     user = User(id=1, first_name="Alice", is_bot=False, username="alice")
     message = Message(

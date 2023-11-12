@@ -14,7 +14,7 @@ PRE_RE = re.compile(r"&lt;(/?pre)")
 class Model:
     """OpenAI API wrapper."""
 
-    async def ask(self, question, history=None):
+    async def ask(self, prompt, question, history=None):
         """Asks the language model a question and returns an answer."""
         history = history or []
         prompt = self._generate_prompt(question, history)

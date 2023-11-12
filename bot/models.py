@@ -8,6 +8,22 @@ from bot.config import config
 T = TypeVar("T")
 
 
+class ChatData:
+    """Represents data associated with a specific chat."""
+
+    def __init__(self, data: Mapping):
+        # data should be a 'chat data' mapping from the chat context
+        self.data = data
+
+    @property
+    def prompt(self) -> str:
+        return self.data.get("prompt") or ""
+
+    @prompt.setter
+    def prompt(self, value: str) -> str:
+        self.data["prompt"] = value
+
+
 class UserData:
     """Represents data associated with a specific user."""
 

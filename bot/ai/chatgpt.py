@@ -34,16 +34,18 @@ MODELS = {
 class Model:
     """OpenAI API wrapper."""
 
-    def __init__(self, name: Optional[str]=None) -> None:
+    def __init__(self, name: Optional[str] = None) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
 
-    async def ask(self, question: str, history: list[tuple[str, str]]) -> str:
+    async def ask(
+        self, prompt: str, question: str, history: list[tuple[str, str]]
+    ) -> str:
         """Asks the language model a question and returns an answer."""
         # maximum number of input tokens
         model = self.name or config.openai.model
         n_input = _calc_n_input(model, n_output=config.openai.params["max_tokens"])
-        messages = self._generate_messages(question, history)
+        messages = self._generate_messages(prompt, question, history)
         messages = shorten(messages, length=n_input)
         params = config.openai.params
         logger.debug(
@@ -67,10 +69,10 @@ class Model:
         return answer
 
     def _generate_messages(
-        self, question: str, history: list[tuple[str, str]]
+        self, prompt: str, question: str, history: list[tuple[str, str]]
     ) -> list[dict]:
         """Builds message history to provide context for the language model."""
-        messages = [{"role": "system", "content": config.openai.prompt}]
+        messages = [{"role": "system", "content": prompt or config.openai.prompt}]
         for prev_question, prev_answer in history:
             messages.append({"role": "user", "content": prev_question})
             messages.append({"role": "assistant", "content": prev_answer})

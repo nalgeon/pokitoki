@@ -20,7 +20,7 @@ from bot import models
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
-from bot.models import UserData
+from bot.models import ChatData, UserData
 
 
 logging.basicConfig(
@@ -30,6 +30,7 @@ logging.basicConfig(
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("bot").setLevel(logging.INFO)
 logging.getLogger("bot.ai.chatgpt").setLevel(logging.INFO)
 logging.getLogger("bot.commands").setLevel(logging.INFO)
 logging.getLogger("bot.questions").setLevel(logging.INFO)
@@ -83,12 +84,15 @@ def add_handlers(application: Application):
     # message-related commands
     application.add_handler(
         CommandHandler(
-            "retry", commands.Retry(reply_to), filters=filters.users_or_chats
+            "imagine", commands.Imagine(reply_to), filters=filters.users_or_chats
         )
     )
     application.add_handler(
+        CommandHandler("prompt", commands.Prompt(), filters=filters.users)
+    )
+    application.add_handler(
         CommandHandler(
-            "imagine", commands.Imagine(reply_to), filters=filters.users_or_chats
+            "retry", commands.Retry(reply_to), filters=filters.users_or_chats
         )
     )
 
@@ -202,8 +206,9 @@ async def _ask_question(
         user.messages.clear()
         history = []
 
+    chat = ChatData(context.chat_data)
     start = time.perf_counter_ns()
-    answer = await asker.ask(question, history)
+    answer = await asker.ask(prompt=chat.prompt, question=question, history=history)
     elapsed = int((time.perf_counter_ns() - start) / 1e6)
 
     logger.info(

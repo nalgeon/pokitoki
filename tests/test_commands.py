@@ -40,7 +40,6 @@ class StartTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         config.telegram.usernames = ["alice"]
@@ -49,7 +48,9 @@ class StartTest(unittest.IsolatedAsyncioTestCase, Helper):
     async def test_start(self):
         update = self._create_update(11)
         await self.command(update, self.context)
-        self.assertTrue(self.bot.text.startswith("Hi! I'm a humble AI-driven chat bot."))
+        self.assertTrue(
+            self.bot.text.startswith("Hi! I'm a humble AI-driven chat bot.")
+        )
 
     async def test_start_unknown(self):
         user = User(id=2, first_name="Bob", is_bot=False, username="bob")
@@ -71,7 +72,6 @@ class HelpTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         config.telegram.usernames = ["alice"]
@@ -89,7 +89,6 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         config.version = 101
@@ -129,7 +128,6 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         config.telegram.usernames = ["alice"]
@@ -153,7 +151,9 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.openai.model = "gpt-3.5-turbo"
         update = self._create_update(11, "/config openai.model gpt-4")
         await self.command(update, self.context)
-        self.assertTrue(self.bot.text.startswith("✓ Changed the `openai.model` property"))
+        self.assertTrue(
+            self.bot.text.startswith("✓ Changed the `openai.model` property")
+        )
 
     async def test_conversation_depth(self):
         commands.config.editor.save = lambda: None
@@ -171,7 +171,8 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, "/config openai.model gpt-3.5-turbo")
         await self.command(update, self.context)
         self.assertEqual(
-            self.bot.text, "✗ The `openai.model` property already equals to `gpt-3.5-turbo`"
+            self.bot.text,
+            "✗ The `openai.model` property already equals to `gpt-3.5-turbo`",
         )
 
     async def test_delayed(self):
@@ -197,6 +198,73 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertEqual(self.filters.chats.chat_ids, frozenset([-100500]))
 
 
+class PromptPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
+    def setUp(self):
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.PRIVATE)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
+        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        config.telegram.usernames = ["alice"]
+        self.command = commands.Prompt()
+
+    async def test_not_set(self):
+        update = self._create_update(11, "/prompt")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("Syntax:"))
+        self.assertEqual(self.application.chat_data[1], {})
+
+    async def test_set_custom(self):
+        update = self._create_update(11, text="/prompt Laugh")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Set custom prompt"))
+        self.assertEqual(self.application.chat_data[1]["prompt"], "Laugh")
+
+    async def test_show_custom(self):
+        update = self._create_update(11, text="/prompt Laugh")
+        await self.command(update, self.context)
+
+        update = self._create_update(11, text="/prompt")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("Using custom prompt"))
+        self.assertEqual(self.application.chat_data[1]["prompt"], "Laugh")
+
+    async def test_reset(self):
+        update = self._create_update(11, text="/prompt Laugh")
+        await self.command(update, self.context)
+
+        update = self._create_update(11, text="/prompt reset")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Using default prompt"))
+        self.assertEqual(self.application.chat_data[1]["prompt"], "")
+
+
+class PromptGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
+    def setUp(self):
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.GROUP)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
+        self.alice = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        self.bob = User(id=2, first_name="Bob", is_bot=False, username="bob")
+        config.telegram.admins = ["alice"]
+        self.command = commands.Prompt()
+
+    async def test_allowed(self):
+        update = self._create_update(11, "/prompt@bot Laugh", user=self.alice)
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Set custom prompt"))
+        self.assertEqual(self.application.chat_data[1]["prompt"], "Laugh")
+
+    async def test_not_allowed(self):
+        update = self._create_update(11, "/prompt@bot Laugh", user=self.bob)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "")
+        self.assertEqual(self.application.chat_data[1], {})
+
+
 class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         askers.TextAsker.model = FakeGPT()
@@ -204,7 +272,6 @@ class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.command = commands.Retry(bot.reply_to)
@@ -225,7 +292,6 @@ class ImagineTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.command = commands.Imagine(bot.reply_to)
@@ -270,7 +336,6 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.command = commands.Message(bot.reply_to)
@@ -292,7 +357,9 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(12, text="+ And why is that?")
         await self.command(update, self.context)
         self.assertEqual(self.ai.question, "And why is that?")
-        self.assertEqual(self.ai.history, [("What is your name?", "What is your name?")])
+        self.assertEqual(
+            self.ai.history, [("What is your name?", "What is your name?")]
+        )
 
         update = self._create_update(13, text="+ Where are you?")
         await self.command(update, self.context)
@@ -306,14 +373,18 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         )
 
     async def test_forward(self):
-        update = self._create_update(11, text="What is your name?", forward_date=dt.datetime.now())
+        update = self._create_update(
+            11, text="What is your name?", forward_date=dt.datetime.now()
+        )
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("This is a forwarded message"))
 
     async def test_document(self):
         update = self._create_update(11, text="I have so much to say" + "." * 5000)
         await self.command(update, self.context)
-        self.assertEqual(self.bot.text, "I have so much to... (see attachment for the rest): 11.md")
+        self.assertEqual(
+            self.bot.text, "I have so much to... (see attachment for the rest): 11.md"
+        )
 
     async def test_exception(self):
         askers.TextAsker.model = FakeGPT(error=Exception("connection timeout"))
@@ -341,7 +412,9 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_message(self):
         mention = MessageEntity(type=MessageEntity.MENTION, offset=0, length=4)
-        update = self._create_update(11, text="@bot What is your name?", entities=(mention,))
+        update = self._create_update(
+            11, text="@bot What is your name?", entities=(mention,)
+        )
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 
@@ -359,7 +432,6 @@ class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.command = commands.Message(bot.reply_to)
@@ -395,7 +467,10 @@ class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
         user = User(id=2, first_name="Bob", is_bot=False, username="bob")
         # the counter has reached the limit, but the value has expired
         user_data = {
-            "message_counter": {"value": 3, "timestamp": dt.datetime.now() - dt.timedelta(hours=1)}
+            "message_counter": {
+                "value": 3,
+                "timestamp": dt.datetime.now() - dt.timedelta(hours=1),
+            }
         }
         self.application.user_data[user.id] = user_data
         context = CallbackContext(self.application, chat_id=1, user_id=user.id)
@@ -425,7 +500,6 @@ class ErrorTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         config.telegram.usernames = ["alice"]

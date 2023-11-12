@@ -22,7 +22,7 @@ async def main(question):
     fetcher = Fetcher()
     question = await fetcher.substitute_urls(question)
     ai = init_model()
-    answer = await ai.ask(question, history=[])
+    answer = await ai.ask(prompt=config.openai.prompt, question=question, history=[])
     await fetcher.close()
     lines = textwrap.wrap(answer, width=60)
     for line in lines:
