@@ -249,9 +249,15 @@ message_limit:
 
 2. Get your Telegram bot token from [@BotFather](https://t.me/BotFather)
 
-3. Copy `config.example.yml` to `config.yml` and specify your tokens there.
+3. Clone the repo to the server:
 
-4. Start the bot:
+```bash
+git clone https://github.com/nalgeon/pokitoki.git
+```
+
+4. Copy `config.example.yml` to `config.yml` and specify your tokens there.
+
+5. Start the bot:
 
 ```bash
 docker compose up --build --detach
@@ -261,6 +267,14 @@ To stop the bot:
 
 ```bash
 docker compose stop
+```
+
+To update the bot to a new version:
+
+```bash
+docker compose stop
+git pull
+docker compose up --build --detach
 ```
 
 For older Docker distributions, use `docker-compose` instead of `docker compose`.
