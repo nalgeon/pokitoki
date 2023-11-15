@@ -38,9 +38,7 @@ class Model:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
 
-    async def ask(
-        self, prompt: str, question: str, history: list[tuple[str, str]]
-    ) -> str:
+    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
         # maximum number of input tokens
         model = self.name or config.openai.model

@@ -48,9 +48,7 @@ class StartTest(unittest.IsolatedAsyncioTestCase, Helper):
     async def test_start(self):
         update = self._create_update(11)
         await self.command(update, self.context)
-        self.assertTrue(
-            self.bot.text.startswith("Hi! I'm a humble AI-driven chat bot.")
-        )
+        self.assertTrue(self.bot.text.startswith("Hi! I'm a humble AI-driven chat bot."))
 
     async def test_start_unknown(self):
         user = User(id=2, first_name="Bob", is_bot=False, username="bob")
@@ -151,9 +149,7 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.openai.model = "gpt-3.5-turbo"
         update = self._create_update(11, "/config openai.model gpt-4")
         await self.command(update, self.context)
-        self.assertTrue(
-            self.bot.text.startswith("✓ Changed the `openai.model` property")
-        )
+        self.assertTrue(self.bot.text.startswith("✓ Changed the `openai.model` property"))
 
     async def test_conversation_depth(self):
         commands.config.editor.save = lambda: None
@@ -357,9 +353,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(12, text="+ And why is that?")
         await self.command(update, self.context)
         self.assertEqual(self.ai.question, "And why is that?")
-        self.assertEqual(
-            self.ai.history, [("What is your name?", "What is your name?")]
-        )
+        self.assertEqual(self.ai.history, [("What is your name?", "What is your name?")])
 
         update = self._create_update(13, text="+ Where are you?")
         await self.command(update, self.context)
@@ -373,18 +367,14 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         )
 
     async def test_forward(self):
-        update = self._create_update(
-            11, text="What is your name?", forward_date=dt.datetime.now()
-        )
+        update = self._create_update(11, text="What is your name?", forward_date=dt.datetime.now())
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("This is a forwarded message"))
 
     async def test_document(self):
         update = self._create_update(11, text="I have so much to say" + "." * 5000)
         await self.command(update, self.context)
-        self.assertEqual(
-            self.bot.text, "I have so much to... (see attachment for the rest): 11.md"
-        )
+        self.assertEqual(self.bot.text, "I have so much to... (see attachment for the rest): 11.md")
 
     async def test_exception(self):
         askers.TextAsker.model = FakeGPT(error=Exception("connection timeout"))
@@ -412,9 +402,7 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_message(self):
         mention = MessageEntity(type=MessageEntity.MENTION, offset=0, length=4)
-        update = self._create_update(
-            11, text="@bot What is your name?", entities=(mention,)
-        )
+        update = self._create_update(11, text="@bot What is your name?", entities=(mention,))
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 

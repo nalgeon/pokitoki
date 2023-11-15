@@ -42,9 +42,7 @@ def extract_group(message: Message, context: CallbackContext) -> tuple[str, Mess
 
     # the message is mentioning the bot,
     # so remove the mention to get the question
-    question = (
-        message.text[: mention.offset] + message.text[mention.offset + mention.length :]
-    )
+    question = message.text[: mention.offset] + message.text[mention.offset + mention.length :]
     question = question.strip()
 
     # messages in topics are technically replies to the 'topic created' message

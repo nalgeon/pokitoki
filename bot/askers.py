@@ -18,15 +18,11 @@ from bot import markdown
 class Asker:
     """Asks AI questions and responds with answers."""
 
-    async def ask(
-        self, prompt: str, question: str, history: list[tuple[str, str]]
-    ) -> str:
+    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks AI a question."""
         pass
 
-    async def reply(
-        self, message: Message, context: CallbackContext, answer: str
-    ) -> None:
+    async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
         pass
 
@@ -36,15 +32,11 @@ class TextAsker(Asker):
 
     model = ai.chatgpt.Model()
 
-    async def ask(
-        self, prompt: str, question: str, history: list[tuple[str, str]]
-    ) -> str:
+    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks AI a question."""
         return await self.model.ask(prompt, question, history)
 
-    async def reply(
-        self, message: Message, context: CallbackContext, answer: str
-    ) -> None:
+    async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
         html_answer = markdown.to_html(answer)
         if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
@@ -53,8 +45,7 @@ class TextAsker(Asker):
 
         doc = io.StringIO(answer)
         caption = (
-            textwrap.shorten(answer, width=40, placeholder="...")
-            + " (see attachment for the rest)"
+            textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"
         )
         reply_to_message_id = message.id if message.chat.type != Chat.PRIVATE else None
         await context.bot.send_document(
@@ -82,17 +73,13 @@ class ImagineAsker(Asker):
     def __init__(self) -> None:
         self.caption = ""
 
-    async def ask(
-        self, prompt: str, question: str, history: list[tuple[str, str]]
-    ) -> str:
+    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks AI a question."""
         size = self._extract_size(question)
         self.caption = self._extract_caption(question)
         return await self.model.imagine(prompt=self.caption, size=size)
 
-    async def reply(
-        self, message: Message, context: CallbackContext, answer: str
-    ) -> None:
+    async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
         await message.reply_photo(answer, caption=self.caption)
 
