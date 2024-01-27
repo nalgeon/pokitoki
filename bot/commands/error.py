@@ -1,6 +1,7 @@
 """Generic error handler."""
 
 import logging
+import textwrap
 from telegram import Chat, Update
 from telegram.ext import CallbackContext
 
@@ -20,7 +21,7 @@ class ErrorCommand:
         class_name = f"{context.error.__class__.__module__}.{context.error.__class__.__qualname__}"
         error_text = f"{class_name}: {context.error}"
         logger.warning("Exception while handling an update %s: %s", update, error_text)
-        text = f"⚠️ {context.error}"
+        text = textwrap.shorten(f"⚠️ {error_text}", width=255, placeholder="...")
 
         message = update.message
         reply_to_message_id = message.id if message and message.chat.type != Chat.PRIVATE else None

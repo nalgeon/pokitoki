@@ -380,7 +380,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         askers.TextAsker.model = FakeGPT(error=Exception("connection timeout"))
         update = self._create_update(11, text="What is your name?")
         await self.command(update, self.context)
-        self.assertTrue(self.bot.text.startswith("Failed to answer"))
+        self.assertTrue(self.bot.text.startswith("⚠️ builtins.Exception:"))
         self.assertTrue("connection timeout" in self.bot.text)
 
 
@@ -498,4 +498,4 @@ class ErrorTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, "Something went wrong")
         update._effective_chat = self.chat
         await command(update, self.context)
-        self.assertEqual(self.bot.text, "⚠️ Something went wrong")
+        self.assertEqual(self.bot.text, "⚠️ builtins.Exception: Something went wrong")

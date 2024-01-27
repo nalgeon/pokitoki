@@ -2,6 +2,7 @@
 
 import logging
 import sys
+import textwrap
 import time
 
 from telegram import Chat, Message
@@ -157,9 +158,10 @@ async def reply_to(message: Message, context: CallbackContext, question: str) ->
 
     except Exception as exc:
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
-        error_text = f"Failed to answer. Reason: {class_name}: {exc}"
-        logger.error(error_text)
-        await message.reply_text(error_text)
+        error_text = f"{class_name}: {exc}"
+        logger.error("Failed to answer: %s", error_text)
+        text = textwrap.shorten(f"⚠️ {error_text}", width=255, placeholder="...")
+        await message.reply_text(text)
 
 
 async def _ask_question(
