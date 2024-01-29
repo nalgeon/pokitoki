@@ -255,7 +255,7 @@ message_limit:
 git clone https://github.com/nalgeon/pokitoki.git
 ```
 
-4. Copy `config.example.yml` to `config.yml` and specify your tokens there.
+4. Copy `config.example.yml` to `config.yml` and specify your tokens there. Add yourself to the `telegram.usernames` property, otherwise the bot will be available to everyone.
 
 5. Start the bot:
 
