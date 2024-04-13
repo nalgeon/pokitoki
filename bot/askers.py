@@ -45,7 +45,8 @@ class TextAsker(Asker):
 
         doc = io.StringIO(answer)
         caption = (
-            textwrap.shorten(answer, width=40, placeholder="...") + " (see attachment for the rest)"
+            textwrap.shorten(answer, width=255, placeholder="...")
+            + " (see attachment for the rest)"
         )
         reply_to_message_id = message.id if message.chat.type != Chat.PRIVATE else None
         await context.bot.send_document(
