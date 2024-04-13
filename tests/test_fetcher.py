@@ -51,10 +51,15 @@ second
 ---""",
         )
 
+    async def test_ignore_quoted(self):
+        src = "What is 'https://example.org/first'?"
+        text = await self.fetcher.substitute_urls(src)
+        self.assertEqual(text, src)
+
     async def test_nothing_to_substitute(self):
-        text = "How are you?"
-        text = await self.fetcher.substitute_urls(text)
-        self.assertEqual(text, "How are you?")
+        src = "How are you?"
+        text = await self.fetcher.substitute_urls(src)
+        self.assertEqual(text, src)
 
 
 class ContentTest(unittest.TestCase):

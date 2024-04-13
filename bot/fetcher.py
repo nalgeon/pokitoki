@@ -8,7 +8,8 @@ from bs4 import BeautifulSoup
 class Fetcher:
     """Retrieves remote content over HTTP."""
 
-    url_re = re.compile(r"\bhttps?://\S+\b")
+    # Matches non-quoted URLs in text
+    url_re = re.compile(r"(?:[^'\"]|^)(https?://\S+)(?:[^'\"]|$)")
     timeout = 3  # seconds
 
     def __init__(self):
