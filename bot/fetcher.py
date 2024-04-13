@@ -66,12 +66,7 @@ class Content:
         if self.content_type != "text/html":
             return self.response.text
         html = BeautifulSoup(self.response.text, "html.parser")
-        article = (
-            html.find("main article")
-            or html.find("article")
-            or html.find("main")
-            or html.find("body")
-        )
+        article = html.find("main") or html.find("body")
         return article.get_text()
 
     def is_text(self) -> bool:
