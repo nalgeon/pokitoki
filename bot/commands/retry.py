@@ -18,4 +18,6 @@ class RetryCommand:
         if not last_message:
             await update.message.reply_text("No message to retry 🤷‍♂️")
             return
-        await self.reply_func(update.message, context, question=last_message.question)
+        await self.reply_func(
+            update=update, message=update.message, context=context, question=last_message.question
+        )

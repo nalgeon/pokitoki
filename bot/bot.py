@@ -5,7 +5,7 @@ import sys
 import textwrap
 import time
 
-from telegram import Chat, Message
+from telegram import Chat, Message, Update
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -112,8 +112,10 @@ async def post_shutdown(application: Application) -> None:
 def with_message_limit(func):
     """Refuses to reply if the user has exceeded the message limit."""
 
-    async def wrapper(message: Message, context: CallbackContext, question: str) -> None:
-        username = message.from_user.username
+    async def wrapper(
+        update: Update, message: Message, context: CallbackContext, question: str
+    ) -> None:
+        username = update.effective_user.username
         user = UserData(context.user_data)
 
         # check if the message counter exceeds the message limit
@@ -129,17 +131,19 @@ def with_message_limit(func):
 
         # this is a known user or they have not exceeded the message limit,
         # so proceed to the actual message handler
-        await func(message, context, question)
+        await func(update=update, message=message, context=context, question=question)
 
         # increment the message counter
         message_count = user.message_counter.increment()
-        logger.debug(f"user={message.from_user.username}, n_messages={message_count}")
+        logger.debug(f"user={username}, n_messages={message_count}")
 
     return wrapper
 
 
 @with_message_limit
-async def reply_to(message: Message, context: CallbackContext, question: str) -> None:
+async def reply_to(
+    update: Update, message: Message, context: CallbackContext, question: str
+) -> None:
     """Replies to a specific question."""
     await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
 

@@ -38,4 +38,6 @@ class ImagineCommand:
                 parse_mode=ParseMode.HTML,
             )
             return
-        await self.reply_func(update.message, context, question=message.text)
+        await self.reply_func(
+            update=update, message=update.message, context=context, question=message.text
+        )

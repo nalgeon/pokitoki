@@ -30,4 +30,4 @@ class MessageCommand:
             # this is not a question to the bot, so ignore it
             return
 
-        await self.reply_func(message, context, question=question)
+        await self.reply_func(update=update, message=message, context=context, question=question)
