@@ -32,6 +32,14 @@ class FakeDalle:
         return "image"
 
 
+class FakeFile:
+    def __init__(self, file_id: str) -> None:
+        self.file_id = file_id
+
+    async def download_as_bytearray(self, buf=None, **kwargs) -> bytearray:
+        return bytearray(b"file content")
+
+
 class FakeBot:
     def __init__(self, username: str) -> None:
         self.user = User(
@@ -54,6 +62,9 @@ class FakeBot:
     @property
     def can_read_all_group_messages(self) -> bool:
         return self.user.can_read_all_group_messages
+
+    async def get_file(self, file_id, **kwargs):
+        return FakeFile(file_id)
 
     async def send_chat_action(self, **kwargs) -> None:
         pass

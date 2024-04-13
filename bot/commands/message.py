@@ -22,9 +22,9 @@ class MessageCommand:
         # the bot is meant to answer questions in private chats,
         # but it can also answer a specific question in a group when mentioned
         if message.chat.type == Chat.PRIVATE:
-            question = questions.extract_private(message, context)
+            question = await questions.extract_private(message, context)
         else:
-            question, message = questions.extract_group(message, context)
+            question, message = await questions.extract_group(message, context)
 
         if not question:
             # this is not a question to the bot, so ignore it

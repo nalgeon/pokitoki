@@ -1,4 +1,5 @@
 """Bot message filters."""
+
 from typing import Union
 from dataclasses import dataclass
 from telegram.ext import filters
@@ -33,7 +34,9 @@ class Filters:
 
         self.users_or_chats = self.users | self.chats
         self.admins_private = self.admins & filters.ChatType.PRIVATE
-        self.messages = filters.TEXT & ~filters.COMMAND & self.users_or_chats
+        self.messages = (
+            (filters.TEXT | filters.Document.TEXT) & ~filters.COMMAND & self.users_or_chats
+        )
 
     def reload(self) -> None:
         """Reloads users and chats from config."""

@@ -142,6 +142,12 @@ Say you received a message from a colleague or read a post on a channel and want
     </tr>
 </table>
 
+### Ask with file
+
+To ask a question about a document, send it as a file and write the question in the caption. The bot will read the file contents and answer. Currently only supports text content (plain text, code, data), not PDFs, images or audio. Sending multiple files is also not supported.
+
+<img src="docs/chat-12.png" alt="Ask with file" width="300">
+
 ### Reply with attachment
 
 Sometimes the AI's reply exceeds the maximum message length set by Telegram. In this case, the bot will not fail or spam you with messages. Instead, it will send the answer as an attached markdown file:
