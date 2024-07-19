@@ -31,6 +31,7 @@ The bot has a terrible memory, so don't expect it to remember any chat context b
 > 🤖 It sounds like you're quoting "Yesterday" by The Beatles. It's a classic song about longing and nostalgia.
 >
 > 🧑 + who wrote it?
+>
 > 🤖 "Yesterday" was written by Paul McCartney of The Beatles.
 
 Available commands:
@@ -43,12 +44,14 @@ To rephrase or add to the last question, simply edit it. The bot will then answe
 
 ## Groups
 
-To get an answer from the bot in a group, mention it in a reply to a question, or ask a question directly:
+To get an answer from the bot in a group, mention it in a reply to a question:
 
 > 🧑 I forgot who played Ramsy in the Game of Thrones 😕<br>
 > 🧑 ↳ @pokitokibot help
 >
 > 🤖 Ramsay Bolton in Game of Thrones was played by Iwan Rheon.
+
+Or ask a question directly:
 
 > 🧑 @pokitokibot Who played Ramsy in the Game of Thrones?
 >
