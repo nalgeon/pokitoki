@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Supported models and their context windows
 MODELS = {
     "gpt-4o": 128000,
+    "gpt-4o-mini": 128000,
     "gpt-4-turbo": 128000,
     "gpt-4-turbo-preview": 128000,
     "gpt-4-vision-preview": 128000,
