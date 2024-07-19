@@ -9,7 +9,7 @@ class Fetcher:
     """Retrieves remote content over HTTP."""
 
     # Matches non-quoted URLs in text
-    url_re = re.compile(r"(?:[^'\"]|^)(https?://\S+)(?:[^'\"]|$)")
+    url_re = re.compile(r"(?:[^'\"]|^)\b(https?://\S+)\b(?:[^'\"]|$)")
     timeout = 3  # seconds
 
     def __init__(self):

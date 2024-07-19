@@ -61,6 +61,19 @@ second
         text = await self.fetcher.substitute_urls(src)
         self.assertEqual(text, src)
 
+    def test_extract_urls(self):
+        text = "Compare https://example.org/first and https://example.org/second"
+        urls = self.fetcher._extract_urls(text)
+        self.assertEqual(urls, ["https://example.org/first", "https://example.org/second"])
+
+        text = "Extract https://example.org/first."
+        urls = self.fetcher._extract_urls(text)
+        self.assertEqual(urls, ["https://example.org/first"])
+
+        text = 'Extract "https://example.org/first"'
+        urls = self.fetcher._extract_urls(text)
+        self.assertEqual(urls, [])
+
 
 class ContentTest(unittest.TestCase):
     def test_extract_as_is(self):
