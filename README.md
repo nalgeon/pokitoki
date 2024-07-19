@@ -1,6 +1,6 @@
-# ChatGPT Telegram Bot
+# Humble GPT Telegram Bot
 
-This is a Telegram chat bot built using the ChatGPT (GPT-3.5 or GPT-4) language model from OpenAI.
+This is a Telegram chat that uses the GPT language models from OpenAI.
 
 Notable features:
 
@@ -18,22 +18,20 @@ Read on for a detailed feature description or jump to [setup](#setup).
 
 The bot acts as your personal assistant:
 
-<img src="docs/chat-1.png" alt="Sample chat" width="400">
+> 🧑 Explain Apache Kafka to a three year old
+>
+> 🤖 Apache Kafka is like a big mailbox that helps different toys (computers) send messages to each other. When one toy has something to say, it puts a message in the mailbox, and other toys can take that message out and read it. This way, they can talk and share things quickly!
 
 To allow other users to use the bot, list them in the `telegram.usernames` config property.
 
 The bot has a terrible memory, so don't expect it to remember any chat context by default. You can, however, reply with a follow-up question (`Ctrl/Cmd + ↑`). Alternatively, use a plus sign to follow up:
 
-<table>
-    <tr>
-        <td>
-            <img src="docs/chat-2.png" alt="Follow-up by reply" width="400">
-        </td>
-        <td>
-            <img src="docs/chat-3.png" alt="Follow-up by plus sign" width="400">
-        </td>
-    </tr>
-</table>
+> 🧑 Yesterday, all my troubles seemed so far away
+>
+> 🤖 It sounds like you're quoting "Yesterday" by The Beatles. It's a classic song about longing and nostalgia.
+>
+> 🧑 + who wrote it?
+> 🤖 "Yesterday" was written by Paul McCartney of The Beatles.
 
 Available commands:
 
@@ -47,16 +45,14 @@ To rephrase or add to the last question, simply edit it. The bot will then answe
 
 To get an answer from the bot in a group, mention it in a reply to a question, or ask a question directly:
 
-<table>
-    <tr>
-        <td>
-            <img src="docs/chat-4.png" alt="Reply with mention" width="400">
-        </td>
-        <td>
-            <img src="docs/chat-5.png" alt="Direct question" width="400">
-        </td>
-    </tr>
-</table>
+> 🧑 I forgot who played Ramsy in the Game of Thrones 😕<br>
+> 🧑 ↳ @pokitokibot help
+>
+> 🤖 Ramsay Bolton in Game of Thrones was played by Iwan Rheon.
+
+> 🧑 @pokitokibot Who played Ramsy in the Game of Thrones?
+>
+> 🤖 Iwan Rheon played Ramsay Bolton in Game of Thrones.
 
 To make the bot reply to group members, list the group id in the `telegram.chat_ids` config property. Otherwise, the bot will ignore questions from group members unless they are listed in the `telegram.usernames` config property.
 
@@ -74,21 +70,37 @@ Chat information:
 
 If you ask "vanilla" ChatGPT about external resources, it will either hallucinate or admit that it doesn't have access to remote content:
 
-> Q: What is the content of https://sqlime.org/employees.sql? Make no assumptions.
+> 🧑 What is the content of https://sqlime.org/employees.sql? Make no assumptions.
 >
-> A: As an AI language model, I cannot access external URLs on the internet.
+> 🤖 As an AI language model, I cannot access external URLs on the internet.
 
 The bot solves the problem by fetching the remote content and feeding it to the model:
 
-<img src="docs/chat-7.png" alt="External links" width="400">
+> 🧑 Name 1 major feature of the Go 1.23 release https://tip.golang.org/doc/go1.23 Be brief!
+>
+> 🤖 A major feature of Go 1.23 is the inclusion of the "range-over-func" experiment as a standard language feature, allowing the "range" clause in "for-range" loops to accept iterator functions.
 
 Currently only supports text content (articles, code, data), not PDFs, images or audio.
+
+If you _don't want_ the bot to access the URL, quote it:
+
+> 🧑 Exact contents of "https://antonz.org/robots.txt"
+>
+> 🤖 I can't access external websites directly. You can check the contents of a robots.txt file by visiting the URL in your browser.
 
 ## Shortcuts
 
 Use short commands to save time and ask the bot to do something specific with your questions. For example, ask it to proofread your writing with a `!proofread` command:
 
-<img src="docs/chat-6.png" alt="Shortcuts" width="400">
+> 🧑 !proofread I can has write java programz
+>
+> 🤖 Revised text: "I can write Java programs."
+>
+> Changes made:
+>
+> 1. Removed "has" for grammatical correctness; "can" does not require "has."
+> 2. Corrected "java" to "Java" for proper capitalization as it is a proper noun.
+> 3. Changed "programz" to "programs" for correct spelling and clarity.
 
 There are several built-in shortcuts:
 
@@ -103,9 +115,7 @@ You can add your own shortcuts. See `config.example.yml` for details.
 
 To set a custom prompt for the current chat, use the `/prompt` command:
 
-```
-/prompt You are an evil genius. Reply with an evil laugh.
-```
+> 🧑 /prompt You are an evil genius. Reply with an evil laugh.
 
 To return to the default prompt, use `/prompt reset`.
 
@@ -115,7 +125,10 @@ The `/prompt` command in group chats is only available to admins - users listed 
 
 Use the `/imagine` command to generate an image using the DALL-E 3 model from OpenAI:
 
-<img src="docs/chat-11.jpg" alt="Generated image" width="400">
+> 🧑 /imagine the dawn of a new era
+>
+> 🤖 (beautiful picture)<br>
+> the dawn of a new era
 
 The default image size is 1024×1024 px. Other supported sizes are 1792×1024 and 1024×1792:
 
@@ -129,30 +142,15 @@ The convenience of working with a bot is made up of small details. Here are some
 
 ### Forwarding
 
-Say you received a message from a colleague or read a post on a channel and want to ask a question. Simply forward the message to the bot and answer the clarifying question it asks:
-
-<table>
-    <tr>
-        <td>
-            <img src="docs/chat-8.png" alt="Forwarding 1" width="400">
-        </td>
-        <td>
-            <img src="docs/chat-9.png" alt="Forwarding 2" width="400">
-        </td>
-    </tr>
-</table>
+Say you received a message from a colleague or read a post on a channel and want to ask a question. Simply forward the message to the bot and answer the clarifying question it asks.
 
 ### Ask with file
 
 To ask a question about a document, send it as a file and write the question in the caption. The bot will read the file contents and answer. Currently only supports text content (plain text, code, data), not PDFs, images or audio. Sending multiple files is also not supported.
 
-<img src="docs/chat-12.png" alt="Ask with file" width="300">
-
 ### Reply with attachment
 
-Sometimes the AI's reply exceeds the maximum message length set by Telegram. In this case, the bot will not fail or spam you with messages. Instead, it will send the answer as an attached markdown file:
-
-<img src="docs/chat-10.png" alt="Reply with attachment" width="400">
+Sometimes the AI's reply exceeds the maximum message length set by Telegram. In this case, the bot will not fail or spam you with messages. Instead, it will send the answer as an attached markdown file.
 
 ### Edited question
 
