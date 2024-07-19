@@ -1,6 +1,6 @@
 # Humble GPT Telegram Bot
 
-This is a Telegram chat that uses the GPT language models from OpenAI.
+This is a Telegram chat bot (AI assistant) that uses the GPT language models from OpenAI.
 
 Notable features:
 
