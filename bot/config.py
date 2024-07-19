@@ -23,8 +23,8 @@ class OpenAI:
     params: dict
     azure: Optional[dict] = None
 
-    default_model = "gpt-3.5-turbo"
-    default_prompt = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses."
+    default_model = "gpt-4o-mini"
+    default_prompt = "You are an AI assistant."
     default_params = {
         "temperature": 0.7,
         "presence_penalty": 0,
