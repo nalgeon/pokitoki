@@ -128,5 +128,6 @@ def _calc_n_input(name: str, n_output: int) -> int:
     """
     # OpenAI counts length in tokens, not charactes.
     # We need to leave some tokens reserved for the output.
-    n_total = MODELS.get(name, 4096)  # max 4096 tokens total by default
+    n_total = MODELS.get(name) or config.openai.window
+    logger.debug("model=%s, n_total=%s, n_output=%s", name, n_total, n_output)
     return n_total - n_output

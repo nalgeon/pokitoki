@@ -19,6 +19,7 @@ class ConfigTest(unittest.TestCase):
 
         self.assertEqual(config.openai.api_key, "oa-1234")
         self.assertEqual(config.openai.model, "gpt-4")
+        self.assertEqual(config.openai.window, 4096)
         self.assertTrue(config.openai.prompt, "You are an AI assistant.")
         self.assertEqual(config.openai.params["temperature"], 0.7)
         self.assertEqual(config.openai.params["presence_penalty"], 0)

@@ -27,7 +27,11 @@ openai:
 
     # OpenAI model name.
     # See https://platform.openai.com/docs/models for description.
-    model: "gpt-3.5-turbo"
+    model: "gpt-4o-mini"
+
+    # Context window size in tokens.
+    # Applies only to custom models.
+    window: 4096
 
     # Model prompt.
     prompt: "You are an AI assistant."
