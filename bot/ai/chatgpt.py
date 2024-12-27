@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Supported models and their context windows
 MODELS = {
     "o1": 200000,
+    "o1-preview": 128000,
     "o1-mini": 128000,
     "gpt-4o": 128000,
     "gpt-4o-mini": 128000,
@@ -31,6 +32,17 @@ MODELS = {
     "gpt-4": 8192,
     "gpt-4-32k": 32768,
     "gpt-3.5-turbo": 16385,
+}
+
+# Prompt role name overrides.
+ROLE_OVERRIDES = {
+    "o1-preview": "user",
+    "o1-mini": "user",
+}
+# Model parameter overrides.
+PARAM_OVERRIDES = {
+    "o1-preview": lambda params: {},
+    "o1-mini": lambda params: {},
 }
 
 
@@ -43,12 +55,15 @@ class Model:
 
     async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
-        # maximum number of input tokens
         model = self.name or config.openai.model
+        prompt_role = ROLE_OVERRIDES.get(model) or "developer"
+        params_func = PARAM_OVERRIDES.get(model) or (lambda params: params)
+
         n_input = _calc_n_input(model, n_output=config.openai.params["max_tokens"])
-        messages = self._generate_messages(prompt, question, history)
+        messages = self._generate_messages(prompt_role, prompt, question, history)
         messages = shorten(messages, length=n_input)
-        params = config.openai.params
+
+        params = params_func(config.openai.params)
         logger.debug(
             f"> chat request: model=%s, params=%s, messages=%s",
             model,
@@ -70,10 +85,10 @@ class Model:
         return answer
 
     def _generate_messages(
-        self, prompt: str, question: str, history: list[tuple[str, str]]
+        self, prompt_role: str, prompt: str, question: str, history: list[tuple[str, str]]
     ) -> list[dict]:
         """Builds message history to provide context for the language model."""
-        messages = [{"role": "system", "content": prompt or config.openai.prompt}]
+        messages = [{"role": prompt_role, "content": prompt or config.openai.prompt}]
         for prev_question, prev_answer in history:
             messages.append({"role": "user", "content": prev_question})
             messages.append({"role": "assistant", "content": prev_answer})
