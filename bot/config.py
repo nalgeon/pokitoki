@@ -16,6 +16,12 @@ class Telegram:
 
 
 @dataclass
+class ScrappingBot:
+    username: str
+    api_key: str
+
+
+@dataclass
 class OpenAI:
     api_key: str
     model: str
@@ -120,6 +126,11 @@ class Config:
             prompt=src["openai"].get("prompt"),
             params=src["openai"].get("params") or {},
             azure=src["openai"].get("azure"),
+        )
+
+        self.scrappingbot = ScrappingBot(
+            username=src["scrappingbot"]["username"],
+            api_key=src["scrappingbot"]["api_key"],
         )
 
         # Conversation settings.

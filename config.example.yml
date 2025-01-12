@@ -20,6 +20,11 @@ telegram:
     # If empty, the bot will only be available to `telegram.usernames`.
     chat_ids: []
 
+# ScrapingBot settings.
+scrappingbot:
+    username: ""
+    api_key: ""
+
 # OpenAI settings.
 openai:
     # OpenAI API key.
