@@ -1,37 +1,36 @@
-import logging
 import re
-import aiohttp
 import httpx
+import aiohttp
 import urllib.parse
-
+import json
 from bs4 import BeautifulSoup
-from httpx import HTTPStatusError
+from httpx import HTTPStatusError, RequestError
 
 from bot.config import config
-
-logger = logging.getLogger(__name__)
 
 
 class Fetcher:
     """Retrieves remote content over HTTP."""
 
-    # Шаблон для поиска URL'ов в тексте
+    # Matches non-quoted URLs in text
     url_re = re.compile(r"(?:[^'\"]|^)\b(https?://\S+)\b(?:[^'\"]|$)")
-    timeout = 3  # seconds
+    timeout = 5  # seconds (you can increase if needed)
 
     def __init__(self):
-        # Браузероподобные заголовки
+        """
+        By default, we use an httpx.AsyncClient with browser-like headers.
+        If the server returns 403, or we face network issues,
+        we'll attempt to use Scrap.do as a fallback (if a token is provided).
+        """
         headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/108.0.0.0 Safari/537.36"
             ),
-            "Accept": "text/html,application/xhtml+xml,"
-                      "application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
         }
-        # Клиент для обычных запросов
         self.client = httpx.AsyncClient(
             follow_redirects=True,
             timeout=self.timeout,
@@ -40,165 +39,110 @@ class Fetcher:
 
     async def substitute_urls(self, text: str) -> str:
         """
-        Находит все URL в тексте, для каждого URL получает HTML
-        и добавляет блок:
-            ---
-            <url> contents:
-
-            <полученный текст>
-            ---
+        Extracts URLs from the given text, fetches their contents,
+        and appends the content to the text in a separated block.
         """
         urls = self._extract_urls(text)
         for url in urls:
-            content = await self._fetch_url(url)
-            text += f"\n\n---\n{url} contents:\n\n{content}\n---"
+            content_str = await self._fetch_url(url)
+            text += f"\n\n---\n{url} contents:\n\n{content_str}\n---"
         return text
 
     async def close(self) -> None:
-        """
-        Закрываем httpx-клиент (освобождаем соединения).
-        """
+        """Closes the underlying httpx client."""
         await self.client.aclose()
 
     def _extract_urls(self, text: str) -> list[str]:
-        """Находит все URL в тексте по регулярному выражению."""
+        """Finds all URLs in the text by regex."""
         return self.url_re.findall(text)
 
     async def _fetch_url(self, url: str) -> str:
         """
-        1) Пробуем загрузить страницу через httpx (self.client).
-        2) Если получаем 403, а в конфиге есть token Scrap.do,
-           пробуем GET через Scrap.do.
-        3) Если всё проваливается — пробрасываем исключение.
+        1) Try loading the page via httpx (self.client).
+        2) If we get 403 Forbidden, or certain network errors (timeout, etc.),
+           and we have a valid Scrap.do token, try Scrap.do as fallback.
+        3) Otherwise, re-raise the exception.
         """
         try:
-            logger.debug(f"Trying to fetch URL with httpx: {url}")
             response = await self.client.get(url)
-            logger.warning(f"got response {response}")
             response.raise_for_status()
-
-            content = Content(response)
-            extr = content.extract_text()
-            logger.warning(f"extract text: {extr}")
-            return extr
+            return Content(response).extract_text()
 
         except HTTPStatusError as exc:
-            logger.warning(f"Got HTTP error {exc.response.status_code} for {url}")
-
+            # If it's a 403, let's try fallback
             if exc.response.status_code == 403:
                 token = config.scrapdo.token
-                logger.debug(f"Scrap.do token present? {bool(token and token.strip())}")
-
-                # Если токен не пустой
                 if token and token.strip():
-                    logger.info(f"Falling back to Scrap.do for URL: {url}")
                     return await self._fetch_via_scrapdo(url, token)
-
-            # Если не 403 или нет токена — просто пробрасываем ошибку
+            # Not a 403 or no token -> re-raise
             raise
 
-        except Exception as e:
-            logger.error(f"Unexpected error while fetching {url}: {str(e)}")
-            raise
+        except (httpx.ReadTimeout, httpx.ConnectError, httpx.RemoteProtocolError, httpx.TooManyRedirects) as net_exc:
+            # If we face typical network issues, fallback to Scrap.do if token is set
+            token = config.scrapdo.token
+            if token and token.strip():
+                return await self._fetch_via_scrapdo(url, token)
+            else:
+                raise net_exc
+
+        except RequestError as req_err:
+            # A generic request error, could be anything
+            # Try fallback if token is available
+            token = config.scrapdo.token
+            if token and token.strip():
+                return await self._fetch_via_scrapdo(url, token)
+            else:
+                raise req_err
 
     async def _fetch_via_scrapdo(self, url: str, token: str) -> str:
         """
-        Делает запрос к Scrap.do (https://scrape.do/docs).
+        Makes a request to Scrap.do (https://scrape.do/docs):
+          GET http://api.scrape.do?token=<token>&url=<encoded_url>
+        Returns the extracted text or the raw HTML.
         """
-        encoded_url = urllib.parse.quote(url)
-        api_url = "http://api.scrape.do"
-        params = {
-            "token": token,
-            "url": encoded_url,
-        }
-        query_string = "&".join(f"{k}={v}" for k, v in params.items())
-        full_url = f"{api_url}?{query_string}"
-
-        logger.debug(f"Scrap.do request: {full_url}")
+        encoded_url = urllib.parse.quote(url, safe="")
+        base_api = "http://api.scrape.do"
+        params = f"token={token}&url={encoded_url}"
+        full_url = f"{base_api}?{params}"
 
         async with aiohttp.ClientSession() as session:
-            try:
-                async with session.get(
-                    full_url,
-                    timeout=self.timeout,
-                    headers={
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-                        "Accept-Encoding": "gzip, deflate"
-                    }
-                ) as resp:
-                    logger.warning(f"Scrap.do response status: {resp.status}")
-                    logger.warning(f"Scrap.do response headers: {resp.headers}")
+            async with session.get(
+                full_url,
+                timeout=self.timeout,
+                headers={
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+                    "Accept-Encoding": "gzip, deflate",
+                }
+            ) as resp:
+                if resp.status == 401:
+                    raise ValueError("Invalid Scrap.do token")
+                if resp.status == 429:
+                    raise ValueError("Scrap.do rate limit exceeded")
 
-                    if resp.status == 401:
-                        logger.error("Scrap.do authentication failed - invalid token")
-                        raise ValueError("Invalid Scrap.do token")
+                resp.raise_for_status()
 
-                    if resp.status == 429:
-                        logger.error("Scrap.do rate limit exceeded")
-                        raise ValueError("Scrap.do rate limit exceeded")
-
-                    resp.raise_for_status()
-
-                    # aiohttp автоматически декодирует gzip
-                    html_text = await resp.text(encoding='utf-8')
-
-                    logger.warning(f"Received HTML content length: {len(html_text)}")
-                    if len(html_text) < 100:  # Если контент подозрительно короткий
-                        logger.warning(f"Unusually short response: {html_text}")
-
-                    # Дополнительно логируем информацию от scrape.do
-                    remaining_credits = resp.headers.get("Scrape.do-Remaining-Credits")
-                    request_cost = resp.headers.get("Scrape.do-Request-Cost")
-                    if remaining_credits and request_cost:
-                        logger.debug(f"Remaining credits: {remaining_credits}, Request cost: {request_cost}")
-
-                    # Проверяем, что получили HTML
-                    if not html_text or "<!DOCTYPE html>" not in html_text.lower():
-                        logger.warning("Response doesn't look like HTML")
-                        if html_text:
-                            logger.warning(f"Response preview: {html_text[:200]}")
-
-                    fake_resp = FakeHttpxResponse(html_text, resp.headers)
-                    content = Content(fake_resp)
-                    extracted_text = content.extract_text()
-
-                    # Проверяем результат
-                    if not extracted_text or extracted_text == "No <main> or <body> found.":
-                        logger.warning("Failed to extract text from HTML")
-                        # Возможно, стоит вернуть весь HTML если не удалось извлечь текст
-                        return html_text
-                    logger.warning(f"extracted_text: {extracted_text}")
-                    return extracted_text
-
-            except aiohttp.ClientError as e:
-                logger.error(f"Network error with Scrap.do: {str(e)}")
-                raise
-            except Exception as e:
-                logger.error(f"Unexpected error with Scrap.do: {str(e)}")
-                raise
+                html_text = await resp.text(encoding="utf-8")
+                fake_resp = FakeHttpxResponse(html_text, resp.headers)
+                return Content(fake_resp).extract_text()
 
 
 class FakeHttpxResponse:
     """
-    Минималистичная «заглушка», чтобы эмулировать некоторые поля httpx.Response
+    Minimalistic mock object to emulate some of the httpx.Response interface
+    that our Content class depends on.
     """
 
     def __init__(self, text: str, headers):
-        self._text = text  # уже получили текст через await resp.text()
+        self._text = text
         self.headers = headers
 
-    @property  # Важно! В httpx это свойство, а не метод
+    @property
     def text(self) -> str:
         return self._text
 
 
 class Content:
-    """
-    Извлекает ресурс как человекочитаемый текст.
-    Рассчитан на объект, схожий с httpx.Response:
-      - response.text
-      - response.headers
-    """
+    """Extracts resource content as human-readable text."""
 
     allowed_content_types = {
         "application/json",
@@ -207,18 +151,17 @@ class Content:
     }
 
     def __init__(self, response):
-        self.response = response
-        # в httpx.Response заголовки — это словарь
+        # Expecting response.headers to be a dict-like
         content_type = response.headers.get("content-type", "")
         content_type, _, _ = content_type.partition(";")
         self.content_type = content_type.strip().lower()
+        self.response = response
 
     def extract_text(self) -> str:
         """
-        Если контент не text/html,
-        просто возвращаем .text
-        Иначе — парсим через BeautifulSoup и пытаемся найти контент
-        в разных возможных местах.
+        If the response is not text/html, return its text as is.
+        Otherwise, parse the HTML with BeautifulSoup and extract text from
+        <main> or <body>.
         """
         if not self.is_text():
             return "Unknown binary content"
@@ -226,10 +169,18 @@ class Content:
         if self.content_type != "text/html":
             return self.response.text
 
-        # Парсим HTML
         html = BeautifulSoup(self.response.text, "html.parser")
 
-        # Пробуем разные селекторы, от специфичных к общим
+        json_scripts = html.find_all('script', type='application/ld+json')
+        for script in json_scripts:
+            try:
+                data = json.loads(script.string)
+                # Ищем articleBody в JSON
+                if 'articleBody' in data:
+                    return data['articleBody']
+            except (json.JSONDecodeError, AttributeError):
+                continue
+
         content = (
             html.find("main") or 
             html.find("article") or
@@ -241,30 +192,22 @@ class Content:
         )
 
         if content:
-            # Удаляем ненужные элементы
             for tag in content.find_all(['script', 'style', 'nav', 'header', 'footer']):
-                tag.decompose()
+                if tag.get('type') != 'application/ld+json':
+                    tag.decompose()
 
-            # Получаем текст с сохранением структуры
             text = content.get_text(separator='\n', strip=True)
 
-            # Убираем лишние пустые строки
             lines = [line.strip() for line in text.splitlines() if line.strip()]
             return '\n'.join(lines)
 
-        # Если совсем ничего не нашли - берем весь текст
         text = html.get_text(separator='\n', strip=True)
         lines = [line.strip() for line in text.splitlines() if line.strip()]
         return '\n'.join(lines)
 
     def is_text(self) -> bool:
-        """
-        Проверяем, является ли контент «текстовым».
-        """
         if not self.content_type:
             return False
-
         if self.content_type.startswith("text/"):
             return True
-
         return self.content_type in self.allowed_content_types
