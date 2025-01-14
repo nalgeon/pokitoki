@@ -20,6 +20,10 @@ telegram:
     # If empty, the bot will only be available to `telegram.usernames`.
     chat_ids: []
 
+# Scrap.do settings.
+scrapdo:
+    token: ""
+
 # OpenAI settings.
 openai:
     # OpenAI API key.
