@@ -28,24 +28,18 @@ class MessageCommand:
             f"text={bool(message.text)}, "
             f"voice={bool(message.voice)}, "
             f"document={message.document.file_name if message.document else None}, "
-            f"photo={[p.file_unique_id for p in message.photo] if message.photo else None}, "
-            f"caption={message.caption}"
+            f"photo={bool(message.photo)}, "
+            f"caption={bool(message.caption)}"
         )
 
         # Сначала обрабатываем файлы, если они есть
         file_content = None
         if (message.document or message.photo) and config.files.enabled:
-            logger.info(
-                f"Processing media: "
-                f"document_size={message.document.file_size if message.document else None}, "
-                f"photo_sizes={[(p.width, p.height, p.file_size) for p in message.photo] if message.photo else None}"
-            )
             file_processor = FileProcessor()
             file_content = await file_processor.process_files(
                 documents=[message.document] if message.document else [],
                 photos=message.photo if message.photo else [],
             )
-            logger.info(f"File processing result: {bool(file_content)}")
 
         # Извлекаем текст сообщения
         if message.chat.type == Chat.PRIVATE:

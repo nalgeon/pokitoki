@@ -112,10 +112,6 @@ class FileProcessor:
     async def _process_photo(self, photo: PhotoSize) -> Optional[Tuple[str, str]]:
         """Processes a single photo."""
         try:
-            logger.info(
-                f"Processing photo: size={photo.file_size}, id={photo.file_unique_id}"
-            )
-
             if photo.file_size > self.max_file_size:
                 raise ValueError(
                     f"Image is too large ({photo.file_size/1024/1024:.1f}MB). "
@@ -128,11 +124,9 @@ class FileProcessor:
             # Download file
             file = await photo.get_file()
             await file.download_to_drive(file_path)
-            logger.info(f"Photo downloaded to {file_path}")
 
             try:
                 # Process image with custom prompt in thread
-                logger.info("Starting photo recognition")
                 loop = asyncio.get_event_loop()
                 result = await loop.run_in_executor(
                     self.executor,
@@ -140,7 +134,6 @@ class FileProcessor:
                         str(file_path), llm_prompt=config.files.image_recognition_prompt
                     ),
                 )
-                logger.info("Photo recognition completed")
                 return f"image_{photo.file_unique_id}", result.text_content
 
             finally:

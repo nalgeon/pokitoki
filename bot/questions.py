@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 async def extract_private(message: Message, context: CallbackContext) -> Optional[str]:
     """Extracts a question from a private message."""
-    logger.info(f"Extracting private message: voice={bool(message.voice)}")
     # allow any messages in a private chat
     question = await _extract_text(message, context)
     if message.reply_to_message:
