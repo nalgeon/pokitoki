@@ -1,7 +1,7 @@
 import unittest
 
-from bot.config import config
 from bot import shortcuts
+from bot.config import config
 
 
 class ExtractTest(unittest.TestCase):

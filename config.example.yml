@@ -90,3 +90,20 @@ shortcuts:
     summarize: "Explain the following text in simple terms. Use no more than two paragraphs."
 
     translate: "Translate the following text into English."
+
+# Voice message processing settings
+voice:
+    # Enable/disable voice message processing
+    enabled: true
+    # Enable/disable text-to-speech responses
+    tts_enabled: true
+    # OpenAI Whisper model for speech recognition
+    model: "whisper-1"
+    # Default language for speech recognition
+    language: "auto"  # "auto" for automatic language detection, or use specific language code like "ru"
+    # Maximum voice message size in MB
+    max_file_size: 25
+    # OpenAI TTS model settings
+    tts:
+        model: "tts-1"
+        voice: "sage"  # alloy, echo, fable, onyx, nova, sage,or shimmer

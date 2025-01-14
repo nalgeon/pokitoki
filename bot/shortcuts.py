@@ -4,6 +4,7 @@ A shortcut is an action that preprocesses a question before asking it of the AI.
 """
 
 import re
+
 from bot.config import config
 
 shortcut_re = re.compile(r"^!(\w+)\b")
