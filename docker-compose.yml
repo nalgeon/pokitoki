@@ -1,8 +1,8 @@
 version: "3"
 
 services:
-    pokitoki:
-        container_name: pokitoki
+    pokitoki-advanced:
+        container_name: pokitoki-advanced
         command: python3 -m bot.bot
         restart: unless-stopped
         build:
