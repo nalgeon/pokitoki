@@ -16,6 +16,11 @@ class Telegram:
 
 
 @dataclass
+class Scrapdo:
+    token: str
+
+
+@dataclass
 class OpenAI:
     api_key: str
     model: str
@@ -120,6 +125,10 @@ class Config:
             prompt=src["openai"].get("prompt"),
             params=src["openai"].get("params") or {},
             azure=src["openai"].get("azure"),
+        )
+
+        self.scrapdo = Scrapdo(
+            token=src["scrapdo"]["token"],
         )
 
         # Conversation settings.

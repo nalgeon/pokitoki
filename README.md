@@ -1,3 +1,8 @@
+# ⚠️ It is fork of [pokitoki](https://github.com/nalgeon/pokitoki) with additional features
+
+- Here is available web-sites scrapping via scrape.do API (provides 1000 requests/mo for free )
+
+
 # Humble GPT Telegram Bot
 
 This is a Telegram chat bot (AI assistant) that uses the GPT language models from OpenAI.

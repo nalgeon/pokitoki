@@ -6,7 +6,10 @@ from bot.config import config
 
 openai = AsyncOpenAI(api_key=config.openai.api_key)
 
-BASE_PROMPT = "Your primary goal is to answer my questions. This may involve writing code or providing helpful information. Be detailed and thorough in your responses. Write code inside <pre>, </pre> tags."
+BASE_PROMPT = ("Your primary goal is to answer my questions. "
+               "This may involve writing code or providing helpful information. "
+               "Be detailed and thorough in your responses. "
+               "Write code inside <pre>, </pre> tags.")
 
 PRE_RE = re.compile(r"&lt;(/?pre)")
 
