@@ -252,7 +252,7 @@ class ConfigEditor:
 
         raise ValueError(f"Failed to get property: {property}")
 
-    def set_value(self, property: str, value: str) -> tuple[bool, bool]:
+    def set_value(self, property: str, value: str) -> tuple[bool, bool]:  # noqa: C901
         """
         Changes a config property value.
         Returns a tuple `(has_changed, is_immediate, new_val)`
