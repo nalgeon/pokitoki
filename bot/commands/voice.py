@@ -3,7 +3,7 @@
 import logging
 from typing import Awaitable
 
-from telegram import Update
+from telegram import Chat, Update
 from telegram.ext import CallbackContext
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,11 @@ class VoiceMessage:
     async def __call__(self, update: Update, context: CallbackContext) -> None:
         message = update.message or update.edited_message
         logger.info(f"Voice message received: from={update.effective_user.username}")
+
+        # Only process voice messages in private chats
+        if message.chat.type != Chat.PRIVATE:
+            logger.info("Ignoring voice message in non-private chat")
+            return
 
         await self.reply_func(
             update=update, message=message, context=context, question=""
