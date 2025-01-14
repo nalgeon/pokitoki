@@ -126,6 +126,39 @@ class Voice:
         self.tts = tts or {"model": "tts-1", "voice": "alloy"}
 
 
+@dataclass
+class Files:
+    enabled: bool
+    image_recognition_prompt: str
+    max_file_size: int
+    supported_extensions: list[str]
+
+    def __init__(
+        self,
+        enabled: bool = True,
+        image_recognition_prompt: str = "Describe what you see in the image, including any text present and its meaning. Be detailed but concise.",
+        max_file_size: int = 25,
+        supported_extensions: Optional[list] = None,
+    ):
+        self.enabled = enabled
+        self.image_recognition_prompt = image_recognition_prompt
+        self.max_file_size = max_file_size
+        self.supported_extensions = supported_extensions or [
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
+            ".txt",
+            ".rtf",
+            ".jpg",
+            ".jpeg",
+            ".png",
+        ]
+
+
 class Config:
     """Config properties."""
 
@@ -177,6 +210,9 @@ class Config:
 
         # Voice processing settings
         self.voice = Voice(**src.get("voice", {}))
+
+        # File processing settings
+        self.files = Files(**src.get("files", {}))
 
     def as_dict(self) -> dict:
         """Converts the config into a dictionary."""

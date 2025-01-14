@@ -8,8 +8,14 @@ import time
 from pathlib import Path
 
 from telegram import Chat, Message, Update
-from telegram.ext import (Application, ApplicationBuilder, CallbackContext,
-                          CommandHandler, MessageHandler, PicklePersistence)
+from telegram.ext import (
+    Application,
+    ApplicationBuilder,
+    CallbackContext,
+    CommandHandler,
+    MessageHandler,
+    PicklePersistence,
+)
 from telegram.ext import filters as tg_filters
 
 from bot import askers, commands, models, questions
@@ -18,6 +24,7 @@ from bot.fetcher import Fetcher
 from bot.filters import Filters
 from bot.models import ChatData, UserData
 from bot.voice import VoiceProcessor
+from bot.file_processor import FileProcessor
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -97,7 +104,9 @@ def add_handlers(application: Application):
     # text message handler
     application.add_handler(
         MessageHandler(
-            (filters.text_filter) & ~tg_filters.COMMAND & filters.users_or_chats,
+            (filters.text_filter | tg_filters.PHOTO | tg_filters.Document.ALL)
+            & ~tg_filters.COMMAND
+            & filters.users_or_chats,
             commands.Message(reply_to),
         )
     )
@@ -181,13 +190,33 @@ async def reply_to(
         f"from={update.effective_user.username}, "
         f"text={bool(message.text)}, "
         f"has_voice={bool(message.voice)}, "
-        f"voice_enabled={config.voice.enabled}"
+        f"has_files={bool(message.document or message.photo)}"
     )
+
     await message.chat.send_action(
         action="typing", message_thread_id=message.message_thread_id
     )
 
     try:
+        # Process files if present
+        if (message.document or message.photo) and config.files.enabled:
+            if not message.caption:
+                await message.reply_text("This is a file. What should I do with it?")
+                return
+
+            file_processor = FileProcessor()
+            file_content = await file_processor.process_files(
+                documents=[message.document] if message.document else [],
+                photos=message.photo if message.photo else [],
+            )
+
+            if file_content:
+                if not question:
+                    question = message.caption
+                question = f"{question}\n\n{file_content}"
+            else:
+                logger.warning("No content extracted from files")
+
         # Handle voice messages
         if message.voice and config.voice.enabled:
             logger.info("Voice message detected")
