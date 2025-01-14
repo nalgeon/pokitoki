@@ -1,4 +1,5 @@
 import unittest
+
 from bot import markdown
 
 TEXT_MD = r"""You can easily regular expressions them using the `sqlean-regexp` extension.

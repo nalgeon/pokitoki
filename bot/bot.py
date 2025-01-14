@@ -2,31 +2,22 @@
 
 import logging
 import sys
+import tempfile
 import textwrap
 import time
-import tempfile
 from pathlib import Path
 
 from telegram import Chat, Message, Update
-from telegram.ext import (
-    Application,
-    ApplicationBuilder,
-    CallbackContext,
-    CommandHandler,
-    MessageHandler,
-    PicklePersistence,
-    filters as tg_filters,
-)
-from bot import askers
-from bot import commands
-from bot import questions
-from bot import models
+from telegram.ext import (Application, ApplicationBuilder, CallbackContext,
+                          CommandHandler, MessageHandler, PicklePersistence)
+from telegram.ext import filters as tg_filters
+
+from bot import askers, commands, models, questions
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
 from bot.models import ChatData, UserData
 from bot.voice import VoiceProcessor
-
 
 logging.basicConfig(
     stream=sys.stdout,

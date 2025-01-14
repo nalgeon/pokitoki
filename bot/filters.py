@@ -1,9 +1,11 @@
 """Bot message filters."""
 
 import logging
-from typing import Union
 from dataclasses import dataclass
+from typing import Union
+
 from telegram.ext import filters
+
 from bot.config import config
 
 logger = logging.getLogger(__name__)

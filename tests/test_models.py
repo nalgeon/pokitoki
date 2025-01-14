@@ -1,10 +1,11 @@
-from collections import deque
 import datetime as dt
 import unittest
+from collections import deque
 
 from bot import models
 from bot.config import config
-from bot.models import ExpiringCounter, TimestampedValue, UserData, UserMessage, UserMessages
+from bot.models import (ExpiringCounter, TimestampedValue, UserData,
+                        UserMessage, UserMessages)
 
 
 class UserDataTest(unittest.TestCase):

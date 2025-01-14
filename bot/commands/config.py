@@ -1,10 +1,10 @@
 """/config command."""
 
 from telegram import Update
-from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
+from telegram.ext import CallbackContext
 
-from bot.config import config, ConfigEditor
+from bot.config import ConfigEditor, config
 from bot.filters import Filters
 
 HELP_MESSAGE = """Syntax:

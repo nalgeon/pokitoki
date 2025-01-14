@@ -1,10 +1,11 @@
 """Bot configuration parameters."""
 
-import os
-from typing import Any, Optional
-import yaml
 import dataclasses
+import os
 from dataclasses import dataclass
+from typing import Any, Optional
+
+import yaml
 
 
 @dataclass

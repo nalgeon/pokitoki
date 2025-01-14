@@ -11,8 +11,7 @@ from telegram import Chat, Message
 from telegram.constants import MessageLimit, ParseMode
 from telegram.ext import CallbackContext
 
-from bot import ai
-from bot import markdown
+from bot import ai, markdown
 
 
 class Asker:

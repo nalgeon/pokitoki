@@ -2,8 +2,10 @@
 
 import logging
 from typing import Optional
-from openai import AsyncAzureOpenAI, AsyncOpenAI
+
 import tiktoken
+from openai import AsyncAzureOpenAI, AsyncOpenAI
+
 from bot.config import config
 
 if config.openai.azure:

@@ -1,7 +1,9 @@
 """Fine-tuned language model from OpenAI."""
 
 import re
+
 from openai import AsyncOpenAI
+
 from bot.config import config
 
 openai = AsyncOpenAI(api_key=config.openai.api_key)

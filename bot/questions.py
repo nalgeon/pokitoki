@@ -1,10 +1,12 @@
 """Extracts questions from chat messages."""
 
-from telegram import Message, MessageEntity
-from telegram.ext import CallbackContext
-from bot import shortcuts
 import logging
 from typing import Optional
+
+from telegram import Message, MessageEntity
+from telegram.ext import CallbackContext
+
+from bot import shortcuts
 
 logger = logging.getLogger(__name__)
 
