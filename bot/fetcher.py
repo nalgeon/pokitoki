@@ -9,6 +9,8 @@ from httpx import HTTPStatusError, RequestError
 from bot.config import config
 
 
+# todo make scrape.do and httpx output similar
+
 class Fetcher:
     """Retrieves remote content over HTTP."""
 
@@ -107,12 +109,12 @@ class Fetcher:
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                full_url,
-                timeout=self.timeout,
-                headers={
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-                    "Accept-Encoding": "gzip, deflate",
-                }
+                    full_url,
+                    timeout=self.timeout,
+                    headers={
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+                        "Accept-Encoding": "gzip, deflate",
+                    }
             ) as resp:
                 if resp.status == 401:
                     raise ValueError("Invalid Scrap.do token")
@@ -182,13 +184,13 @@ class Content:
                 continue
 
         content = (
-            html.find("main") or 
-            html.find("article") or
-            html.find("div", class_="content") or
-            html.find("div", class_="article") or
-            html.find("div", {"id": "content"}) or
-            html.find("div", {"id": "main"}) or
-            html.find("body")
+                html.find("main") or
+                html.find("article") or
+                html.find("div", class_="content") or
+                html.find("div", class_="article") or
+                html.find("div", {"id": "content"}) or
+                html.find("div", {"id": "main"}) or
+                html.find("body")
         )
 
         if content:
