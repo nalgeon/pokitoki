@@ -1,6 +1,7 @@
 """DALL-E model from OpenAI."""
 
 from openai import AsyncOpenAI
+
 from bot.config import config
 
 openai = AsyncOpenAI(api_key=config.openai.api_key)

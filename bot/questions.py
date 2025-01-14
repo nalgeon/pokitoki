@@ -1,12 +1,19 @@
 """Extracts questions from chat messages."""
 
+import logging
+from typing import Optional
+
 from telegram import Message, MessageEntity
 from telegram.ext import CallbackContext
+
 from bot import shortcuts
 
+logger = logging.getLogger(__name__)
 
-async def extract_private(message: Message, context: CallbackContext) -> str:
-    """Extracts a question from a message in a private chat."""
+
+async def extract_private(message: Message, context: CallbackContext) -> Optional[str]:
+    """Extracts a question from a private message."""
+    logger.info(f"Extracting private message: voice={bool(message.voice)}")
     # allow any messages in a private chat
     question = await _extract_text(message, context)
     if message.reply_to_message:
@@ -15,7 +22,9 @@ async def extract_private(message: Message, context: CallbackContext) -> str:
     return question
 
 
-async def extract_group(message: Message, context: CallbackContext) -> tuple[str, Message]:
+async def extract_group(
+    message: Message, context: CallbackContext
+) -> tuple[str, Message]:
     """Extracts a question from a message in a group chat."""
     text = await _extract_text(message, context)
     if not text:
@@ -31,7 +40,9 @@ async def extract_group(message: Message, context: CallbackContext) -> tuple[str
         return question, message
 
     entities = message.entities or message.caption_entities
-    mention = entities[0] if entities and entities[0].type == MessageEntity.MENTION else None
+    mention = (
+        entities[0] if entities and entities[0].type == MessageEntity.MENTION else None
+    )
     if not mention:
         # the message is not a reply to the bot,
         # so ignore it unless it's mentioning the bot

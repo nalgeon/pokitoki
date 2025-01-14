@@ -1,8 +1,8 @@
 """/prompt command."""
 
 from telegram import Chat, Update
-from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
+from telegram.ext import CallbackContext
 
 from bot.config import config
 from bot.models import ChatData

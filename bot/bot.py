@@ -2,27 +2,22 @@
 
 import logging
 import sys
+import tempfile
 import textwrap
 import time
+from pathlib import Path
 
 from telegram import Chat, Message, Update
-from telegram.ext import (
-    Application,
-    ApplicationBuilder,
-    CallbackContext,
-    CommandHandler,
-    MessageHandler,
-    PicklePersistence,
-)
-from bot import askers
-from bot import commands
-from bot import questions
-from bot import models
+from telegram.ext import (Application, ApplicationBuilder, CallbackContext,
+                          CommandHandler, MessageHandler, PicklePersistence)
+from telegram.ext import filters as tg_filters
+
+from bot import askers, commands, models, questions
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
 from bot.models import ChatData, UserData
-
+from bot.voice import VoiceProcessor
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -44,6 +39,8 @@ fetcher = Fetcher()
 
 # telegram message filters
 filters = Filters()
+
+voice_processor = VoiceProcessor()
 
 
 def main():
@@ -68,25 +65,50 @@ def add_handlers(application: Application):
 
     # info commands
     application.add_handler(CommandHandler("start", commands.Start()))
-    application.add_handler(CommandHandler("help", commands.Help(), filters=filters.users))
-    application.add_handler(CommandHandler("version", commands.Version(), filters=filters.users))
+    application.add_handler(
+        CommandHandler("help", commands.Help(), filters=filters.users)
+    )
+    application.add_handler(
+        CommandHandler("version", commands.Version(), filters=filters.users)
+    )
 
     # admin commands
     application.add_handler(
-        CommandHandler("config", commands.Config(filters), filters=filters.admins_private)
+        CommandHandler(
+            "config", commands.Config(filters), filters=filters.admins_private
+        )
     )
 
     # message-related commands
     application.add_handler(
-        CommandHandler("imagine", commands.Imagine(reply_to), filters=filters.users_or_chats)
+        CommandHandler(
+            "imagine", commands.Imagine(reply_to), filters=filters.users_or_chats
+        )
     )
-    application.add_handler(CommandHandler("prompt", commands.Prompt(), filters=filters.users))
     application.add_handler(
-        CommandHandler("retry", commands.Retry(reply_to), filters=filters.users_or_chats)
+        CommandHandler("prompt", commands.Prompt(), filters=filters.users)
+    )
+    application.add_handler(
+        CommandHandler(
+            "retry", commands.Retry(reply_to), filters=filters.users_or_chats
+        )
     )
 
-    # non-command handler: the default action is to reply to a message
-    application.add_handler(MessageHandler(filters.messages, commands.Message(reply_to)))
+    # text message handler
+    application.add_handler(
+        MessageHandler(
+            (filters.text_filter) & ~tg_filters.COMMAND & filters.users_or_chats,
+            commands.Message(reply_to),
+        )
+    )
+
+    # voice message handler
+    application.add_handler(
+        MessageHandler(
+            tg_filters.VOICE & filters.users_or_chats,
+            commands.VoiceMessage(reply_to),
+        )
+    )
 
     # generic error handler
     application.add_error_handler(commands.Error())
@@ -101,6 +123,11 @@ async def post_init(application: Application) -> None:
     logging.info(f"admins: {config.telegram.admins}")
     logging.info(f"model name: {config.openai.model}")
     logging.info(f"bot: username={bot.username}, id={bot.id}")
+    logging.info(
+        f"voice processing: enabled={config.voice.enabled}, "
+        f"tts_enabled={config.voice.tts_enabled}, "
+        f"language={config.voice.language}"
+    )
     await bot.set_my_commands(commands.BOT_COMMANDS)
 
 
@@ -121,12 +148,16 @@ def with_message_limit(func):
         # check if the message counter exceeds the message limit
         if (
             not filters.is_known_user(username)
-            and user.message_counter.value >= config.conversation.message_limit.count > 0
+            and user.message_counter.value
+            >= config.conversation.message_limit.count
+            > 0
             and not user.message_counter.is_expired()
         ):
             # this is a group user and they have exceeded the message limit
             wait_for = models.format_timedelta(user.message_counter.expires_after())
-            await message.reply_text(f"Please wait {wait_for} before asking a new question.")
+            await message.reply_text(
+                f"Please wait {wait_for} before asking a new question."
+            )
             return
 
         # this is a known user or they have not exceeded the message limit,
@@ -145,12 +176,40 @@ async def reply_to(
     update: Update, message: Message, context: CallbackContext, question: str
 ) -> None:
     """Replies to a specific question."""
-    await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
+    logger.info(
+        f"Message received: "
+        f"from={update.effective_user.username}, "
+        f"text={bool(message.text)}, "
+        f"has_voice={bool(message.voice)}, "
+        f"voice_enabled={config.voice.enabled}"
+    )
+    await message.chat.send_action(
+        action="typing", message_thread_id=message.message_thread_id
+    )
 
     try:
+        # Handle voice messages
+        if message.voice and config.voice.enabled:
+            logger.warning("Voice message detected")
+            # Download voice file
+            voice_file = await message.voice.get_file()
+            with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp_file:
+                await voice_file.download_to_drive(tmp_file.name)
+                voice_path = Path(tmp_file.name)
+
+            # Transcribe voice to text
+            question = await voice_processor.transcribe(voice_path)
+            logger.warning(f"Transcribed voice to text: {question}")
+            voice_path.unlink()  # Clean up
+
+            if not question:
+                await message.reply_text(
+                    "Sorry, I couldn't understand the voice message."
+                )
+                return
+
         asker = askers.create(question)
         if message.chat.type == Chat.PRIVATE and message.forward_date:
-            # this is a forwarded message, don't answer yet
             answer = "This is a forwarded message. What should I do with it?"
         else:
             answer = await _ask_question(message, context, question, asker)
@@ -158,7 +217,16 @@ async def reply_to(
         user = UserData(context.user_data)
         user.messages.add(question, answer)
         logger.debug(user.messages)
+
+        # Send text response
         await asker.reply(message, context, answer)
+
+        # Send voice response if enabled
+        if message.voice and config.voice.tts_enabled:
+            speech_file = await voice_processor.text_to_speech(answer)
+            if speech_file:
+                await message.reply_voice(speech_file)
+                speech_file.unlink()  # Clean up
 
     except Exception as exc:
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"

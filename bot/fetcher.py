@@ -1,8 +1,9 @@
-import re
-import httpx
-import aiohttp
-import urllib.parse
 import json
+import re
+import urllib.parse
+
+import aiohttp
+import httpx
 from bs4 import BeautifulSoup
 from httpx import HTTPStatusError, RequestError
 

@@ -1,8 +1,9 @@
 """Bot data models."""
 
-from collections import deque
 import datetime as dt
+from collections import deque
 from typing import Generic, Mapping, NamedTuple, Optional, TypeVar
+
 from bot.config import config
 
 T = TypeVar("T")

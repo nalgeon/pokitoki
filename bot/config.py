@@ -1,10 +1,11 @@
 """Bot configuration parameters."""
 
-import os
-from typing import Any, Optional
-import yaml
 import dataclasses
+import os
 from dataclasses import dataclass
+from typing import Any, Optional
+
+import yaml
 
 
 @dataclass
@@ -93,8 +94,36 @@ class Imagine:
 
     def __init__(self, enabled: str) -> None:
         self.enabled = (
-            enabled if enabled in ("none", "users_only", "users_and_groups") else "users_only"
+            enabled
+            if enabled in ("none", "users_only", "users_and_groups")
+            else "users_only"
         )
+
+
+@dataclass
+class Voice:
+    enabled: bool
+    tts_enabled: bool
+    model: str
+    language: str
+    max_file_size: int
+    tts: dict[str, str]
+
+    def __init__(
+        self,
+        enabled: bool = False,
+        tts_enabled: bool = False,
+        model: str = "whisper-1",
+        language: str = "auto",
+        max_file_size: int = 25,
+        tts: Optional[dict] = None,
+    ):
+        self.enabled = enabled
+        self.tts_enabled = tts_enabled
+        self.model = model
+        self.language = language
+        self.max_file_size = max_file_size
+        self.tts = tts or {"model": "tts-1", "voice": "alloy"}
 
 
 class Config:
@@ -145,6 +174,9 @@ class Config:
 
         # Custom AI commands (additional prompts).
         self.shortcuts = src.get("shortcuts") or {}
+
+        # Voice processing settings
+        self.voice = Voice(**src.get("voice", {}))
 
     def as_dict(self) -> dict:
         """Converts the config into a dictionary."""
@@ -340,7 +372,9 @@ class SchemaMigrator:
             "persistence_path": old.get("persistence_path"),
             "shortcuts": old.get("shortcuts"),
         }
-        data["conversation"] = {"depth": old.get("max_history_depth") or Conversation.default_depth}
+        data["conversation"] = {
+            "depth": old.get("max_history_depth") or Conversation.default_depth
+        }
         return data
 
     def _migrate_v3(old: dict) -> dict:

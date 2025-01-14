@@ -1,6 +1,7 @@
 import unittest
-from bot.config import config
+
 from bot.ai import chatgpt
+from bot.config import config
 from bot.models import UserMessage
 
 

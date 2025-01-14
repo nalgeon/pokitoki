@@ -1,17 +1,15 @@
 import datetime as dt
 import unittest
+
 from telegram import Chat, Message, MessageEntity, Update, User
 from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 from telegram.ext import filters as tg_filters
 
-from bot import askers
-from bot import bot
-from bot import commands
-from bot import models
+from bot import askers, bot, commands, models
 from bot.config import config
 from bot.filters import Filters
-from tests.mocks import FakeGPT, FakeDalle, FakeApplication, FakeBot
+from tests.mocks import FakeApplication, FakeBot, FakeDalle, FakeGPT
 
 
 class Helper:

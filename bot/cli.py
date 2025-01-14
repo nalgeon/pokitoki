@@ -10,11 +10,11 @@ import os
 import sys
 import textwrap
 
-from bot.config import config
-from bot.fetcher import Fetcher
 import bot.ai.chatgpt
 import bot.ai.custom
 import bot.ai.davinci
+from bot.config import config
+from bot.fetcher import Fetcher
 
 
 async def main(question):

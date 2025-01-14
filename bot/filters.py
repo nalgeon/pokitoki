@@ -1,9 +1,14 @@
 """Bot message filters."""
 
-from typing import Union
+import logging
 from dataclasses import dataclass
+from typing import Union
+
 from telegram.ext import filters
+
 from bot.config import config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -16,7 +21,7 @@ class Filters:
 
     users_or_chats: filters.BaseFilter
     admins_private: filters.BaseFilter
-    messages: filters.BaseFilter
+    text_filter: filters.BaseFilter
 
     def __init__(self) -> None:
         """Defines users and chats that are allowed to use the bot."""
@@ -34,8 +39,10 @@ class Filters:
 
         self.users_or_chats = self.users | self.chats
         self.admins_private = self.admins & filters.ChatType.PRIVATE
-        self.messages = (
-            (filters.TEXT | filters.Document.TEXT) & ~filters.COMMAND & self.users_or_chats
+        self.text_filter = filters.TEXT
+
+        logger.info(
+            f"Filters initialized: text={self.text_filter}, users_or_chats={self.users_or_chats}"
         )
 
     def reload(self) -> None:
