@@ -8,3 +8,4 @@ from .prompt import PromptCommand as Prompt
 from .retry import RetryCommand as Retry
 from .start import StartCommand as Start
 from .version import VersionCommand as Version
+from .voice import VoiceMessage
