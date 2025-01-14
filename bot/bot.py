@@ -190,7 +190,7 @@ async def reply_to(
     try:
         # Handle voice messages
         if message.voice and config.voice.enabled:
-            logger.warning("Voice message detected")
+            logger.info("Voice message detected")
             # Download voice file
             voice_file = await message.voice.get_file()
             with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp_file:
@@ -199,7 +199,7 @@ async def reply_to(
 
             # Transcribe voice to text
             question = await voice_processor.transcribe(voice_path)
-            logger.warning(f"Transcribed voice to text: {question}")
+            logger.info(f"Transcribed voice to text: {question}")
             voice_path.unlink()  # Clean up
 
             if not question:

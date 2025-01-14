@@ -9,7 +9,6 @@ from httpx import HTTPStatusError, RequestError
 
 from bot.config import config
 
-
 # todo make scrape.do and httpx output similar
 
 class Fetcher:
