@@ -26,41 +26,39 @@ async def extract_group(
 ) -> tuple[str, Message]:
     """Extracts a question from a message in a group chat."""
     text = await _extract_text(message, context)
-    if not text:
-        # ignore messages without text
-        return "", message
 
-    if (
+    # Проверяем, является ли сообщение ответом боту
+    is_reply_to_bot = (
         message.reply_to_message
         and message.reply_to_message.from_user.username == context.bot.username
-    ):
-        # treat a reply to the bot as a follow-up question
-        question = f"+ {text}"
-        return question, message
+    )
 
+    # Проверяем упоминание бота
     entities = message.entities or message.caption_entities
     mention = (
         entities[0] if entities and entities[0].type == MessageEntity.MENTION else None
     )
-    if not mention:
-        # the message is not a reply to the bot,
-        # so ignore it unless it's mentioning the bot
+
+    # Если это не ответ боту и нет упоминания - игнорируем
+    if not is_reply_to_bot and not mention:
         return "", message
 
+    # Если это ответ боту
+    if is_reply_to_bot:
+        question = f"+ {text}" if text else ""
+        return question, message
+
+    # Если есть упоминание, проверяем что оно относится к боту
     mention_text = text[mention.offset : mention.offset + mention.length]
     if mention_text.lower() != context.bot.name.lower():
-        # the message mentions someone else
         return "", message
 
-    # the message is mentioning the bot,
-    # so remove the mention to get the question
+    # Убираем упоминание из текста
     question = text[: mention.offset] + text[mention.offset + mention.length :]
     question = question.strip()
 
-    # messages in topics are technically replies to the 'topic created' message
-    # so we should ignore such replies
+    # Если это ответ на сообщение (но не на создание топика)
     if message.reply_to_message and not message.reply_to_message.forum_topic_created:
-        # the real question is in the original message
         reply_text = await _extract_text(message.reply_to_message, context)
         question = f"{question}: {reply_text}" if question else reply_text
         return question, message.reply_to_message
