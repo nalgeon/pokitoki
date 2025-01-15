@@ -1,7 +1,8 @@
 # ⚠️ It is fork of [pokitoki](https://github.com/nalgeon/pokitoki) with additional features
 
 - Here is available web-sites scrapping via scrape.do API (provides 1000 requests/mo for free )
-- Voice messsages now switched-on, with support of TTS-output.
+- Voice messsages support, with optional TTS-output (hear answer instead of reading).
+- Documents support.
 
 
 # Humble GPT Telegram Bot
