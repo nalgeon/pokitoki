@@ -28,7 +28,7 @@ from bot.file_processor import FileProcessor
 
 logging.basicConfig(
     stream=sys.stdout,
-    level=logging.INFO,
+    level=logging.WARNING,
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -219,7 +219,6 @@ async def reply_to(
 
         # Handle voice messages
         if message.voice and config.voice.enabled:
-            logger.info("Voice message detected")
             # Download voice file
             voice_file = await message.voice.get_file()
             with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as tmp_file:
@@ -228,7 +227,6 @@ async def reply_to(
 
             # Transcribe voice to text
             question = await voice_processor.transcribe(voice_path)
-            logger.info(f"Transcribed voice to text: {question}")
             voice_path.unlink()  # Clean up
 
             if not question:
