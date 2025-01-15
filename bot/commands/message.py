@@ -72,8 +72,6 @@ class MessageCommand:
         if file_content:
             question = f"{question}\n\n{file_content}" if question else file_content
 
-        logger.info(f"Extracted question: {question}")
-
         await self.reply_func(
             update=update, message=message, context=context, question=question
         )
