@@ -11,6 +11,7 @@ from bot.config import config
 
 # todo make scrape.do and httpx output similar
 
+
 class Fetcher:
     """Retrieves remote content over HTTP."""
 
@@ -34,9 +35,7 @@ class Fetcher:
             "Accept-Language": "en-US,en;q=0.9",
         }
         self.client = httpx.AsyncClient(
-            follow_redirects=True,
-            timeout=self.timeout,
-            headers=headers
+            follow_redirects=True, timeout=self.timeout, headers=headers
         )
 
     async def substitute_urls(self, text: str) -> str:
@@ -79,7 +78,12 @@ class Fetcher:
             # Not a 403 or no token -> re-raise
             raise
 
-        except (httpx.ReadTimeout, httpx.ConnectError, httpx.RemoteProtocolError, httpx.TooManyRedirects) as net_exc:
+        except (
+            httpx.ReadTimeout,
+            httpx.ConnectError,
+            httpx.RemoteProtocolError,
+            httpx.TooManyRedirects,
+        ) as net_exc:
             # If we face typical network issues, fallback to Scrap.do if token is set
             token = config.scrapdo.token
             if token and token.strip():
@@ -109,12 +113,12 @@ class Fetcher:
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
-                    full_url,
-                    timeout=self.timeout,
-                    headers={
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
-                        "Accept-Encoding": "gzip, deflate",
-                    }
+                full_url,
+                timeout=self.timeout,
+                headers={
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9",
+                    "Accept-Encoding": "gzip, deflate",
+                },
             ) as resp:
                 if resp.status == 401:
                     raise ValueError("Invalid Scrap.do token")
@@ -173,39 +177,39 @@ class Content:
 
         html = BeautifulSoup(self.response.text, "html.parser")
 
-        json_scripts = html.find_all('script', type='application/ld+json')
+        json_scripts = html.find_all("script", type="application/ld+json")
         for script in json_scripts:
             try:
                 data = json.loads(script.string)
                 # Ищем articleBody в JSON
-                if 'articleBody' in data:
-                    return data['articleBody']
+                if "articleBody" in data:
+                    return data["articleBody"]
             except (json.JSONDecodeError, AttributeError):
                 continue
 
         content = (
-                html.find("main") or
-                html.find("article") or
-                html.find("div", class_="content") or
-                html.find("div", class_="article") or
-                html.find("div", {"id": "content"}) or
-                html.find("div", {"id": "main"}) or
-                html.find("body")
+            html.find("main")
+            or html.find("article")
+            or html.find("div", class_="content")
+            or html.find("div", class_="article")
+            or html.find("div", {"id": "content"})
+            or html.find("div", {"id": "main"})
+            or html.find("body")
         )
 
         if content:
-            for tag in content.find_all(['script', 'style', 'nav', 'header', 'footer']):
-                if tag.get('type') != 'application/ld+json':
+            for tag in content.find_all(["script", "style", "nav", "header", "footer"]):
+                if tag.get("type") != "application/ld+json":
                     tag.decompose()
 
-            text = content.get_text(separator='\n', strip=True)
+            text = content.get_text(separator="\n", strip=True)
 
             lines = [line.strip() for line in text.splitlines() if line.strip()]
-            return '\n'.join(lines)
+            return "\n".join(lines)
 
-        text = html.get_text(separator='\n', strip=True)
+        text = html.get_text(separator="\n", strip=True)
         lines = [line.strip() for line in text.splitlines() if line.strip()]
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def is_text(self) -> bool:
         if not self.content_type:

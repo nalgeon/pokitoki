@@ -11,7 +11,7 @@ AI shortcuts:
 {shortcuts}
 
 [More features →](https://github.com/artwist-polyakov/pokitoki-advanced)
-"""
+"""  # noqa: E501
 
 PRIVACY_MESSAGE = (
     "⚠️ The bot does not have access to group messages, "

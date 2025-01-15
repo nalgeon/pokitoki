@@ -107,3 +107,25 @@ voice:
     tts:
         model: "tts-1"
         voice: "sage"  # alloy, echo, fable, onyx, nova, sage,or shimmer
+
+# File processing settings
+files:
+    enabled: true
+    # Default prompt for image recognition if not specified
+    image_recognition_prompt: "Describe what you see in the image, including any text present and its meaning. Be detailed but concise."
+    # Maximum file size in MB
+    max_file_size: 25
+    # Supported file extensions
+    supported_extensions:
+        - .pdf
+        - .doc
+        - .docx
+        - .xls
+        - .xlsx
+        - .ppt
+        - .pptx
+        - .txt
+        - .rtf
+        - .jpg
+        - .jpeg
+        - .png

@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 async def extract_private(message: Message, context: CallbackContext) -> Optional[str]:
     """Extracts a question from a private message."""
-    logger.info(f"Extracting private message: voice={bool(message.voice)}")
     # allow any messages in a private chat
     question = await _extract_text(message, context)
     if message.reply_to_message:
@@ -113,15 +112,6 @@ async def _extract_text(message: Message, context: CallbackContext) -> str:
     """Extracts text from a text message or a document message."""
     if message.text:
         return message.text
-    if message.document:
-        return await _extract_document_text(message, context)
+    if message.caption:
+        return message.caption
     return ""
-
-
-async def _extract_document_text(message: Message, context: CallbackContext) -> str:
-    """Extracts text from a document message."""
-    file = await context.bot.get_file(message.document.file_id)
-    bytes = await file.download_as_bytearray()
-    text = bytes.decode("utf-8").strip()
-    caption = f"{message.caption}\n\n" if message.caption else ""
-    return f"{caption}{message.document.file_name}:\n```\n{text}\n```"

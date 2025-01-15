@@ -55,7 +55,9 @@ class Model:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
 
-    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
+    async def ask(
+        self, prompt: str, question: str, history: list[tuple[str, str]]
+    ) -> str:
         """Asks the language model a question and returns an answer."""
         model = self.name or config.openai.model
         prompt_role = ROLE_OVERRIDES.get(model) or "developer"
@@ -67,7 +69,7 @@ class Model:
 
         params = params_func(config.openai.params)
         logger.debug(
-            f"> chat request: model=%s, params=%s, messages=%s",
+            "> chat request: model=%s, params=%s, messages=%s",
             model,
             params,
             messages,
@@ -87,7 +89,11 @@ class Model:
         return answer
 
     def _generate_messages(
-        self, prompt_role: str, prompt: str, question: str, history: list[tuple[str, str]]
+        self,
+        prompt_role: str,
+        prompt: str,
+        question: str,
+        history: list[tuple[str, str]],
     ) -> list[dict]:
         """Builds message history to provide context for the language model."""
         messages = [{"role": prompt_role, "content": prompt or config.openai.prompt}]
