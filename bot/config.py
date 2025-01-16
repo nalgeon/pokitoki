@@ -219,7 +219,10 @@ class Config:
         return {
             "schema_version": self.schema_version,
             "telegram": dataclasses.asdict(self.telegram),
+            "scrapdo": dataclasses.asdict(self.scrapdo),
             "openai": dataclasses.asdict(self.openai),
+            "voice": dataclasses.asdict(self.voice),
+            "files": dataclasses.asdict(self.files),
             "conversation": dataclasses.asdict(self.conversation),
             "imagine": dataclasses.asdict(self.imagine),
             "persistence_path": self.persistence_path,
