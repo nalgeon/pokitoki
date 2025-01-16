@@ -250,6 +250,8 @@ class ConfigEditor:
         "conversation",
         "imagine",
         "shortcuts",
+        "voice",
+        "files",
     ]
     # Changes made to these properties take effect after a restart.
     delayed = [
@@ -269,12 +271,12 @@ class ConfigEditor:
         """Returns a config property value."""
         names = property.split(".")
         if names[0] not in self.known:
-            raise ValueError(f"No such property: {property}")
+            raise ValueError(f"No such property in known: {property}")
 
         obj = self.config
         for name in names[:-1]:
             if not hasattr(obj, name):
-                raise ValueError(f"No such property: {property}")
+                raise ValueError(f"No such property in attrs: {property}")
             obj = getattr(obj, name)
 
         name = names[-1]
