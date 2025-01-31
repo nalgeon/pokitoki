@@ -13,6 +13,7 @@ MODELS = {
     "o1": 200000,
     "o1-preview": 128000,
     "o1-mini": 128000,
+    "o3-mini": 200000,
     "gpt-4o": 128000,
     "gpt-4o-mini": 128000,
     "gpt-4-turbo": 128000,
@@ -28,12 +29,14 @@ ROLE_OVERRIDES = {
     "o1": "user",
     "o1-preview": "user",
     "o1-mini": "user",
+    "o3-mini": "user",
 }
 # Model parameter overrides.
 PARAM_OVERRIDES = {
     "o1": lambda params: {},
     "o1-preview": lambda params: {},
     "o1-mini": lambda params: {},
+    "o3-mini": lambda params: {},
 }
 
 
