@@ -2,10 +2,10 @@
 
 import logging
 from typing import Optional
-from openai import AsyncOpenAI
+import httpx
 from bot.config import config
 
-openai = AsyncOpenAI(api_key=config.openai.api_key)
+client = httpx.AsyncClient(timeout=60.0)
 
 logger = logging.getLogger(__name__)
 
@@ -62,16 +62,21 @@ class Model:
             params,
             messages,
         )
-        resp = await openai.chat.completions.create(
-            model=model,
-            messages=messages,
-            **params,
+        response = await client.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={"Authorization": f"Bearer {config.openai.api_key}"},
+            json={
+                "model": model,
+                "messages": messages,
+                **params,
+            },
         )
+        resp = response.json()
         logger.debug(
             "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
-            resp.usage.prompt_tokens,
-            resp.usage.completion_tokens,
-            resp.usage.total_tokens,
+            resp["usage"]["prompt_tokens"],
+            resp["usage"]["completion_tokens"],
+            resp["usage"]["total_tokens"],
         )
         answer = self._prepare_answer(resp)
         return answer
@@ -89,10 +94,10 @@ class Model:
 
     def _prepare_answer(self, resp) -> str:
         """Post-processes an answer from the language model."""
-        if len(resp.choices) == 0:
+        if len(resp["choices"]) == 0:
             raise ValueError("received an empty answer")
 
-        answer = resp.choices[0].message.content
+        answer = resp["choices"][0]["message"]["content"]
         answer = answer.strip()
         return answer
 

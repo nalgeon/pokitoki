@@ -1,9 +1,9 @@
 """DALL-E model from OpenAI."""
 
-from openai import AsyncOpenAI
+import httpx
 from bot.config import config
 
-openai = AsyncOpenAI(api_key=config.openai.api_key)
+client = httpx.AsyncClient(timeout=60.0)
 
 
 class Model:
@@ -11,7 +11,17 @@ class Model:
 
     async def imagine(self, prompt: str, size: str) -> str:
         """Generates an image of the specified size according to the description."""
-        resp = await openai.images.generate(model="dall-e-3", prompt=prompt, size=size, n=1)
-        if len(resp.data) == 0:
+        response = await client.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={"Authorization": f"Bearer {config.openai.api_key}"},
+            json={
+                "model": "dall-e-3",
+                "prompt": prompt,
+                "size": size,
+                "n": 1,
+            },
+        )
+        resp = response.json()
+        if len(resp["data"]) == 0:
             raise ValueError("received an empty answer")
-        return resp.data[0].url
+        return resp["data"][0]["url"]
