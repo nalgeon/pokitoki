@@ -204,7 +204,7 @@ async def _ask_question(
 
     logger.info(
         f"<- answer id={message.id}, user={user_id}, "
-        f"n_chars={len(question)}, len_history={len(history)}, took={elapsed}ms"
+        f"n_chars={len(answer)}, len_history={len(history)}, took={elapsed}ms"
     )
     return answer
 
