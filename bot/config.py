@@ -17,12 +17,14 @@ class Telegram:
 
 @dataclass
 class OpenAI:
+    url: str
     api_key: str
     model: str
     window: int
     prompt: str
     params: dict
 
+    default_url = "https://api.openai.com/v1"
     default_model = "gpt-4o-mini"
     default_window = 4096
     default_prompt = "You are an AI assistant."
@@ -35,12 +37,14 @@ class OpenAI:
 
     def __init__(
         self,
+        url: str,
         api_key: str,
         model: str,
         window: int,
         prompt: str,
         params: dict,
     ) -> None:
+        self.url = url or self.default_url
         self.api_key = api_key
         self.model = model or self.default_model
         self.window = window or self.default_window
@@ -111,6 +115,7 @@ class Config:
 
         # OpenAI settings.
         self.openai = OpenAI(
+            url=src["openai"].get("url"),
             api_key=src["openai"]["api_key"],
             model=src["openai"].get("model"),
             window=src["openai"].get("window"),
@@ -170,7 +175,6 @@ class ConfigEditor:
     # Changes made to these properties take effect after a restart.
     delayed = [
         "telegram.token",
-        "openai.api_key",
         "persistence_path",
     ]
     # All editable properties.

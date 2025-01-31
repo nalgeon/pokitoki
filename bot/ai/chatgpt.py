@@ -1,4 +1,4 @@
-"""ChatGPT (GPT-3.5+) language model from OpenAI."""
+"""OpenAI-compatible language model."""
 
 import logging
 from typing import Optional
@@ -6,10 +6,9 @@ import httpx
 from bot.config import config
 
 client = httpx.AsyncClient(timeout=60.0)
-
 logger = logging.getLogger(__name__)
 
-# Supported models and their context windows
+# Known models and their context windows
 MODELS = {
     "o1": 200000,
     "o1-preview": 128000,
@@ -38,8 +37,14 @@ PARAM_OVERRIDES = {
 }
 
 
+class AIException(Exception):
+    """An error coming from the AI provider."""
+
+    pass
+
+
 class Model:
-    """OpenAI API wrapper."""
+    """AI API wrapper."""
 
     def __init__(self, name: Optional[str] = None) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
@@ -63,7 +68,7 @@ class Model:
             messages,
         )
         response = await client.post(
-            "https://api.openai.com/v1/chat/completions",
+            f"{config.openai.url}/chat/completions",
             headers={"Authorization": f"Bearer {config.openai.api_key}"},
             json={
                 "model": model,
@@ -72,6 +77,8 @@ class Model:
             },
         )
         resp = response.json()
+        if "usage" not in resp:
+            raise AIException(resp)
         logger.debug(
             "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
             resp["usage"]["prompt_tokens"],

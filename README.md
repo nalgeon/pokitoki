@@ -1,6 +1,6 @@
-# Humble GPT Telegram Bot
+# Humble AI Telegram Bot
 
-This is a Telegram chat bot (AI assistant) that uses the GPT language models from OpenAI.
+This is a Telegram chat bot (AI assistant) that uses large language models from OpenAI-compatible providers (like [OpenAI](https://platform.openai.com/), [OpenRouter](https://openrouter.ai/docs/) or [Nebius](https://docs.nebius.com/)).
 
 Notable features:
 
@@ -190,7 +190,7 @@ AI information:
 Use the `/config` command to change almost any setting on the fly, without restarting the bot.
 
 -   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
--   Adjust the AI model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
+-   Adjust the AI provider (`openai.url`), API key (`openai.api_key`), model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
 -   Enable or disable image generation (`imagine.enabled`).
 -   Add or change AI shortcuts (`shortcuts`).
 -   Change any other config property.
@@ -207,6 +207,8 @@ To change a specific config property, put its name and value after `/config`:
 
 ```
 /config telegram.usernames ["alice", "bob", "cindy"]
+/config openai.url https://api.studio.nebius.ai/v1
+/config openai.model meta-llama/Meta-Llama-3.1-70B-Instruct
 /config openai.prompt "You are an evil AI bot"
 /config imagine.enabled none
 ```
@@ -222,7 +224,7 @@ The `/config` command is only available to admins - users listed in the `telegra
 
 ## Message limits
 
-Heated discussions with the bot in large groups can lead to high usage of the OpenAI API. To avoid spending your entire budget, set message limits for groups with the `conversation.message_limit` config property.
+Heated discussions with the bot in large groups can lead to high usage of the AI API. To avoid spending your entire budget, set message limits for groups with the `conversation.message_limit` config property.
 
 You can limit the number of messages from a user over a period of time. For example:
 
@@ -252,7 +254,7 @@ message_limit:
 
 ## Setup
 
-1. Get your [OpenAI API](https://openai.com/api/) key
+1. Get your AI API key (from [OpenAI](https://openai.com/api/) or other provider)
 
 2. Get your Telegram bot token from [@BotFather](https://t.me/BotFather)
 

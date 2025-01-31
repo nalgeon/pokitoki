@@ -99,6 +99,7 @@ async def post_init(application: Application) -> None:
     logging.info(f"allowed users: {config.telegram.usernames}")
     logging.info(f"allowed chats: {config.telegram.chat_ids}")
     logging.info(f"admins: {config.telegram.admins}")
+    logging.info(f"api url: {config.openai.url}")
     logging.info(f"model name: {config.openai.model}")
     logging.info(f"bot: username={bot.username}, id={bot.id}")
     await bot.set_my_commands(commands.BOT_COMMANDS)

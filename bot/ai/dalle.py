@@ -12,7 +12,7 @@ class Model:
     async def imagine(self, prompt: str, size: str) -> str:
         """Generates an image of the specified size according to the description."""
         response = await client.post(
-            "https://api.openai.com/v1/images/generations",
+            f"{config.openai.url}/images/generations",
             headers={"Authorization": f"Bearer {config.openai.api_key}"},
             json={
                 "model": "dall-e-3",
