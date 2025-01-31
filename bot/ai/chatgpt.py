@@ -3,7 +3,6 @@
 import logging
 from typing import Optional
 from openai import AsyncAzureOpenAI, AsyncOpenAI
-import tiktoken
 from bot.config import config
 
 if config.openai.azure:
@@ -16,7 +15,6 @@ if config.openai.azure:
 else:
     openai = AsyncOpenAI(api_key=config.openai.api_key)
 
-encoding = tiktoken.get_encoding("cl100k_base")
 logger = logging.getLogger(__name__)
 
 # Supported models and their context windows
@@ -110,7 +108,7 @@ def shorten(messages: list[dict], length: int) -> list[dict]:
     Truncates messages so that the total number or tokens
     does not exceed the specified length.
     """
-    lengths = [len(encoding.encode(m["content"])) for m in messages]
+    lengths = [_calc_tokens(m["content"]) for m in messages]
     total_len = sum(lengths)
     if total_len <= length:
         return messages
@@ -130,10 +128,14 @@ def shorten(messages: list[dict], length: int) -> list[dict]:
     # there is only one message left, and it's still longer than allowed
     # so we have to shorten it
     maxlen = length - prompt_len
-    tokens = encoding.encode(messages[1]["content"])
-    tokens = tokens[:maxlen]
-    messages[1]["content"] = encoding.decode(tokens)
+    tokens = messages[1]["content"].split()[:maxlen]
+    messages[1]["content"] = " ".join(tokens)
     return messages
+
+
+def _calc_tokens(s: str) -> int:
+    """Calculates the number of tokens in a string."""
+    return int(len(s.split()) * 1.2)
 
 
 def _calc_n_input(name: str, n_output: int) -> int:
