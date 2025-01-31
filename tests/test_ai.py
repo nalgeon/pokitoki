@@ -11,11 +11,11 @@ class ModelTest(unittest.TestCase):
     def test_generate_messages(self):
         history = [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]
         messages = self.model._generate_messages(
-            prompt_role="developer", prompt="", question="What's your name?", history=history
+            prompt_role="system", prompt="", question="What's your name?", history=history
         )
         self.assertEqual(len(messages), 6)
 
-        self.assertEqual(messages[0]["role"], "developer")
+        self.assertEqual(messages[0]["role"], "system")
         self.assertEqual(messages[0]["content"], config.openai.prompt)
 
         self.assertEqual(messages[1]["role"], "user")
