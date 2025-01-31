@@ -20,12 +20,14 @@ class OpenAI:
     url: str
     api_key: str
     model: str
+    image_model: str
     window: int
     prompt: str
     params: dict
 
     default_url = "https://api.openai.com/v1"
     default_model = "gpt-4o-mini"
+    default_image_model = "dall-e-3"
     default_window = 4096
     default_prompt = "You are an AI assistant."
     default_params = {
@@ -40,6 +42,7 @@ class OpenAI:
         url: str,
         api_key: str,
         model: str,
+        image_model: str,
         window: int,
         prompt: str,
         params: dict,
@@ -47,6 +50,7 @@ class OpenAI:
         self.url = url or self.default_url
         self.api_key = api_key
         self.model = model or self.default_model
+        self.image_model = image_model or self.default_image_model
         self.window = window or self.default_window
         self.prompt = prompt or self.default_prompt
         self.params = self.default_params.copy()
@@ -118,6 +122,7 @@ class Config:
             url=src["openai"].get("url"),
             api_key=src["openai"]["api_key"],
             model=src["openai"].get("model"),
+            image_model=src["openai"].get("image_model"),
             window=src["openai"].get("window"),
             prompt=src["openai"].get("prompt"),
             params=src["openai"].get("params") or {},

@@ -32,7 +32,7 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("bot").setLevel(logging.INFO)
-logging.getLogger("bot.ai.chatgpt").setLevel(logging.INFO)
+logging.getLogger("bot.ai.chat").setLevel(logging.INFO)
 logging.getLogger("bot.commands").setLevel(logging.INFO)
 logging.getLogger("bot.questions").setLevel(logging.INFO)
 logging.getLogger("__main__").setLevel(logging.INFO)

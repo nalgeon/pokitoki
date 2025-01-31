@@ -37,12 +37,6 @@ PARAM_OVERRIDES = {
 }
 
 
-class AIException(Exception):
-    """An error coming from the AI provider."""
-
-    pass
-
-
 class Model:
     """AI API wrapper."""
 
@@ -78,7 +72,7 @@ class Model:
         )
         resp = response.json()
         if "usage" not in resp:
-            raise AIException(resp)
+            raise Exception(resp)
         logger.debug(
             "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
             resp["usage"]["prompt_tokens"],

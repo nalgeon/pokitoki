@@ -30,7 +30,7 @@ class Asker:
 class TextAsker(Asker):
     """Works with chat completion AI."""
 
-    model = ai.chatgpt.Model()
+    model = ai.chat.Model()
 
     async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks AI a question."""
@@ -61,7 +61,7 @@ class TextAsker(Asker):
 class ImagineAsker(Asker):
     """Works with image generation AI."""
 
-    model = ai.dalle.Model()
+    model = ai.images.Model()
     size_re = re.compile(r"(256|512|1024)(?:x\1)?\s?(?:px)?")
     sizes = {
         "256": "256x256",

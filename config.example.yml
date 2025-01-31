@@ -29,9 +29,12 @@ openai:
     # AI API key.
     api_key: ""
 
-    # AI model name.
+    # Chat model name.
     # See https://platform.openai.com/docs/models for description.
     model: "gpt-4o-mini"
+
+    # Image generation model name.
+    image_model: "dall-e-3"
 
     # Context window size in tokens.
     # Applies only to custom models.

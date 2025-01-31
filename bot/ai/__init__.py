@@ -1,2 +1,2 @@
-from . import chatgpt
-from . import dalle
+from . import chat
+from . import images
