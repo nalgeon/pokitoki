@@ -13,8 +13,6 @@ import textwrap
 from bot.config import config
 from bot.fetcher import Fetcher
 import bot.ai.chatgpt
-import bot.ai.custom
-import bot.ai.davinci
 
 
 async def main(question):
@@ -31,11 +29,7 @@ async def main(question):
 
 def init_model():
     name = os.getenv("OPENAI_MODEL") or config.openai.model
-    if name.startswith("gpt"):
-        return bot.ai.chatgpt.Model(name)
-    if name == "davinci":
-        return bot.ai.davinci.Model()
-    return bot.ai.custom.Model(name)
+    return bot.ai.chatgpt.Model(name)
 
 
 if __name__ == "__main__":
