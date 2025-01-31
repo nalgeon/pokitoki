@@ -22,7 +22,6 @@ class OpenAI:
     window: int
     prompt: str
     params: dict
-    azure: Optional[dict] = None
 
     default_model = "gpt-4o-mini"
     default_window = 4096
@@ -41,7 +40,6 @@ class OpenAI:
         window: int,
         prompt: str,
         params: dict,
-        azure: Optional[dict] = None,
     ) -> None:
         self.api_key = api_key
         self.model = model or self.default_model
@@ -49,7 +47,6 @@ class OpenAI:
         self.prompt = prompt or self.default_prompt
         self.params = self.default_params.copy()
         self.params.update(params)
-        self.azure = azure
 
 
 @dataclass
@@ -119,7 +116,6 @@ class Config:
             window=src["openai"].get("window"),
             prompt=src["openai"].get("prompt"),
             params=src["openai"].get("params") or {},
-            azure=src["openai"].get("azure"),
         )
 
         # Conversation settings.

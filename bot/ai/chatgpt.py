@@ -2,18 +2,10 @@
 
 import logging
 from typing import Optional
-from openai import AsyncAzureOpenAI, AsyncOpenAI
+from openai import AsyncOpenAI
 from bot.config import config
 
-if config.openai.azure:
-    openai = AsyncAzureOpenAI(
-        api_key=config.openai.api_key,
-        api_version=config.openai.azure["version"],
-        azure_endpoint=config.openai.azure["endpoint"],
-        azure_deployment=config.openai.azure["deployment"],
-    )
-else:
-    openai = AsyncOpenAI(api_key=config.openai.api_key)
+openai = AsyncOpenAI(api_key=config.openai.api_key)
 
 logger = logging.getLogger(__name__)
 
