@@ -34,11 +34,13 @@ MODELS = {
 
 # Prompt role name overrides.
 ROLE_OVERRIDES = {
+    "o1": "user",
     "o1-preview": "user",
     "o1-mini": "user",
 }
 # Model parameter overrides.
 PARAM_OVERRIDES = {
+    "o1": lambda params: {},
     "o1-preview": lambda params: {},
     "o1-mini": lambda params: {},
 }
