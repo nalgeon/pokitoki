@@ -114,6 +114,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertTrue("- access to messages: True" in self.bot.text)
 
         self.assertTrue("<pre>AI information:" in self.bot.text)
+        self.assertTrue("- provider: api.openai.com" in self.bot.text)
         self.assertTrue("- model: gpt-4" in self.bot.text)
         self.assertTrue("- history depth: 10" in self.bot.text)
         self.assertTrue("- imagine: none" in self.bot.text)

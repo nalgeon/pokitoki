@@ -1,5 +1,7 @@
 """/version command."""
 
+from urllib import parse
+
 from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
@@ -45,9 +47,11 @@ class VersionCommand:
             text += f"\n\n{constants.PRIVACY_MESSAGE}"
 
         # AI information
+        provider = parse.urlparse(config.openai.url).hostname
         text += (
             "\n\n<pre>"
             "AI information:\n"
+            f"- provider: {provider}\n"
             f"- model: {config.openai.model}\n"
             f"- history depth: {config.conversation.depth}\n"
             f"- imagine: {config.imagine.enabled}\n"
