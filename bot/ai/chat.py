@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 
 # Known models and their context windows
 MODELS = {
+    # Gemini
+    "gemini-2.0-flash": 1_048_576,
+    "gemini-1.5-flash": 1_048_576,
+    "gemini-1.5-flash-8b": 1_048_576,
+    "gemini-1.5-pro": 2_097_152,
+    # OpenAI
     "o1": 200000,
     "o1-preview": 128000,
     "o1-mini": 128000,

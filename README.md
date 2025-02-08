@@ -1,6 +1,6 @@
 # Humble AI Telegram Bot
 
-This is a Telegram chat bot (AI assistant) that uses large language models from OpenAI-compatible providers (like [OpenAI](https://platform.openai.com/), [OpenRouter](https://openrouter.ai/docs/) or [Nebius](https://docs.nebius.com/)).
+This is a Telegram chat bot (AI assistant) that uses large language models from OpenAI-compatible providers (like [OpenAI](https://platform.openai.com/), [OpenRouter](https://openrouter.ai/docs/), [Nebius](https://docs.nebius.com/) or [Gemini](https://ai.google.dev/gemini-api/docs/openai)).
 
 Notable features:
 
