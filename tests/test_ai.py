@@ -6,7 +6,7 @@ from bot.models import UserMessage
 
 class ModelTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.model = chat.Model()
+        self.model = chat.Model("gpt")
 
     def test_generate_messages(self):
         history = [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]

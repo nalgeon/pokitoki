@@ -49,13 +49,13 @@ PARAM_OVERRIDES = {
 class Model:
     """AI API wrapper."""
 
-    def __init__(self, name: Optional[str] = None) -> None:
+    def __init__(self, name: str) -> None:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
 
     async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
-        model = self.name or config.openai.model
+        model = self.name
         prompt_role = ROLE_OVERRIDES.get(model) or "system"
         params_func = PARAM_OVERRIDES.get(model) or (lambda params: params)
 

@@ -80,6 +80,7 @@ def add_handlers(application: Application):
     application.add_handler(
         CommandHandler("imagine", commands.Imagine(reply_to), filters=filters.users_or_chats)
     )
+    application.add_handler(CommandHandler("model", commands.Model(), filters=filters.users))
     application.add_handler(CommandHandler("prompt", commands.Prompt(), filters=filters.users))
     application.add_handler(
         CommandHandler("retry", commands.Retry(reply_to), filters=filters.users_or_chats)
@@ -149,7 +150,9 @@ async def reply_to(
     await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
 
     try:
-        asker = askers.create(question)
+        chat = ChatData(context.chat_data)
+        model = chat.model or config.openai.model
+        asker = askers.create(model=model, question=question)
         if message.chat.type == Chat.PRIVATE and message.forward_date:
             # this is a forwarded message, don't answer yet
             answer = "This is a forwarded message. What should I do with it?"

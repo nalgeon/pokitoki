@@ -5,17 +5,16 @@ from telegram.ext import CallbackContext
 
 from bot import askers
 from bot.askers import ImagineAsker, TextAsker
-from bot.config import config
-from tests.mocks import FakeApplication, FakeBot, FakeDalle, FakeGPT
+from tests.mocks import FakeApplication, FakeBot, FakeDalle, FakeGPT, mock_text_asker
 
 
 class TextAskerTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.ai = FakeGPT()
-        TextAsker.model = self.ai
+        mock_text_asker(self.ai)
 
     async def test_ask(self):
-        asker = TextAsker()
+        asker = TextAsker("gpt")
         await asker.ask(
             prompt="Answer me", question="What is your name?", history=[("Hello", "Hi")]
         )
@@ -25,7 +24,7 @@ class TextAskerTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_reply(self):
         message, context = _create_message()
-        asker = TextAsker()
+        asker = TextAsker("gpt")
         await asker.reply(message, context, answer="My name is ChatGPT.")
         self.assertEqual(context.bot.text, "My name is ChatGPT.")
 
@@ -81,11 +80,11 @@ class ImagineAskerTest(unittest.IsolatedAsyncioTestCase):
 
 class CreateTest(unittest.TestCase):
     def test_text_asker(self):
-        asker = askers.create("What is your name?")
+        asker = askers.create(model="gpt", question="What is your name?")
         self.assertIsInstance(asker, TextAsker)
 
     def test_imagine_asker(self):
-        asker = askers.create("/imagine a cat")
+        asker = askers.create(model="dalle", question="/imagine a cat")
         self.assertIsInstance(asker, ImagineAsker)
 
 

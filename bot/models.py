@@ -16,6 +16,14 @@ class ChatData:
         self.data = data
 
     @property
+    def model(self) -> str:
+        return self.data.get("model") or ""
+
+    @model.setter
+    def model(self, value: str) -> str:
+        self.data["model"] = value
+
+    @property
     def prompt(self) -> str:
         return self.data.get("prompt") or ""
 

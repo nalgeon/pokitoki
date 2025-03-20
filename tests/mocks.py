@@ -1,5 +1,6 @@
 from typing import Optional
 from telegram import User
+from bot import askers
 
 
 class FakeGPT:
@@ -89,3 +90,8 @@ class FakeApplication:
         self.chat_data = {1: {}}
         self.user_data = {1: {}}
         self.bot = bot
+
+
+def mock_text_asker(ai: FakeGPT) -> None:
+    mock_init = lambda asker, _: setattr(asker, "model", ai)
+    askers.TextAsker.__init__ = mock_init

@@ -11,7 +11,7 @@ from bot import commands
 from bot import models
 from bot.config import config
 from bot.filters import Filters
-from tests.mocks import FakeGPT, FakeDalle, FakeApplication, FakeBot
+from tests.mocks import FakeGPT, FakeDalle, FakeApplication, FakeBot, mock_text_asker
 
 
 class Helper:
@@ -35,7 +35,7 @@ class Helper:
 
 class StartTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        askers.TextAsker.model = FakeGPT()
+        mock_text_asker(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -93,6 +93,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.usernames = ["alice", "bob"]
         config.telegram.admins = ["alice"]
         config.telegram.chat_ids = [-100500]
+        config.openai.url = "https://api.openai.com/v1"
         config.openai.model = "gpt-4"
         config.conversation.depth = 10
         config.imagine.enabled = "none"
@@ -195,6 +196,73 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertEqual(self.filters.chats.chat_ids, frozenset([-100500]))
 
 
+class ModelPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
+    def setUp(self):
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.PRIVATE)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
+        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        config.telegram.usernames = ["alice"]
+        self.command = commands.Model()
+
+    async def test_help(self):
+        update = self._create_update(11, "/model")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("Syntax:"))
+        self.assertEqual(self.application.chat_data[1], {})
+
+    async def test_set(self):
+        update = self._create_update(11, text="/model gpt-5")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Set model"))
+        self.assertEqual(self.application.chat_data[1]["model"], "gpt-5")
+
+    async def test_show(self):
+        update = self._create_update(11, text="/model gpt-5")
+        await self.command(update, self.context)
+
+        update = self._create_update(11, text="/model")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("Using model"))
+        self.assertEqual(self.application.chat_data[1]["model"], "gpt-5")
+
+    async def test_reset(self):
+        update = self._create_update(11, text="/model gpt-5")
+        await self.command(update, self.context)
+
+        update = self._create_update(11, text="/model reset")
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Using default model"))
+        self.assertEqual(self.application.chat_data[1]["model"], "")
+
+
+class ModelGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
+    def setUp(self):
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.GROUP)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
+        self.alice = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        self.bob = User(id=2, first_name="Bob", is_bot=False, username="bob")
+        config.telegram.admins = ["alice"]
+        self.command = commands.Model()
+
+    async def test_allowed(self):
+        update = self._create_update(11, "/model@bot gpt-5", user=self.alice)
+        await self.command(update, self.context)
+        self.assertTrue(self.bot.text.startswith("✓ Set model"))
+        self.assertEqual(self.application.chat_data[1]["model"], "gpt-5")
+
+    async def test_not_allowed(self):
+        update = self._create_update(11, "/model@bot gpt-5", user=self.bob)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "")
+        self.assertEqual(self.application.chat_data[1], {})
+
+
 class PromptPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.bot = FakeBot("bot")
@@ -264,7 +332,7 @@ class PromptGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
 
 class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        askers.TextAsker.model = FakeGPT()
+        mock_text_asker(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -328,7 +396,7 @@ class ImagineTest(unittest.IsolatedAsyncioTestCase, Helper):
 class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
-        askers.TextAsker.model = self.ai
+        mock_text_asker(self.ai)
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -378,7 +446,8 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertEqual(self.bot.text, "I have so much to... (see attachment for the rest): 11.md")
 
     async def test_exception(self):
-        askers.TextAsker.model = FakeGPT(error=Exception("connection timeout"))
+        ai = FakeGPT(error=Exception("connection timeout"))
+        mock_text_asker(ai)
         update = self._create_update(11, text="What is your name?")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("⚠️ builtins.Exception:"))
@@ -387,7 +456,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
 
 class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        askers.TextAsker.model = FakeGPT()
+        mock_text_asker(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.GROUP)
         self.chat.set_bot(self.bot)
@@ -416,7 +485,7 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
 class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
-        askers.TextAsker.model = self.ai
+        mock_text_asker(self.ai)
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -484,7 +553,7 @@ class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
 
 class ErrorTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        askers.TextAsker.model = FakeGPT()
+        mock_text_asker(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
