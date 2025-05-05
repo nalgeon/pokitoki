@@ -69,7 +69,7 @@ imagine:
     #   - users_only       = enabled only for users listed in `telegram.usernames`
     #   - users_and_groups = enabled for both users listed in `telegram.usernames`
     #                        and members of `telegrams.chat_ids`
-    enabled: users_only
+    enabled: none
 
 # Where to store the chat context file.
 persistence_path: "./data/persistence.pkl"

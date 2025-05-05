@@ -90,9 +90,7 @@ class Imagine:
     enabled: str
 
     def __init__(self, enabled: str) -> None:
-        self.enabled = (
-            enabled if enabled in ("none", "users_only", "users_and_groups") else "users_only"
-        )
+        self.enabled = enabled if enabled in ("none", "users_only", "users_and_groups") else "none"
 
 
 class Config:

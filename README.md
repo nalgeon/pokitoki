@@ -8,8 +8,7 @@ Notable features:
 -   Direct questions, mentions, follow-ups.
 -   Access external links (articles, code, data).
 -   Shortcuts (custom AI commands).
--   Custom chat-wide prompts.
--   Image generation.
+-   Custom per-chat prompts and models.
 -   On-the-fly configuration.
 
 Read on for a detailed feature description or jump to [setup](#setup).
@@ -114,9 +113,13 @@ There are several built-in shortcuts:
 
 You can add your own shortcuts. See `config.example.yml` for details.
 
-## Chat-wide prompts
+## Per-chat settings
 
-To set a custom prompt for the current chat, use the `/prompt` command:
+You can customize some settings on a per-chat basis. For example, to have one prompt for your private chat with a bot and another prompt for a group chat that you manage.
+
+### Prompt
+
+Set a custom prompt for the current chat with the `/prompt` command:
 
 > 🧑 /prompt You are an evil genius. Reply with an evil laugh.
 
@@ -124,20 +127,15 @@ To return to the default prompt, use `/prompt reset`.
 
 The `/prompt` command in group chats is only available to admins - users listed in the `telegram.admins` property.
 
-## Image generation
+### Model
 
-Use the `/imagine` command to generate an image using the DALL-E 3 model from OpenAI:
+Set a custom AI model for the current chat with the `/model` command:
 
-> 🧑 /imagine the dawn of a new era
->
-> 🤖 (beautiful picture)<br>
-> the dawn of a new era
+> 🧑 /model o3-mini
 
-The default image size is 1024×1024 px. Other supported sizes are 1792×1024 and 1024×1792:
+To return to the default model, use `/model reset`.
 
-> /imagine a lazy cat on a sunny day 1792×1024
-
-Image generation is quite pricey. By default it's only enabled for users listed in `telegram.usernames`, not for group members. You can change this with the `imagine.enabled` config property.
+The `/model` command in group chats is only available to admins - users listed in the `telegram.admins` property.
 
 ## Other useful features
 
@@ -179,10 +177,10 @@ Bot information:
 - access to messages: True
 
 AI information:
-- model: gpt-3.5-turbo
-- history depth: 3
-- imagine: True
-- shortcuts: bugfix, proofread, summarize, translate
+- provider: api.openai.com
+- model: gpt-4o-mini
+- history depth: 5
+- shortcuts: proofread, summarize
 ```
 
 ## Configuration
@@ -191,7 +189,6 @@ Use the `/config` command to change almost any setting on the fly, without resta
 
 -   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
 -   Adjust the AI provider (`openai.url`), API key (`openai.api_key`), model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
--   Enable or disable image generation (`imagine.enabled`).
 -   Add or change AI shortcuts (`shortcuts`).
 -   Change any other config property.
 
@@ -200,7 +197,6 @@ To view a specific config property, put its name after `/config`:
 ```
 /config telegram.usernames
 /config openai.prompt
-/config imagine.enabled
 ```
 
 To change a specific config property, put its name and value after `/config`:
@@ -210,7 +206,6 @@ To change a specific config property, put its name and value after `/config`:
 /config openai.url https://api.studio.nebius.ai/v1
 /config openai.model meta-llama/Meta-Llama-3.1-70B-Instruct
 /config openai.prompt "You are an evil AI bot"
-/config imagine.enabled none
 ```
 
 When working with list properties like `telegram.usernames`, you can add or remove individual items instead of redefining the whole list:
@@ -281,7 +276,7 @@ docker compose stop
 To update the bot to a new version:
 
 ```bash
-docker compose stop
+docker compose down
 git pull
 docker compose up --build --detach
 ```
@@ -321,11 +316,9 @@ python -m bot.bot
 
 ## Contributing
 
-For new features and improvements, please first open an issue to discuss what you would like to change.
+Contributions are welcome. For anything other than bugfixes, please first open an issue to discuss what you want to change.
 
-Be sure to add or update tests as appropriate.
-
-Use [Black](https://black.readthedocs.io/en/stable/) for code formatting and [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
+Use [Black](https://black.readthedocs.io/en/stable/) for code formatting. Be sure to add or update tests as appropriate.
 
 ## Changelog
 
