@@ -5,16 +5,18 @@ from bot.fetcher import Fetcher, Content
 
 
 class FakeClient:
-    def __init__(self, responses: dict[str, Response]) -> None:
+    def __init__(self, responses: dict[str, Response | Exception]) -> None:
         self.responses = responses
 
     async def get(self, url: str) -> Response:
         request = Request(method="GET", url=url)
-        template = self.responses[url]
+        response = self.responses[url]
+        if isinstance(response, Exception):
+            raise response
         return Response(
-            status_code=template.status_code,
-            headers=template.headers,
-            text=template.text,
+            status_code=response.status_code,
+            headers=response.headers,
+            text=response.text,
             request=request,
         )
 
@@ -50,6 +52,15 @@ https://example.org/second contents:
 second
 ---""",
         )
+
+    async def test_fetch_url(self):
+        resp = Response(status_code=200, headers={"content-type": "text/plain"}, text="hello")
+        exc = ConnectionError("timeout")
+        self.fetcher.client = FakeClient({"https://success.org": resp, "https://failure.org": exc})
+        text = await self.fetcher._fetch_url("https://success.org")
+        self.assertEqual(text, "hello")
+        text = await self.fetcher._fetch_url("https://failure.org")
+        self.assertEqual(text, "Failed to fetch (builtins.ConnectionError)")
 
     async def test_ignore_quoted(self):
         src = "What is 'https://example.org/first'?"

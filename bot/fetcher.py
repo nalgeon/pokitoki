@@ -37,10 +37,14 @@ class Fetcher:
 
     async def _fetch_url(self, url: str) -> str:
         """Retrieves URL content and returns it as text."""
-        response = await self.client.get(url)
-        response.raise_for_status()
-        content = Content(response)
-        return content.extract_text()
+        try:
+            response = await self.client.get(url)
+            response.raise_for_status()
+            content = Content(response)
+            return content.extract_text()
+        except Exception as exc:
+            class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
+            return f"Failed to fetch ({class_name})"
 
 
 class Content:
