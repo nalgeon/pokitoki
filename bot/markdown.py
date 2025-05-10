@@ -14,7 +14,7 @@ code_re = re.compile(r"`([^`\n]+)`")
 
 # Bold text, e.g.:
 # **Note**. Cats **do** like boxes.
-bold_re = re.compile(r"\*\*([^*]+?)\*\*")
+bold_re = re.compile(r"\*\*([^<*]+?)\*\*")
 
 # Unordered list items, e.g.:
 # *   Wake up.

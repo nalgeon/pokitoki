@@ -64,6 +64,8 @@ class Test(unittest.TestCase):
         self.assertEqual(text, "one *two* three")
         text = markdown.to_html("one **two three")
         self.assertEqual(text, "one **two three")
+        text = markdown.to_html("operator `**` is so ** powerful")
+        self.assertEqual(text, "operator <code>**</code> is so ** powerful")
 
     def test_bullet(self):
         text = markdown.to_html("*   one two three")
