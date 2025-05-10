@@ -17,9 +17,15 @@ MODELS = {
     "gemini-1.5-pro": 2_097_152,
     # OpenAI
     "o1": 200000,
-    "o1-preview": 128000,
     "o1-mini": 128000,
+    "o1-pro": 200000,
+    "o3": 200000,
     "o3-mini": 200000,
+    "o4": 200000,
+    "o4-mini": 200000,
+    "gpt-4.1": 1_047_576,
+    "gpt-4.1-mini": 1_047_576,
+    "gpt-4.1-nano": 1_047_576,
     "gpt-4o": 128000,
     "gpt-4o-mini": 128000,
     "gpt-4-turbo": 128000,
@@ -33,16 +39,23 @@ MODELS = {
 # Prompt role name overrides.
 ROLE_OVERRIDES = {
     "o1": "user",
-    "o1-preview": "user",
     "o1-mini": "user",
+    "o1-pro": "user",
+    "o3": "user",
     "o3-mini": "user",
+    "o4": "user",
+    "o4-mini": "user",
 }
+
 # Model parameter overrides.
 PARAM_OVERRIDES = {
     "o1": lambda params: {},
-    "o1-preview": lambda params: {},
     "o1-mini": lambda params: {},
+    "o1-pro": lambda params: {},
+    "o3": lambda params: {},
     "o3-mini": lambda params: {},
+    "o4": lambda params: {},
+    "o4-mini": lambda params: {},
 }
 
 
