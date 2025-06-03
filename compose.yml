@@ -1,9 +1,6 @@
-version: "3"
-
 services:
     pokitoki:
         container_name: pokitoki
-        command: python3 -m bot.bot
         restart: unless-stopped
         build:
             context: .
@@ -11,6 +8,5 @@ services:
         volumes:
             - ./config.yml:/code/config.yml
             - data:/code/data
-
 volumes:
     data:
