@@ -281,8 +281,6 @@ git pull
 docker compose up --build --detach
 ```
 
-For older Docker distributions, use `docker-compose` instead of `docker compose`.
-
 ## Development setup
 
 Prepare the environment:
