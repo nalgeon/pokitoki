@@ -27,7 +27,7 @@ def generate_message(username: str) -> str:
     admin_commands = ""
     if username in config.telegram.admins:
         admin_commands += "\n\nAdmin-only commads:\n"
-        admin_commands += f'/config - {constants.ADMIN_COMMANDS["config"]}\n'
+        admin_commands += f"/config - {constants.ADMIN_COMMANDS['config']}\n"
     admin_commands = admin_commands.rstrip()
 
     # shortcuts

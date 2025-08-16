@@ -169,8 +169,8 @@ def format_timedelta(delta: dt.timedelta) -> str:
     if seconds < 60:
         return f"{seconds} seconds"
     if seconds < 3600:
-        return f"{seconds//60} minutes"
+        return f"{seconds // 60} minutes"
     if seconds < 2 * 3600:
         hours = round(seconds / 3600, 1)
         return f"{hours} hours"
-    return f"{seconds//3600} hours"
+    return f"{seconds // 3600} hours"
