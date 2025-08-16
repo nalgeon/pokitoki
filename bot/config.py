@@ -1,7 +1,7 @@
 """Bot configuration parameters."""
 
 import os
-from typing import Any, Optional
+from typing import Any
 import yaml
 import dataclasses
 from dataclasses import dataclass
@@ -99,7 +99,7 @@ class Config:
     # Config schema version. Increments for backward-incompatible changes.
     schema_version = 4
     # Bot version.
-    version = 227
+    version = 239
 
     def __init__(self, filename: str, src: dict) -> None:
         # Config filename.
