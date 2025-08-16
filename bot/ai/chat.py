@@ -1,7 +1,6 @@
 """OpenAI-compatible language model."""
 
 import logging
-from typing import Optional
 import httpx
 from bot.config import config
 
@@ -11,6 +10,9 @@ logger = logging.getLogger(__name__)
 # Known models and their context windows
 MODELS = {
     # Gemini
+    "gemini-2.5-pro": 1_048_576,
+    "gemini-2.5-flash": 1_048_576,
+    "gemini-2.5-flash-lite": 1_048_576,
     "gemini-2.0-flash": 1_048_576,
     "gemini-1.5-flash": 1_048_576,
     "gemini-1.5-flash-8b": 1_048_576,
@@ -23,6 +25,9 @@ MODELS = {
     "o3-mini": 200000,
     "o4": 200000,
     "o4-mini": 200000,
+    "gpt-5": 128000,
+    "gpt-5-mini": 128000,
+    "gpt-5-nano": 128000,
     "gpt-4.1": 1_047_576,
     "gpt-4.1-mini": 1_047_576,
     "gpt-4.1-nano": 1_047_576,
@@ -49,6 +54,9 @@ ROLE_OVERRIDES = {
 
 # Model parameter overrides.
 PARAM_OVERRIDES = {
+    "gpt-5": lambda params: {},
+    "gpt-5-mini": lambda params: {},
+    "gpt-5-nano": lambda params: {},
     "o1": lambda params: {},
     "o1-mini": lambda params: {},
     "o1-pro": lambda params: {},
@@ -66,7 +74,9 @@ class Model:
         """Creates a wrapper for a given OpenAI large language model."""
         self.name = name
 
-    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
+    async def ask(
+        self, prompt: str, question: str, history: list[tuple[str, str]]
+    ) -> str:
         """Asks the language model a question and returns an answer."""
         model = self.name
         prompt_role = ROLE_OVERRIDES.get(model) or "system"
@@ -78,7 +88,7 @@ class Model:
 
         params = params_func(config.openai.params)
         logger.debug(
-            f"> chat request: model=%s, params=%s, messages=%s",
+            "> chat request: model=%s, params=%s, messages=%s",
             model,
             params,
             messages,
@@ -105,7 +115,11 @@ class Model:
         return answer
 
     def _generate_messages(
-        self, prompt_role: str, prompt: str, question: str, history: list[tuple[str, str]]
+        self,
+        prompt_role: str,
+        prompt: str,
+        question: str,
+        history: list[tuple[str, str]],
     ) -> list[dict]:
         """Builds message history to provide context for the language model."""
         messages = [{"role": prompt_role, "content": prompt or config.openai.prompt}]
