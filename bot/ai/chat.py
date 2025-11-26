@@ -25,6 +25,7 @@ MODELS = {
     "o3-mini": 200000,
     "o4": 200000,
     "o4-mini": 200000,
+    "gpt-5.1": 128000,
     "gpt-5": 128000,
     "gpt-5-mini": 128000,
     "gpt-5-nano": 128000,
@@ -54,6 +55,7 @@ ROLE_OVERRIDES = {
 
 # Model parameter overrides.
 PARAM_OVERRIDES = {
+    "gpt-5.1": lambda params: {},
     "gpt-5": lambda params: {},
     "gpt-5-mini": lambda params: {},
     "gpt-5-nano": lambda params: {},
