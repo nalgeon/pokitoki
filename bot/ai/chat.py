@@ -25,6 +25,7 @@ MODELS = {
     "o3-mini": 200000,
     "o4": 200000,
     "o4-mini": 200000,
+    "gpt-5.4-mini": 128000,
     "gpt-5.1": 128000,
     "gpt-5": 128000,
     "gpt-5-mini": 128000,
@@ -53,19 +54,29 @@ ROLE_OVERRIDES = {
     "o4-mini": "user",
 }
 
+
+def _use_completion_tokens(params: dict) -> dict:
+    """Replace max_tokens with max_completion_tokens for models that require it."""
+    result = {k: v for k, v in params.items() if k != "max_tokens"}
+    if "max_tokens" in params:
+        result["max_completion_tokens"] = params["max_tokens"]
+    return result
+
+
 # Model parameter overrides.
 PARAM_OVERRIDES = {
-    "gpt-5.1": lambda params: {},
-    "gpt-5": lambda params: {},
-    "gpt-5-mini": lambda params: {},
-    "gpt-5-nano": lambda params: {},
-    "o1": lambda params: {},
-    "o1-mini": lambda params: {},
-    "o1-pro": lambda params: {},
-    "o3": lambda params: {},
-    "o3-mini": lambda params: {},
-    "o4": lambda params: {},
-    "o4-mini": lambda params: {},
+    "gpt-5.4-mini": _use_completion_tokens,
+    "gpt-5.1": _use_completion_tokens,
+    "gpt-5": _use_completion_tokens,
+    "gpt-5-mini": _use_completion_tokens,
+    "gpt-5-nano": _use_completion_tokens,
+    "o1": _use_completion_tokens,
+    "o1-mini": _use_completion_tokens,
+    "o1-pro": _use_completion_tokens,
+    "o3": _use_completion_tokens,
+    "o3-mini": _use_completion_tokens,
+    "o4": _use_completion_tokens,
+    "o4-mini": _use_completion_tokens,
 }
 
 
