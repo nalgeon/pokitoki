@@ -15,48 +15,25 @@ N_OUTPUT = 4096
 # Known models and their context windows
 MODELS = {
     # Gemini
-    "gemini-2.5-pro": 1_048_576,
-    "gemini-2.5-flash": 1_048_576,
-    "gemini-2.5-flash-lite": 1_048_576,
-    "gemini-2.0-flash": 1_048_576,
-    "gemini-1.5-flash": 1_048_576,
-    "gemini-1.5-flash-8b": 1_048_576,
-    "gemini-1.5-pro": 2_097_152,
+    "gemini-4-argon": 1_048_576,
+    "gemini-3.8-flash": 1_048_576,
+    "gemini-3.6-flash": 1_048_576,
+    "gemini-3.5-flash-lite": 1_048_576,
+    "gemini-3.1-pro-preview": 1_048_576,
+    "gemini-3.1-flash-lite": 1_048_576,
+    "gemini-3-flash-preview": 1_048_576,
     # OpenAI
-    "o1": 200000,
-    "o1-mini": 128000,
-    "o1-pro": 200000,
-    "o3": 200000,
-    "o3-mini": 200000,
-    "o4": 200000,
-    "o4-mini": 200000,
-    "gpt-5.4-mini": 128000,
-    "gpt-5.1": 128000,
-    "gpt-5": 128000,
-    "gpt-5-mini": 128000,
-    "gpt-5-nano": 128000,
-    "gpt-4.1": 1_047_576,
-    "gpt-4.1-mini": 1_047_576,
-    "gpt-4.1-nano": 1_047_576,
-    "gpt-4o": 128000,
-    "gpt-4o-mini": 128000,
-    "gpt-4-turbo": 128000,
-    "gpt-4-turbo-preview": 128000,
-    "gpt-4-vision-preview": 128000,
-    "gpt-4": 8192,
-    "gpt-4-32k": 32768,
-    "gpt-3.5-turbo": 16385,
-}
-
-# Prompt role name overrides.
-ROLE_OVERRIDES = {
-    "o1": "user",
-    "o1-mini": "user",
-    "o1-pro": "user",
-    "o3": "user",
-    "o3-mini": "user",
-    "o4": "user",
-    "o4-mini": "user",
+    "gpt-6.1-sol": 1_050_000,
+    "gpt-6-sol": 1_050_000,
+    "gpt-6-astra": 1_050_000,
+    "gpt-6-luna": 1_050_000,
+    "gpt-5.6-sol": 1_050_000,
+    "gpt-5.6-terra": 1_050_000,
+    "gpt-5.6-luna": 1_050_000,
+    "gpt-5.5": 1_050_000,
+    "gpt-5.4": 1_050_000,
+    "gpt-5.4-mini": 400_000,
+    "gpt-5.2": 400_000,
 }
 
 
@@ -70,10 +47,8 @@ class Model:
     async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks the language model a question and returns an answer."""
         model = self.name
-        prompt_role = ROLE_OVERRIDES.get(model) or "system"
-
         n_input = _calc_n_input(model, n_output=N_OUTPUT)
-        messages = self._generate_messages(prompt_role, prompt, question, history)
+        messages = self._generate_messages(prompt, question, history)
         messages = shorten(messages, length=n_input)
 
         logger.debug("> chat request: model=%s, messages=%s", model, messages)
@@ -96,13 +71,12 @@ class Model:
 
     def _generate_messages(
         self,
-        prompt_role: str,
         prompt: str,
         question: str,
         history: list[tuple[str, str]],
     ) -> list[dict]:
         """Builds message history to provide context for the language model."""
-        messages = [{"role": prompt_role, "content": prompt or config.ai.prompt}]
+        messages = [{"role": "system", "content": prompt or config.ai.prompt}]
         for prev_question, prev_answer in history:
             messages.append({"role": "user", "content": prev_question})
             messages.append({"role": "assistant", "content": prev_answer})

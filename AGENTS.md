@@ -31,12 +31,7 @@ Lint and format with Ruff (default rules, line length 100, configured in `pyproj
 4. `reply_to` (wrapped by `with_message_limit`) builds the history. In private chats it uses the per-user deque, which is cleared unless the message is a follow-up. In groups it only uses the replied-to bot message. URLs are inlined with `bot/fetcher.py` (quoted URLs are skipped).
 5. `bot/askers.py`: `askers.create()` returns a `TextAsker` or an `ImagineAsker`. The `Asker` does `ask()` (AI call) and then `reply()`, which renders Markdown as Telegram HTML via `bot/markdown.py`. If the answer exceeds Telegram's length limit, it is sent as an `.md` attachment instead.
 
-**AI layer (`bot/ai/chat.py`).** It POSTs to `{ai.url}/chat/completions` with just the model and messages (no sampling params like `temperature` or `max_tokens`, since many modern models reject them). Per-model behavior lives in two dicts:
-
-- `MODELS`: context window sizes. Unknown models fall back to `ai.window`.
-- `ROLE_OVERRIDES`: models that need a `user` prompt role instead of `system`.
-
-Adding a new model usually means adding entries to these dicts (see recent `ai: ...` commits). History is trimmed by `shorten()` using a rough token estimate of words × 1.2, leaving `N_OUTPUT` tokens of the window for the answer.
+**AI layer (`bot/ai/chat.py`).** It POSTs to `{ai.url}/chat/completions` with just the model and messages (no sampling params like `temperature` or `max_tokens`, since many modern models reject them). The `MODELS` dict holds context window sizes of current OpenAI and Gemini models that support Chat Completions. Unknown models fall back to `ai.window`. Adding a new model means adding an entry there. History is trimmed by `shorten()` using a rough token estimate of words × 1.2, leaving `N_OUTPUT` tokens of the window for the answer.
 
 **State.** Per-chat and per-user data persist through `PicklePersistence` (`persistence_path`, default `./data/persistence.pkl`). `bot/models.py` wraps the raw `context.chat_data` and `context.user_data` dicts:
 

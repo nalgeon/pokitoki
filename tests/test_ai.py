@@ -12,7 +12,7 @@ class ModelTest(unittest.TestCase):
     def test_generate_messages(self):
         history = [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]
         messages = self.model._generate_messages(
-            prompt_role="system", prompt="", question="What's your name?", history=history
+            prompt="", question="What's your name?", history=history
         )
         self.assertEqual(len(messages), 6)
 

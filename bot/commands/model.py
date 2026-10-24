@@ -11,7 +11,7 @@ HELP_MESSAGE = """Syntax:
 <code>/model [AI model name]</code>
 
 For example:
-<code>/model gpt-4o</code>
+<code>/model gpt-6-astra</code>
 
 To use the default model:
 <code>/model reset</code>"""
