@@ -385,9 +385,11 @@ class SchemaMigrator:
 
     def _migrate_v6(old: dict) -> dict:
         # Moves chat settings from the pickle file to the SQLite database
-        # in the same directory. The pickle file itself is left intact.
+        # with the same name (state.pkl -> state.db), so that bots with different
+        # pickle files in the same directory get separate databases.
+        # The pickle file itself is left intact.
         persistence_path = old.get("persistence_path") or "./data/persistence.pkl"
-        db_path = os.path.join(os.path.dirname(persistence_path), "pokitoki.db")
+        db_path = os.path.splitext(persistence_path)[0] + ".db"
         db.import_pickle(persistence_path, db_path)
         data = {
             "schema_version": 7,

@@ -265,7 +265,7 @@ class MigrateTest(unittest.TestCase):
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 3},
-                "db_path": "./data/pokitoki.db",
+                "db_path": "./data/persistence.db",
                 "shortcuts": None,
             },
         )
@@ -289,7 +289,7 @@ class MigrateTest(unittest.TestCase):
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 5},
-                "db_path": "./data/pokitoki.db",
+                "db_path": "./data/persistence.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -313,7 +313,7 @@ class MigrateTest(unittest.TestCase):
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 5},
-                "db_path": "./data/pokitoki.db",
+                "db_path": "./data/persistence.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -341,7 +341,7 @@ class MigrateTest(unittest.TestCase):
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 5},
-                "db_path": "./data/pokitoki.db",
+                "db_path": "./data/persistence.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -365,7 +365,7 @@ class MigrateTest(unittest.TestCase):
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-5", "provider": "openai"},
                 "conversation": {"depth": 5},
-                "db_path": "./data/pokitoki.db",
+                "db_path": "./data/persistence.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -388,11 +388,33 @@ class MigrateTest(unittest.TestCase):
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-5", "provider": "openai"},
                 "conversation": {"depth": 5},
-                "db_path": "/var/bot/pokitoki.db",
+                "db_path": "/var/bot/state.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
-        self.import_pickle.assert_called_once_with("/var/bot/state.pkl", "/var/bot/pokitoki.db")
+        self.import_pickle.assert_called_once_with("/var/bot/state.pkl", "/var/bot/state.db")
+
+    def test_migrate_v6_same_dir(self):
+        # bots with different pickle files in the same directory get separate databases
+        db_paths = []
+        for name in ("one", "two"):
+            old = {
+                "schema_version": 6,
+                "telegram": {"token": "tg-1234"},
+                "ai": {"api_key": "oa-1234"},
+                "conversation": {"depth": 5},
+                "persistence_path": f"./data/{name}.pkl",
+            }
+            migrated, _ = SchemaMigrator.migrate(old)
+            db_paths.append(migrated["db_path"])
+        self.assertEqual(db_paths, ["./data/one.db", "./data/two.db"])
+        self.assertEqual(
+            self.import_pickle.call_args_list,
+            [
+                mock.call("./data/one.pkl", "./data/one.db"),
+                mock.call("./data/two.pkl", "./data/two.db"),
+            ],
+        )
 
     def test_migrate_v7(self):
         old = {

@@ -45,7 +45,7 @@ Lint and format with Ruff (default rules, line length 100, configured in `pyproj
 - `ChatData(chat_id)`: per-chat `prompt` and `model` overrides (`chats` table, empty = NULL).
 - `UserData(user_id)`: message history (`messages` table, trimmed to `conversation.depth` rows per user) and an `ExpiringCounter` for rate limiting (`users` table).
 
-The schema 8 config migration (`_migrate_v7`) sets `ai.provider` to `openai` for api.openai.com URLs and to `compatible` otherwise. The schema 7 config migration (`_migrate_v6`) imports chat overrides from the old PicklePersistence file (`persistence_path`) into `pokitoki.db` in the same directory via `db.import_pickle()`. Since config migrations run at import time, tests that migrate configs must stub `db.import_pickle`.
+The schema 8 config migration (`_migrate_v7`) sets `ai.provider` to `openai` for api.openai.com URLs and to `compatible` otherwise. The schema 7 config migration (`_migrate_v6`) imports chat overrides from the old PicklePersistence file (`persistence_path`) into a database with the same name (`state.pkl` → `state.db`) via `db.import_pickle()`, so bots with different pickle files in one directory don't share a database. Since config migrations run at import time, tests that migrate configs must stub `db.import_pickle`.
 
 **Tests** use `unittest.IsolatedAsyncioTestCase` with hand-written fakes in `tests/mocks.py` (`FakeBot`, `FakeApplication` (which also resets `db` to a fresh in-memory database), `FakeGPT`). `mock_chat()` replaces `chat.ask` with a fake model. Tests also change the global `config` directly (e.g. `config.telegram.usernames = [...]`).
 
