@@ -1,7 +1,7 @@
 # Bot configuration parameters.
 
 # Config schema version. Increments for backward-incompatible changes.
-schema_version: 5
+schema_version: 6
 
 # Telegram settings.
 telegram:
@@ -33,9 +33,6 @@ ai:
     # See https://platform.openai.com/docs/models for description.
     model: "gpt-6-luna"
 
-    # Image generation model name.
-    image_model: "dall-e-3"
-
     # Context window size in tokens.
     # Applies only to custom models.
     window: 128000
@@ -55,15 +52,6 @@ conversation:
     message_limit:
         count: 0
         period: hour
-
-# Image generation settings.
-imagine:
-    # Enable/disable image generation:
-    #   - none             = disabled for everyone
-    #   - users_only       = enabled only for users listed in `telegram.usernames`
-    #   - users_and_groups = enabled for both users listed in `telegram.usernames`
-    #                        and members of `telegrams.chat_ids`
-    enabled: none
 
 # Where to store the chat context file.
 persistence_path: "./data/persistence.pkl"

@@ -9,7 +9,6 @@ class ConfigTest(unittest.TestCase):
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": {"enabled": "none"},
         }
         config = Config("config.test.yml", src)
 
@@ -24,7 +23,6 @@ class ConfigTest(unittest.TestCase):
         self.assertTrue(config.ai.prompt, "You are an AI assistant.")
 
         self.assertEqual(config.conversation.depth, 5)
-        self.assertEqual(config.imagine.enabled, "none")
         self.assertEqual(config.persistence_path, "./data/persistence.pkl")
         self.assertEqual(config.shortcuts, {})
 
@@ -33,7 +31,6 @@ class ConfigTest(unittest.TestCase):
             "telegram": {"token": "tg-1234"},
             "ai": {"api_key": "oa-1234"},
             "conversation": {},
-            "imagine": {},
         }
         config = Config("config.test.yml", src)
         self.assertEqual(config.ai.url, "https://api.openai.com/v1")
@@ -44,7 +41,6 @@ class ConfigTest(unittest.TestCase):
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": {"enabled": "none"},
         }
         config = Config("config.test.yml", src)
         data = config.as_dict()
@@ -55,7 +51,6 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(data["ai"]["api_key"], src["ai"]["api_key"])
         self.assertEqual(data["ai"]["model"], src["ai"]["model"])
         self.assertEqual(data["conversation"]["depth"], src["conversation"]["depth"])
-        self.assertEqual(data["imagine"]["enabled"], src["imagine"]["enabled"])
 
 
 class GetValueTest(unittest.TestCase):
@@ -64,7 +59,6 @@ class GetValueTest(unittest.TestCase):
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
             "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": {"enabled": "none"},
             "shortcuts": {"translate": "Translate into English"},
         }
         self.editor = ConfigEditor(Config("config.test.yml", src))
@@ -126,7 +120,6 @@ class SetValueTest(unittest.TestCase):
             },
             "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
-            "imagine": {"enabled": "none"},
             "shortcuts": {"translate": "Translate into English"},
         }
         self.editor = ConfigEditor(Config("config.test.yml", src))
@@ -180,7 +173,7 @@ class SetValueTest(unittest.TestCase):
 
     def test_invalid_type_3(self):
         with self.assertRaises(ValueError):
-            self.editor.set_value("imagine", "no")
+            self.editor.set_value("conversation", "no")
 
     def test_not_allowed(self):
         with self.assertRaises(ValueError):
@@ -205,20 +198,20 @@ class SetValueTest(unittest.TestCase):
 
     def test_invalid_value(self):
         with self.assertRaises(ValueError):
-            self.editor.set_value("imagine.enabled", '"users_only')
+            self.editor.set_value("ai.model", '"gpt-5')
 
     def test_has_changed(self):
-        has_changed, _, new_val = self.editor.set_value("imagine.enabled", "users_only")
+        has_changed, _, new_val = self.editor.set_value("ai.model", "gpt-5")
         self.assertTrue(has_changed)
-        self.assertEqual(new_val, "users_only")
+        self.assertEqual(new_val, "gpt-5")
 
     def test_has_not_changed(self):
-        has_changed, _, new_val = self.editor.set_value("imagine.enabled", "none")
+        has_changed, _, new_val = self.editor.set_value("ai.model", "gpt-4")
         self.assertFalse(has_changed)
-        self.assertEqual(new_val, "none")
+        self.assertEqual(new_val, "gpt-4")
 
     def test_is_immediate_1(self):
-        _, is_immediate, _ = self.editor.set_value("imagine.enabled", "users_only")
+        _, is_immediate, _ = self.editor.set_value("ai.model", "gpt-5")
         self.assertTrue(is_immediate)
 
     def test_is_immediate_2(self):
@@ -245,11 +238,10 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 5,
+                "schema_version": 6,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 3},
-                "imagine": {"enabled": "users_only"},
                 "persistence_path": "./data/persistence.pkl",
                 "shortcuts": None,
             },
@@ -270,11 +262,10 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 5,
+                "schema_version": 6,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
-                "imagine": {"enabled": "none"},
                 "persistence_path": "./data/persistence.pkl",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
@@ -295,11 +286,10 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 5,
+                "schema_version": 6,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
-                "imagine": {"enabled": "users_only"},
                 "persistence_path": "./data/persistence.pkl",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
@@ -324,11 +314,34 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 5,
+                "schema_version": 6,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
-                "imagine": {"enabled": "users_only"},
+                "persistence_path": "./data/persistence.pkl",
+                "shortcuts": {"bugfix": "Fix bugs"},
+            },
+        )
+
+    def test_migrate_v5(self):
+        old = {
+            "schema_version": 5,
+            "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+            "ai": {"api_key": "oa-1234", "model": "gpt-5", "image_model": "dall-e-3"},
+            "conversation": {"depth": 5},
+            "imagine": {"enabled": "users_only"},
+            "persistence_path": "./data/persistence.pkl",
+            "shortcuts": {"bugfix": "Fix bugs"},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 6,
+                "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+                "ai": {"api_key": "oa-1234", "model": "gpt-5"},
+                "conversation": {"depth": 5},
                 "persistence_path": "./data/persistence.pkl",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
@@ -336,11 +349,10 @@ class MigrateTest(unittest.TestCase):
 
     def test_not_changed(self):
         old = {
-            "schema_version": 5,
+            "schema_version": 6,
             "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
             "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
             "conversation": {"depth": 5},
-            "imagine": {"enabled": "users_only"},
             "persistence_path": "./data/persistence.pkl",
             "shortcuts": {"bugfix": "Fix bugs"},
         }

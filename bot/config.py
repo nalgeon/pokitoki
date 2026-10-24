@@ -21,13 +21,11 @@ class AI:
     url: str
     api_key: str
     model: str
-    image_model: str
     window: int
     prompt: str
 
     default_url = "https://api.openai.com/v1"
     default_model = "gpt-6-luna"
-    default_image_model = "dall-e-3"
     default_window = 128000
     default_prompt = "You are an AI assistant."
 
@@ -36,14 +34,12 @@ class AI:
         url: str,
         api_key: str,
         model: str,
-        image_model: str,
         window: int,
         prompt: str,
     ) -> None:
         self.url = url or self.default_url
         self.api_key = api_key
         self.model = model or self.default_model
-        self.image_model = image_model or self.default_image_model
         self.window = window or self.default_window
         self.prompt = prompt or self.default_prompt
 
@@ -78,19 +74,11 @@ class Conversation:
         self.message_limit = RateLimit(**message_limit)
 
 
-@dataclass
-class Imagine:
-    enabled: str
-
-    def __init__(self, enabled: str) -> None:
-        self.enabled = enabled if enabled in ("none", "users_only", "users_and_groups") else "none"
-
-
 class Config:
     """Config properties."""
 
     # Config schema version. Increments for backward-incompatible changes.
-    schema_version = 5
+    schema_version = 6
     # Bot version.
     version = 239
 
@@ -111,7 +99,6 @@ class Config:
             url=src["ai"].get("url"),
             api_key=src["ai"]["api_key"],
             model=src["ai"].get("model"),
-            image_model=src["ai"].get("image_model"),
             window=src["ai"].get("window"),
             prompt=src["ai"].get("prompt"),
         )
@@ -121,9 +108,6 @@ class Config:
             depth=src["conversation"].get("depth"),
             message_limit=src["conversation"].get("message_limit") or {},
         )
-
-        # Image generation settings.
-        self.imagine = Imagine(enabled=src["imagine"].get("enabled") or "")
 
         # Where to store the chat context file.
         self.persistence_path = src.get("persistence_path") or "./data/persistence.pkl"
@@ -138,7 +122,6 @@ class Config:
             "telegram": dataclasses.asdict(self.telegram),
             "ai": dataclasses.asdict(self.ai),
             "conversation": dataclasses.asdict(self.conversation),
-            "imagine": dataclasses.asdict(self.imagine),
             "persistence_path": self.persistence_path,
             "shortcuts": self.shortcuts,
         }
@@ -162,7 +145,6 @@ class ConfigEditor:
         "telegram",
         "ai",
         "conversation",
-        "imagine",
         "shortcuts",
     ]
     # Changes made to these properties take effect after a restart.
@@ -293,6 +275,9 @@ class SchemaMigrator:
         if data["schema_version"] == 4:
             data = cls._migrate_v4(data)
             has_changed = True
+        if data["schema_version"] == 5:
+            data = cls._migrate_v5(data)
+            has_changed = True
         return data, has_changed
 
     @classmethod
@@ -352,6 +337,18 @@ class SchemaMigrator:
             "ai": ai,
             "conversation": old["conversation"],
             "imagine": old["imagine"],
+            "persistence_path": old.get("persistence_path"),
+            "shortcuts": old.get("shortcuts"),
+        }
+        return data
+
+    def _migrate_v5(old: dict) -> dict:
+        ai = {k: v for k, v in old["ai"].items() if k != "image_model"}
+        data = {
+            "schema_version": 6,
+            "telegram": old["telegram"],
+            "ai": ai,
+            "conversation": old["conversation"],
             "persistence_path": old.get("persistence_path"),
             "shortcuts": old.get("shortcuts"),
         }

@@ -21,7 +21,6 @@ PRIVACY_MESSAGE = (
 
 BOT_COMMANDS = [
     ("retry", "retry the last question"),
-    ("imagine", "generate described image"),
     ("version", "show debug information"),
     ("help", "show help"),
 ]

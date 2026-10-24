@@ -55,7 +55,6 @@ class VersionCommand:
             f"- provider: {provider}\n"
             f"- model: {config.ai.model}\n"
             f"- history depth: {config.conversation.depth}\n"
-            f"- imagine: {config.imagine.enabled}\n"
             f"- shortcuts: {', '.join(config.shortcuts.keys())}"
             "</pre>"
         )

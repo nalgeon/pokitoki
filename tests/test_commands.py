@@ -6,10 +6,10 @@ from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 from telegram.ext import filters as tg_filters
 
-from bot import askers, bot, commands, models
+from bot import bot, commands, models
 from bot.config import config
 from bot.filters import Filters
-from tests.mocks import FakeApplication, FakeBot, FakeDalle, FakeGPT, mock_text_asker
+from tests.mocks import FakeApplication, FakeBot, FakeGPT, mock_chat
 
 
 class Helper:
@@ -33,7 +33,7 @@ class Helper:
 
 class StartTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        mock_text_asker(FakeGPT())
+        mock_chat(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -94,7 +94,6 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.ai.url = "https://api.openai.com/v1"
         config.ai.model = "gpt-4"
         config.conversation.depth = 10
-        config.imagine.enabled = "none"
         config.shortcuts = {
             "translate_en": "Translate into English",
             "translate_fr": "Translate into French",
@@ -116,7 +115,6 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertTrue("- provider: api.openai.com" in self.bot.text)
         self.assertTrue("- model: gpt-4" in self.bot.text)
         self.assertTrue("- history depth: 10" in self.bot.text)
-        self.assertTrue("- imagine: none" in self.bot.text)
         self.assertTrue("- shortcuts: translate_en, translate_fr" in self.bot.text)
 
 
@@ -330,7 +328,7 @@ class PromptGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
 
 class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        mock_text_asker(FakeGPT())
+        mock_chat(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -348,53 +346,10 @@ class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertEqual(self.bot.text, "What is your name?")
 
 
-class ImagineTest(unittest.IsolatedAsyncioTestCase, Helper):
-    def setUp(self):
-        askers.ImagineAsker.model = FakeDalle()
-        self.bot = FakeBot("bot")
-        self.chat = Chat(id=1, type=ChatType.PRIVATE)
-        self.chat.set_bot(self.bot)
-        self.application = FakeApplication(self.bot)
-        self.context = CallbackContext(self.application, chat_id=1, user_id=1)
-        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
-        self.command = commands.Imagine(bot.reply_to)
-        config.telegram.usernames = ["alice"]
-
-    async def test_imagine(self):
-        config.imagine.enabled = "users_only"
-        update = self._create_update(11, "/imagine a cat")
-        self.context.args = ["a", "cat"]
-        await self.command(update, self.context)
-        self.assertEqual(self.bot.text, "a cat: image")
-
-    async def test_disabled(self):
-        config.imagine.enabled = "none"
-        update = self._create_update(11, "/imagine a cat")
-        self.context.args = ["a", "cat"]
-        await self.command(update, self.context)
-        self.assertTrue("command is disabled" in self.bot.text)
-
-    async def test_users_only(self):
-        config.imagine.enabled = "users_only"
-        user = User(id=2, first_name="Bob", is_bot=False, username="bob")
-        update = self._create_update(11, "/imagine a cat", user=user)
-        self.context.args = ["a", "cat"]
-        await self.command(update, self.context)
-        self.assertTrue("command is disabled" in self.bot.text)
-
-    async def test_users_and_groups(self):
-        config.imagine.enabled = "users_and_groups"
-        user = User(id=2, first_name="Bob", is_bot=False, username="bob")
-        update = self._create_update(11, "/imagine a cat", user=user)
-        self.context.args = ["a", "cat"]
-        await self.command(update, self.context)
-        self.assertEqual(self.bot.text, "a cat: image")
-
-
 class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
-        mock_text_asker(self.ai)
+        mock_chat(self.ai)
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -446,7 +401,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_exception(self):
         ai = FakeGPT(error=Exception("connection timeout"))
-        mock_text_asker(ai)
+        mock_chat(ai)
         update = self._create_update(11, text="What is your name?")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("⚠️ builtins.Exception:"))
@@ -455,7 +410,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
 
 class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        mock_text_asker(FakeGPT())
+        mock_chat(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.GROUP)
         self.chat.set_bot(self.bot)
@@ -484,7 +439,7 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
 class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
         self.ai = FakeGPT()
-        mock_text_asker(self.ai)
+        mock_chat(self.ai)
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)
@@ -552,7 +507,7 @@ class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
 
 class ErrorTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
-        mock_text_asker(FakeGPT())
+        mock_chat(FakeGPT())
         self.bot = FakeBot("bot")
         self.chat = Chat(id=1, type=ChatType.PRIVATE)
         self.chat.set_bot(self.bot)

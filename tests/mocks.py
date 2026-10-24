@@ -1,36 +1,24 @@
 from telegram import User
 
-from bot import askers
+from bot.ai import chat
 
 
 class FakeGPT:
     def __init__(self, error: Exception | None = None):
         self.error = error
+        self.model = None
         self.prompt = None
         self.question = None
         self.history = None
 
-    async def ask(self, prompt: str, question: str, history: list) -> str:
+    async def ask(self, model: str, prompt: str, question: str, history: list) -> str:
+        self.model = model
         self.prompt = prompt
         self.question = question
         self.history = history
         if self.error:
             raise self.error
         return question
-
-
-class FakeDalle:
-    def __init__(self, error: Exception | None = None):
-        self.error = error
-        self.prompt = None
-        self.size = None
-
-    async def imagine(self, prompt: str, size: str) -> str:
-        self.prompt = prompt
-        self.size = size
-        if self.error:
-            raise self.error
-        return "image"
 
 
 class FakeFile:
@@ -78,11 +66,6 @@ class FakeBot:
     ) -> None:
         self.text = f"{caption}: {filename}"
 
-    async def send_photo(
-        self, chat_id: int, photo: str, caption: str | None = None, **kwargs
-    ) -> None:
-        self.text = f"{caption}: {photo}"
-
     async def get_me(self, **kwargs) -> User:
         return self.user
 
@@ -94,6 +77,5 @@ class FakeApplication:
         self.bot = bot
 
 
-def mock_text_asker(ai: FakeGPT) -> None:
-    mock_init = lambda asker, _: setattr(asker, "model", ai)
-    askers.TextAsker.__init__ = mock_init
+def mock_chat(ai: FakeGPT) -> None:
+    chat.ask = ai.ask

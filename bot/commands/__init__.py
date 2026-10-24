@@ -2,7 +2,6 @@ from .config import ConfigCommand as Config
 from .constants import BOT_COMMANDS
 from .error import ErrorCommand as Error
 from .help import HelpCommand as Help
-from .imagine import ImagineCommand as Imagine
 from .message import MessageCommand as Message
 from .model import ModelCommand as Model
 from .prompt import PromptCommand as Prompt
@@ -15,7 +14,6 @@ __all__ = [
     "Config",
     "Error",
     "Help",
-    "Imagine",
     "Message",
     "Model",
     "Prompt",

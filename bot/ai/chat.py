@@ -37,60 +37,47 @@ MODELS = {
 }
 
 
-class Model:
-    """AI API wrapper."""
+async def ask(model: str, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
+    """Asks the language model a question and returns an answer."""
+    n_input = _calc_n_input(model, n_output=N_OUTPUT)
+    messages = _generate_messages(prompt, question, history)
+    messages = shorten(messages, length=n_input)
 
-    def __init__(self, name: str) -> None:
-        """Creates a wrapper for a given OpenAI large language model."""
-        self.name = name
+    logger.debug("> chat request: model=%s, messages=%s", model, messages)
+    response = await client.post(
+        f"{config.ai.url}/chat/completions",
+        headers={"Authorization": f"Bearer {config.ai.api_key}"},
+        json={"model": model, "messages": messages},
+    )
+    resp = response.json()
+    if "usage" not in resp:
+        raise RuntimeError(resp)
+    logger.debug(
+        "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
+        resp["usage"]["prompt_tokens"],
+        resp["usage"]["completion_tokens"],
+        resp["usage"]["total_tokens"],
+    )
+    return _prepare_answer(resp)
 
-    async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
-        """Asks the language model a question and returns an answer."""
-        model = self.name
-        n_input = _calc_n_input(model, n_output=N_OUTPUT)
-        messages = self._generate_messages(prompt, question, history)
-        messages = shorten(messages, length=n_input)
 
-        logger.debug("> chat request: model=%s, messages=%s", model, messages)
-        response = await client.post(
-            f"{config.ai.url}/chat/completions",
-            headers={"Authorization": f"Bearer {config.ai.api_key}"},
-            json={"model": model, "messages": messages},
-        )
-        resp = response.json()
-        if "usage" not in resp:
-            raise RuntimeError(resp)
-        logger.debug(
-            "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
-            resp["usage"]["prompt_tokens"],
-            resp["usage"]["completion_tokens"],
-            resp["usage"]["total_tokens"],
-        )
-        answer = self._prepare_answer(resp)
-        return answer
+def _generate_messages(prompt: str, question: str, history: list[tuple[str, str]]) -> list[dict]:
+    """Builds message history to provide context for the language model."""
+    messages = [{"role": "system", "content": prompt or config.ai.prompt}]
+    for prev_question, prev_answer in history:
+        messages.append({"role": "user", "content": prev_question})
+        messages.append({"role": "assistant", "content": prev_answer})
+    messages.append({"role": "user", "content": question})
+    return messages
 
-    def _generate_messages(
-        self,
-        prompt: str,
-        question: str,
-        history: list[tuple[str, str]],
-    ) -> list[dict]:
-        """Builds message history to provide context for the language model."""
-        messages = [{"role": "system", "content": prompt or config.ai.prompt}]
-        for prev_question, prev_answer in history:
-            messages.append({"role": "user", "content": prev_question})
-            messages.append({"role": "assistant", "content": prev_answer})
-        messages.append({"role": "user", "content": question})
-        return messages
 
-    def _prepare_answer(self, resp) -> str:
-        """Post-processes an answer from the language model."""
-        if len(resp["choices"]) == 0:
-            raise ValueError("received an empty answer")
+def _prepare_answer(resp) -> str:
+    """Post-processes an answer from the language model."""
+    if len(resp["choices"]) == 0:
+        raise ValueError("received an empty answer")
 
-        answer = resp["choices"][0]["message"]["content"]
-        answer = answer.strip()
-        return answer
+    answer = resp["choices"][0]["message"]["content"]
+    return answer.strip()
 
 
 def shorten(messages: list[dict], length: int) -> list[dict]:

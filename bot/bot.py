@@ -1,11 +1,13 @@
 """Telegram chat bot built using the language model from OpenAI."""
 
+import io
 import logging
 import sys
 import textwrap
 import time
 
-from telegram import Chat, Message, Update
+from telegram import Chat, Message, ReplyParameters, Update
+from telegram.constants import MessageLimit, ParseMode
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -15,7 +17,7 @@ from telegram.ext import (
     PicklePersistence,
 )
 
-from bot import askers, commands, models, questions
+from bot import ai, commands, markdown, models, questions
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
@@ -73,9 +75,6 @@ def add_handlers(application: Application):
     )
 
     # message-related commands
-    application.add_handler(
-        CommandHandler("imagine", commands.Imagine(reply_to), filters=filters.users_or_chats)
-    )
     application.add_handler(CommandHandler("model", commands.Model(), filters=filters.users))
     application.add_handler(CommandHandler("prompt", commands.Prompt(), filters=filters.users))
     application.add_handler(
@@ -146,19 +145,16 @@ async def reply_to(
     await message.chat.send_action(action="typing", message_thread_id=message.message_thread_id)
 
     try:
-        chat = ChatData(context.chat_data)
-        model = chat.model or config.ai.model
-        asker = askers.create(model=model, question=question)
         if message.chat.type == Chat.PRIVATE and message.forward_origin:
             # this is a forwarded message, don't answer yet
             answer = "This is a forwarded message. What should I do with it?"
         else:
-            answer = await _ask_question(message, context, question, asker)
+            answer = await _ask_question(message, context, question)
 
         user = UserData(context.user_data)
         user.messages.add(question, answer)
         logger.debug(user.messages)
-        await asker.reply(message, context, answer)
+        await _send_answer(message, context, answer)
 
     except Exception as exc:  # noqa: BLE001
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
@@ -168,9 +164,7 @@ async def reply_to(
         await message.reply_text(text)
 
 
-async def _ask_question(
-    message: Message, context: CallbackContext, question: str, asker: askers.Asker
-) -> str:
+async def _ask_question(message: Message, context: CallbackContext, question: str) -> str:
     """Answers a question using the OpenAI model."""
     user_id = message.from_user.username or message.from_user.id
     logger.info(f"-> question id={message.id}, user={user_id}, n_chars={len(question)}")
@@ -198,8 +192,9 @@ async def _ask_question(
         history = [("", prev_message)] if prev_message else []
 
     chat = ChatData(context.chat_data)
+    model = chat.model or config.ai.model
     start = time.perf_counter_ns()
-    answer = await asker.ask(prompt=chat.prompt, question=question, history=history)
+    answer = await ai.chat.ask(model, prompt=chat.prompt, question=question, history=history)
     elapsed = int((time.perf_counter_ns() - start) / 1e6)
 
     logger.info(
@@ -207,6 +202,27 @@ async def _ask_question(
         f"n_chars={len(answer)}, len_history={len(history)}, took={elapsed}ms"
     )
     return answer
+
+
+async def _send_answer(message: Message, context: CallbackContext, answer: str) -> None:
+    """Replies with an answer from AI, as a document if it's too long for a message."""
+    html_answer = markdown.to_html(answer)
+    if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
+        await message.reply_text(html_answer, parse_mode=ParseMode.HTML)
+        return
+
+    doc = io.StringIO(answer)
+    caption = (
+        textwrap.shorten(answer, width=255, placeholder="...") + " (see attachment for the rest)"
+    )
+    reply_parameters = ReplyParameters(message.id) if message.chat.type != Chat.PRIVATE else None
+    await context.bot.send_document(
+        chat_id=message.chat_id,
+        caption=caption,
+        filename=f"{message.id}.md",
+        document=doc,
+        reply_parameters=reply_parameters,
+    )
 
 
 if __name__ == "__main__":
