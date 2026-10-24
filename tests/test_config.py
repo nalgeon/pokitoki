@@ -7,7 +7,7 @@ class ConfigTest(unittest.TestCase):
     def test_init(self):
         src = {
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
-            "openai": {"api_key": "oa-1234", "model": "gpt-4"},
+            "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
             "imagine": {"enabled": "none"},
         }
@@ -18,22 +18,31 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.telegram.admins, [])
         self.assertEqual(config.telegram.chat_ids, [])
 
-        self.assertEqual(config.openai.api_key, "oa-1234")
-        self.assertEqual(config.openai.model, "gpt-4")
-        self.assertEqual(config.openai.window, 128000)
-        self.assertTrue(config.openai.prompt, "You are an AI assistant.")
-        self.assertEqual(config.openai.params["temperature"], 0.7)
-        self.assertEqual(config.openai.params["max_tokens"], 4096)
+        self.assertEqual(config.ai.api_key, "oa-1234")
+        self.assertEqual(config.ai.model, "gpt-4")
+        self.assertEqual(config.ai.window, 128000)
+        self.assertTrue(config.ai.prompt, "You are an AI assistant.")
 
         self.assertEqual(config.conversation.depth, 5)
         self.assertEqual(config.imagine.enabled, "none")
         self.assertEqual(config.persistence_path, "./data/persistence.pkl")
         self.assertEqual(config.shortcuts, {})
 
+    def test_defaults(self):
+        src = {
+            "telegram": {"token": "tg-1234"},
+            "ai": {"api_key": "oa-1234"},
+            "conversation": {},
+            "imagine": {},
+        }
+        config = Config("config.test.yml", src)
+        self.assertEqual(config.ai.url, "https://api.openai.com/v1")
+        self.assertEqual(config.ai.model, "gpt-6-luna")
+
     def test_as_dict(self):
         src = {
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
-            "openai": {"api_key": "oa-1234", "model": "gpt-4"},
+            "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
             "imagine": {"enabled": "none"},
         }
@@ -43,8 +52,8 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(data["telegram"]["usernames"], src["telegram"]["usernames"])
         self.assertEqual(data["telegram"]["admins"], [])
         self.assertEqual(data["telegram"]["chat_ids"], [])
-        self.assertEqual(data["openai"]["api_key"], src["openai"]["api_key"])
-        self.assertEqual(data["openai"]["model"], src["openai"]["model"])
+        self.assertEqual(data["ai"]["api_key"], src["ai"]["api_key"])
+        self.assertEqual(data["ai"]["model"], src["ai"]["model"])
         self.assertEqual(data["conversation"]["depth"], src["conversation"]["depth"])
         self.assertEqual(data["imagine"]["enabled"], src["imagine"]["enabled"])
 
@@ -53,7 +62,7 @@ class GetValueTest(unittest.TestCase):
     def setUp(self) -> None:
         src = {
             "telegram": {"token": "tg-1234", "usernames": ["nalgeon"]},
-            "openai": {"api_key": "oa-1234", "model": "gpt-4"},
+            "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
             "imagine": {"enabled": "none"},
             "shortcuts": {"translate": "Translate into English"},
@@ -90,10 +99,6 @@ class GetValueTest(unittest.TestCase):
         value = self.editor.get_value("conversation.depth")
         self.assertEqual(value, 5)
 
-    def test_float(self):
-        value = self.editor.get_value("openai.params.temperature")
-        self.assertEqual(value, 0.7)
-
     def test_not_allowed(self):
         with self.assertRaises(ValueError):
             self.editor.get_value("__class__")
@@ -119,7 +124,7 @@ class SetValueTest(unittest.TestCase):
                 "usernames": ["alice", "bob"],
                 "admins": ["botfather"],
             },
-            "openai": {"api_key": "oa-1234", "model": "gpt-4"},
+            "ai": {"api_key": "oa-1234", "model": "gpt-4"},
             "conversation": {"depth": 5},
             "imagine": {"enabled": "none"},
             "shortcuts": {"translate": "Translate into English"},
@@ -161,14 +166,9 @@ class SetValueTest(unittest.TestCase):
         self.assertEqual(value, "Translate into Spanish")
 
     def test_int(self):
-        self.editor.set_value("openai.params.max_tokens", "500")
-        value = self.editor.get_value("openai.params.max_tokens")
-        self.assertEqual(value, 500)
-
-    def test_float(self):
-        self.editor.set_value("openai.params.temperature", "0.5")
-        value = self.editor.get_value("openai.params.temperature")
-        self.assertEqual(value, 0.5)
+        self.editor.set_value("conversation.depth", "7")
+        value = self.editor.get_value("conversation.depth")
+        self.assertEqual(value, 7)
 
     def test_invalid_type_1(self):
         with self.assertRaises(ValueError):
@@ -245,9 +245,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 4,
+                "schema_version": 5,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 3},
                 "imagine": {"enabled": "users_only"},
                 "persistence_path": "./data/persistence.pkl",
@@ -270,9 +270,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 4,
+                "schema_version": 5,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
                 "imagine": {"enabled": "none"},
                 "persistence_path": "./data/persistence.pkl",
@@ -295,9 +295,38 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 4,
+                "schema_version": 5,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "conversation": {"depth": 5},
+                "imagine": {"enabled": "users_only"},
+                "persistence_path": "./data/persistence.pkl",
+                "shortcuts": {"bugfix": "Fix bugs"},
+            },
+        )
+
+    def test_migrate_v4(self):
+        old = {
+            "schema_version": 4,
+            "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+            "openai": {
+                "api_key": "oa-1234",
+                "model": "gpt-3.5-turbo",
+                "params": {"temperature": 0.7, "max_tokens": 4096},
+            },
+            "conversation": {"depth": 5},
+            "imagine": {"enabled": "users_only"},
+            "persistence_path": "./data/persistence.pkl",
+            "shortcuts": {"bugfix": "Fix bugs"},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 5,
+                "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
                 "imagine": {"enabled": "users_only"},
                 "persistence_path": "./data/persistence.pkl",
@@ -307,9 +336,9 @@ class MigrateTest(unittest.TestCase):
 
     def test_not_changed(self):
         old = {
-            "schema_version": 4,
+            "schema_version": 5,
             "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-            "openai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+            "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
             "conversation": {"depth": 5},
             "imagine": {"enabled": "users_only"},
             "persistence_path": "./data/persistence.pkl",

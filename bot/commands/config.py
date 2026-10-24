@@ -11,10 +11,10 @@ HELP_MESSAGE = """Syntax:
 <code>/config property [value]</code>
 
 E.g. to view the property value:
-<code>/config openai.prompt</code>
+<code>/config ai.prompt</code>
 
 E.g. to change the property value:
-<code>/config openai.prompt You are an AI assistant</code>"""
+<code>/config ai.prompt You are an AI assistant</code>"""
 
 editor = ConfigEditor(config)
 

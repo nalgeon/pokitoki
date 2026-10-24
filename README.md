@@ -178,7 +178,7 @@ Bot information:
 
 AI information:
 - provider: api.openai.com
-- model: gpt-4o-mini
+- model: gpt-6-luna
 - history depth: 5
 - shortcuts: proofread, summarize
 ```
@@ -188,7 +188,7 @@ AI information:
 Use the `/config` command to change almost any setting on the fly, without restarting the bot.
 
 -   Add or remove users and chats allowed to interact with the bot (`telegram.usernames` and `telegram.chat_ids`).
--   Adjust the AI provider (`openai.url`), API key (`openai.api_key`), model (`openai.model`), prompt (`openai.prompt`) and params (`openai.params`).
+-   Adjust the AI provider (`ai.url`), API key (`ai.api_key`), model (`ai.model`) and prompt (`ai.prompt`).
 -   Add or change AI shortcuts (`shortcuts`).
 -   Change any other config property.
 
@@ -196,16 +196,16 @@ To view a specific config property, put its name after `/config`:
 
 ```
 /config telegram.usernames
-/config openai.prompt
+/config ai.prompt
 ```
 
 To change a specific config property, put its name and value after `/config`:
 
 ```
 /config telegram.usernames ["alice", "bob", "cindy"]
-/config openai.url https://api.studio.nebius.ai/v1
-/config openai.model meta-llama/Meta-Llama-3.1-70B-Instruct
-/config openai.prompt "You are an evil AI bot"
+/config ai.url https://api.studio.nebius.ai/v1
+/config ai.model meta-llama/Meta-Llama-3.1-70B-Instruct
+/config ai.prompt "You are an evil AI bot"
 ```
 
 When working with list properties like `telegram.usernames`, you can add or remove individual items instead of redefining the whole list:

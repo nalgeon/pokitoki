@@ -20,7 +20,7 @@ async def main(question):
     fetcher = Fetcher()
     question = await fetcher.substitute_urls(question)
     ai = init_model()
-    answer = await ai.ask(prompt=config.openai.prompt, question=question, history=[])
+    answer = await ai.ask(prompt=config.ai.prompt, question=question, history=[])
     await fetcher.close()
     lines = textwrap.wrap(answer, width=60)
     for line in lines:
@@ -28,7 +28,7 @@ async def main(question):
 
 
 def init_model():
-    name = os.getenv("OPENAI_MODEL") or config.openai.model
+    name = os.getenv("AI_MODEL") or config.ai.model
     return bot.ai.chat.Model(name)
 
 

@@ -52,7 +52,7 @@ class PromptCommand:
             # /prompt with "reset" argument
             chat.prompt = ""
             await message.reply_text(
-                f"✓ Using default prompt:\n<code>{config.openai.prompt}</code>",
+                f"✓ Using default prompt:\n<code>{config.ai.prompt}</code>",
                 parse_mode=ParseMode.HTML,
             )
             return

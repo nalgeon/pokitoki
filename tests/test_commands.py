@@ -91,8 +91,8 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.usernames = ["alice", "bob"]
         config.telegram.admins = ["alice"]
         config.telegram.chat_ids = [-100500]
-        config.openai.url = "https://api.openai.com/v1"
-        config.openai.model = "gpt-4"
+        config.ai.url = "https://api.openai.com/v1"
+        config.ai.model = "gpt-4"
         config.conversation.depth = 10
         config.imagine.enabled = "none"
         config.shortcuts = {
@@ -139,17 +139,17 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertTrue(self.bot.text.startswith("Syntax:"))
 
     async def test_view(self):
-        config.openai.model = "gpt-3.5-turbo"
-        update = self._create_update(11, "/config openai.model")
+        config.ai.model = "gpt-3.5-turbo"
+        update = self._create_update(11, "/config ai.model")
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "`gpt-3.5-turbo`")
 
     async def test_change(self):
         commands.config.editor.save = lambda: None
-        config.openai.model = "gpt-3.5-turbo"
-        update = self._create_update(11, "/config openai.model gpt-4")
+        config.ai.model = "gpt-3.5-turbo"
+        update = self._create_update(11, "/config ai.model gpt-4")
         await self.command(update, self.context)
-        self.assertTrue(self.bot.text.startswith("✓ Changed the `openai.model` property"))
+        self.assertTrue(self.bot.text.startswith("✓ Changed the `ai.model` property"))
 
     async def test_conversation_depth(self):
         commands.config.editor.save = lambda: None
@@ -163,12 +163,12 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_not_changed(self):
         commands.config.editor.save = lambda: None
-        config.openai.model = "gpt-3.5-turbo"
-        update = self._create_update(11, "/config openai.model gpt-3.5-turbo")
+        config.ai.model = "gpt-3.5-turbo"
+        update = self._create_update(11, "/config ai.model gpt-3.5-turbo")
         await self.command(update, self.context)
         self.assertEqual(
             self.bot.text,
-            "✗ The `openai.model` property already equals to `gpt-3.5-turbo`",
+            "✗ The `ai.model` property already equals to `gpt-3.5-turbo`",
         )
 
     async def test_delayed(self):

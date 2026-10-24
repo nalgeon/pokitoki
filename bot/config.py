@@ -17,24 +17,19 @@ class Telegram:
 
 
 @dataclass
-class OpenAI:
+class AI:
     url: str
     api_key: str
     model: str
     image_model: str
     window: int
     prompt: str
-    params: dict
 
     default_url = "https://api.openai.com/v1"
-    default_model = "gpt-4o-mini"
+    default_model = "gpt-6-luna"
     default_image_model = "dall-e-3"
     default_window = 128000
     default_prompt = "You are an AI assistant."
-    default_params: ClassVar = {
-        "temperature": 0.7,
-        "max_tokens": 4096,
-    }
 
     def __init__(
         self,
@@ -44,7 +39,6 @@ class OpenAI:
         image_model: str,
         window: int,
         prompt: str,
-        params: dict,
     ) -> None:
         self.url = url or self.default_url
         self.api_key = api_key
@@ -52,8 +46,6 @@ class OpenAI:
         self.image_model = image_model or self.default_image_model
         self.window = window or self.default_window
         self.prompt = prompt or self.default_prompt
-        self.params = self.default_params.copy()
-        self.params.update(params)
 
 
 @dataclass
@@ -98,7 +90,7 @@ class Config:
     """Config properties."""
 
     # Config schema version. Increments for backward-incompatible changes.
-    schema_version = 4
+    schema_version = 5
     # Bot version.
     version = 239
 
@@ -114,15 +106,14 @@ class Config:
             chat_ids=src["telegram"].get("chat_ids") or [],
         )
 
-        # OpenAI settings.
-        self.openai = OpenAI(
-            url=src["openai"].get("url"),
-            api_key=src["openai"]["api_key"],
-            model=src["openai"].get("model"),
-            image_model=src["openai"].get("image_model"),
-            window=src["openai"].get("window"),
-            prompt=src["openai"].get("prompt"),
-            params=src["openai"].get("params") or {},
+        # AI settings.
+        self.ai = AI(
+            url=src["ai"].get("url"),
+            api_key=src["ai"]["api_key"],
+            model=src["ai"].get("model"),
+            image_model=src["ai"].get("image_model"),
+            window=src["ai"].get("window"),
+            prompt=src["ai"].get("prompt"),
         )
 
         # Conversation settings.
@@ -145,7 +136,7 @@ class Config:
         return {
             "schema_version": self.schema_version,
             "telegram": dataclasses.asdict(self.telegram),
-            "openai": dataclasses.asdict(self.openai),
+            "ai": dataclasses.asdict(self.ai),
             "conversation": dataclasses.asdict(self.conversation),
             "imagine": dataclasses.asdict(self.imagine),
             "persistence_path": self.persistence_path,
@@ -157,7 +148,7 @@ class ConfigEditor:
     """
     Config properties editor.
     Gets/sets config properties by their 'path',
-    e.g. 'openai.params.temperature' or 'conversation.depth'.
+    e.g. 'ai.model' or 'conversation.depth'.
     """
 
     # These properties cannot be changed at all.
@@ -169,7 +160,7 @@ class ConfigEditor:
     # Changes made to these properties take effect immediately.
     immediate: ClassVar = [
         "telegram",
-        "openai",
+        "ai",
         "conversation",
         "imagine",
         "shortcuts",
@@ -299,6 +290,9 @@ class SchemaMigrator:
         if data["schema_version"] == 3:
             data = cls._migrate_v3(data)
             has_changed = True
+        if data["schema_version"] == 4:
+            data = cls._migrate_v4(data)
+            has_changed = True
         return data, has_changed
 
     @classmethod
@@ -348,6 +342,19 @@ class SchemaMigrator:
         imagine_enabled = old.get("imagine")
         imagine_enabled = True if imagine_enabled is None else imagine_enabled
         data["imagine"] = {"enabled": "users_only" if imagine_enabled else "none"}
+        return data
+
+    def _migrate_v4(old: dict) -> dict:
+        ai = {k: v for k, v in old["openai"].items() if k != "params"}
+        data = {
+            "schema_version": 5,
+            "telegram": old["telegram"],
+            "ai": ai,
+            "conversation": old["conversation"],
+            "imagine": old["imagine"],
+            "persistence_path": old.get("persistence_path"),
+            "shortcuts": old.get("shortcuts"),
+        }
         return data
 
 

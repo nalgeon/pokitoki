@@ -48,12 +48,12 @@ class VersionCommand:
             text += f"\n\n{constants.PRIVACY_MESSAGE}"
 
         # AI information
-        provider = parse.urlparse(config.openai.url).hostname
+        provider = parse.urlparse(config.ai.url).hostname
         text += (
             "\n\n<pre>"
             "AI information:\n"
             f"- provider: {provider}\n"
-            f"- model: {config.openai.model}\n"
+            f"- model: {config.ai.model}\n"
             f"- history depth: {config.conversation.depth}\n"
             f"- imagine: {config.imagine.enabled}\n"
             f"- shortcuts: {', '.join(config.shortcuts.keys())}"

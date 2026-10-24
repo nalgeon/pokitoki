@@ -52,7 +52,7 @@ class ModelCommand:
             # /model with "reset" argument
             chat.model = ""
             await message.reply_text(
-                f"✓ Using default model:\n<code>{config.openai.model}</code>",
+                f"✓ Using default model:\n<code>{config.ai.model}</code>",
                 parse_mode=ParseMode.HTML,
             )
             return

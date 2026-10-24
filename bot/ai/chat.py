@@ -9,6 +9,9 @@ from bot.config import config
 client = httpx.AsyncClient(timeout=60.0)
 logger = logging.getLogger(__name__)
 
+# Number of tokens reserved for the answer when trimming the history.
+N_OUTPUT = 4096
+
 # Known models and their context windows
 MODELS = {
     # Gemini
@@ -57,31 +60,6 @@ ROLE_OVERRIDES = {
 }
 
 
-def _use_completion_tokens(params: dict) -> dict:
-    """Replace max_tokens with max_completion_tokens for models that require it."""
-    result = {k: v for k, v in params.items() if k != "max_tokens"}
-    if "max_tokens" in params:
-        result["max_completion_tokens"] = params["max_tokens"]
-    return result
-
-
-# Model parameter overrides.
-PARAM_OVERRIDES = {
-    "gpt-5.4-mini": _use_completion_tokens,
-    "gpt-5.1": _use_completion_tokens,
-    "gpt-5": _use_completion_tokens,
-    "gpt-5-mini": _use_completion_tokens,
-    "gpt-5-nano": _use_completion_tokens,
-    "o1": _use_completion_tokens,
-    "o1-mini": _use_completion_tokens,
-    "o1-pro": _use_completion_tokens,
-    "o3": _use_completion_tokens,
-    "o3-mini": _use_completion_tokens,
-    "o4": _use_completion_tokens,
-    "o4-mini": _use_completion_tokens,
-}
-
-
 class Model:
     """AI API wrapper."""
 
@@ -93,27 +71,16 @@ class Model:
         """Asks the language model a question and returns an answer."""
         model = self.name
         prompt_role = ROLE_OVERRIDES.get(model) or "system"
-        params_func = PARAM_OVERRIDES.get(model) or (lambda params: params)
 
-        n_input = _calc_n_input(model, n_output=config.openai.params["max_tokens"])
+        n_input = _calc_n_input(model, n_output=N_OUTPUT)
         messages = self._generate_messages(prompt_role, prompt, question, history)
         messages = shorten(messages, length=n_input)
 
-        params = params_func(config.openai.params)
-        logger.debug(
-            "> chat request: model=%s, params=%s, messages=%s",
-            model,
-            params,
-            messages,
-        )
+        logger.debug("> chat request: model=%s, messages=%s", model, messages)
         response = await client.post(
-            f"{config.openai.url}/chat/completions",
-            headers={"Authorization": f"Bearer {config.openai.api_key}"},
-            json={
-                "model": model,
-                "messages": messages,
-                **params,
-            },
+            f"{config.ai.url}/chat/completions",
+            headers={"Authorization": f"Bearer {config.ai.api_key}"},
+            json={"model": model, "messages": messages},
         )
         resp = response.json()
         if "usage" not in resp:
@@ -135,7 +102,7 @@ class Model:
         history: list[tuple[str, str]],
     ) -> list[dict]:
         """Builds message history to provide context for the language model."""
-        messages = [{"role": prompt_role, "content": prompt or config.openai.prompt}]
+        messages = [{"role": prompt_role, "content": prompt or config.ai.prompt}]
         for prev_question, prev_answer in history:
             messages.append({"role": "user", "content": prev_question})
             messages.append({"role": "assistant", "content": prev_answer})
@@ -194,6 +161,6 @@ def _calc_n_input(name: str, n_output: int) -> int:
     """
     # OpenAI counts length in tokens, not charactes.
     # We need to leave some tokens reserved for the output.
-    n_total = MODELS.get(name) or config.openai.window
+    n_total = MODELS.get(name) or config.ai.window
     logger.debug("model=%s, n_total=%s, n_output=%s", name, n_total, n_output)
     return n_total - n_output

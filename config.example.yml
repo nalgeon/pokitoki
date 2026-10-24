@@ -1,7 +1,7 @@
 # Bot configuration parameters.
 
 # Config schema version. Increments for backward-incompatible changes.
-schema_version: 3
+schema_version: 5
 
 # Telegram settings.
 telegram:
@@ -21,7 +21,7 @@ telegram:
     chat_ids: []
 
 # AI settings.
-openai:
+ai:
     # AI API endpoint. You can use any OpenAI-compatible provider like
     # OpenRouter (https://openrouter.ai/api/v1) or Nebius (https://api.studio.nebius.ai/v1).
     url: "https://api.openai.com/v1"
@@ -31,7 +31,7 @@ openai:
 
     # Chat model name.
     # See https://platform.openai.com/docs/models for description.
-    model: "gpt-4o-mini"
+    model: "gpt-6-luna"
 
     # Image generation model name.
     image_model: "dall-e-3"
@@ -42,12 +42,6 @@ openai:
 
     # Model prompt.
     prompt: "You are an AI assistant."
-
-    # Model parameters.
-    # See https://platform.openai.com/docs/api-reference/chat/create for description.
-    params:
-        temperature: 0.7
-        max_tokens: 4096
 
 conversation:
     # The maximum number of previous messages

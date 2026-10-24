@@ -27,7 +27,6 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("bot").setLevel(logging.INFO)
 logging.getLogger("bot.ai.chat").setLevel(logging.INFO)
 logging.getLogger("bot.commands").setLevel(logging.INFO)
@@ -97,8 +96,8 @@ async def post_init(application: Application) -> None:
     logger.info(f"allowed users: {config.telegram.usernames}")
     logger.info(f"allowed chats: {config.telegram.chat_ids}")
     logger.info(f"admins: {config.telegram.admins}")
-    logger.info(f"api url: {config.openai.url}")
-    logger.info(f"model name: {config.openai.model}")
+    logger.info(f"api url: {config.ai.url}")
+    logger.info(f"model name: {config.ai.model}")
     logger.info(f"bot: username={bot.username}, id={bot.id}")
     await bot.set_my_commands(commands.BOT_COMMANDS)
 
@@ -148,7 +147,7 @@ async def reply_to(
 
     try:
         chat = ChatData(context.chat_data)
-        model = chat.model or config.openai.model
+        model = chat.model or config.ai.model
         asker = askers.create(model=model, question=question)
         if message.chat.type == Chat.PRIVATE and message.forward_origin:
             # this is a forwarded message, don't answer yet
