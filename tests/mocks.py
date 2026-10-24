@@ -1,5 +1,6 @@
 from telegram import User
 
+from bot import db
 from bot.ai import chat
 
 
@@ -72,8 +73,8 @@ class FakeBot:
 
 class FakeApplication:
     def __init__(self, bot: FakeBot) -> None:
-        self.chat_data = {1: {}}
-        self.user_data = {1: {}}
+        # each application starts with a fresh in-memory database
+        db.init(":memory:")
         self.bot = bot
 
 

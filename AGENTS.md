@@ -33,12 +33,14 @@ Lint and format with Ruff (default rules, line length 100, configured in `pyproj
 
 **AI layer (`bot/ai/chat.py`).** It POSTs to `{ai.url}/chat/completions` with just the model and messages (no sampling params like `temperature` or `max_tokens`, since many modern models reject them). The `MODELS` dict holds context window sizes of current OpenAI and Gemini models that support Chat Completions. Unknown models fall back to `ai.window`. Adding a new model means adding an entry there. History is trimmed by `shorten()` using a rough token estimate of words × 1.2, leaving `N_OUTPUT` tokens of the window for the answer.
 
-**State.** Per-chat and per-user data persist through `PicklePersistence` (`persistence_path`, default `./data/persistence.pkl`). `bot/models.py` wraps the raw `context.chat_data` and `context.user_data` dicts:
+**State.** Per-chat and per-user data live in SQLite (`db_path`, default `./data/pokitoki.db`), not in PTB persistence (`context.chat_data`/`user_data` are unused). `bot/db.py` holds a module-level connection (`db.init(path)` is called in `main()`; autocommit, WAL) and the schema. The models in `bot/models.py` read and write the tables directly on every access, so editing the database by hand takes effect immediately:
 
-- `ChatData`: per-chat `prompt` and `model` overrides.
-- `UserData`: message history and an `ExpiringCounter` for rate limiting.
+- `ChatData(chat_id)`: per-chat `prompt` and `model` overrides (`chats` table, empty = NULL).
+- `UserData(user_id)`: message history (`messages` table, trimmed to `conversation.depth` rows per user) and an `ExpiringCounter` for rate limiting (`users` table).
 
-**Tests** use `unittest.IsolatedAsyncioTestCase` with hand-written fakes in `tests/mocks.py` (`FakeBot`, `FakeApplication`, `FakeGPT`). `mock_chat()` replaces `chat.ask` with a fake model. Tests also change the global `config` directly (e.g. `config.telegram.usernames = [...]`).
+The schema 7 config migration (`_migrate_v6`) imports chat overrides from the old PicklePersistence file (`persistence_path`) into `pokitoki.db` in the same directory via `db.import_pickle()`. Since config migrations run at import time, tests that migrate configs must stub `db.import_pickle`.
+
+**Tests** use `unittest.IsolatedAsyncioTestCase` with hand-written fakes in `tests/mocks.py` (`FakeBot`, `FakeApplication` (which also resets `db` to a fresh in-memory database), `FakeGPT`). `mock_chat()` replaces `chat.ask` with a fake model. Tests also change the global `config` directly (e.g. `config.telegram.usernames = [...]`).
 
 ## Conventions
 

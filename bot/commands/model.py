@@ -32,7 +32,7 @@ class ModelCommand:
             # Only admins are allowed to change the model in group chats.
             return
 
-        chat = ChatData(context.chat_data)
+        chat = ChatData(message.chat_id)
         _, _, model = message.text.partition(" ")
         if not model:
             # /model without arguments

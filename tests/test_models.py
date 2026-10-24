@@ -1,178 +1,165 @@
 import datetime as dt
 import unittest
-from collections import deque
 
-from bot import models
+from bot import db, models
 from bot.config import config
-from bot.models import ExpiringCounter, TimestampedValue, UserData, UserMessage, UserMessages
+from bot.models import ChatData, ExpiringCounter, UserData, UserMessage, UserMessages
+
+
+class ChatDataTest(unittest.TestCase):
+    def setUp(self) -> None:
+        db.init(":memory:")
+
+    def test_init(self):
+        chat = ChatData(1)
+        self.assertEqual(chat.model, "")
+        self.assertEqual(chat.prompt, "")
+
+    def test_set(self):
+        chat = ChatData(1)
+        chat.model = "gpt-5"
+        chat.prompt = "Laugh"
+        self.assertEqual(ChatData(1).model, "gpt-5")
+        self.assertEqual(ChatData(1).prompt, "Laugh")
+        self.assertEqual(ChatData(2).model, "")
+        row = db.conn.execute("select model, prompt from chats where id = 1").fetchone()
+        self.assertEqual(row, ("gpt-5", "Laugh"))
+
+    def test_reset(self):
+        chat = ChatData(1)
+        chat.model = "gpt-5"
+        chat.model = ""
+        self.assertEqual(chat.model, "")
+        row = db.conn.execute("select model from chats where id = 1").fetchone()
+        self.assertEqual(row, (None,))
 
 
 class UserDataTest(unittest.TestCase):
+    def setUp(self) -> None:
+        db.init(":memory:")
+
     def test_init(self):
-        data = {}
-        user = UserData(data)
+        user = UserData(1)
         self.assertEqual(user.messages.as_list(), [])
-        self.assertEqual(data["messages"], deque([], maxlen=config.conversation.depth))
+        self.assertEqual(user.messages.maxlen, config.conversation.depth)
         self.assertEqual(user.message_counter.value, 0)
-        self.assertEqual(data["message_counter"]["value"], 0)
 
     def test_messages(self):
-        data = {}
-        user = UserData(data)
+        user = UserData(1)
         user.messages.add("question", "answer")
         user.messages.add("question", "answer")
         self.assertEqual(len(user.messages.as_list()), 2)
-        self.assertEqual(len(data["messages"]), 2)
+        self.assertEqual(len(UserData(1).messages.as_list()), 2)
+        self.assertEqual(UserData(2).messages.as_list(), [])
 
     def test_message_counter(self):
-        data = {}
-        user = UserData(data)
+        user = UserData(1)
         user.message_counter.increment()
         user.message_counter.increment()
         self.assertEqual(user.message_counter.value, 2)
-        self.assertEqual(data["message_counter"]["value"], 2)
+        self.assertEqual(UserData(1).message_counter.value, 2)
 
 
 class UserMessagesTest(unittest.TestCase):
-    def test_init(self):
-        um = UserMessages({}, maxlen=config.conversation.depth)
-        self.assertIsInstance(um.messages, deque)
-        self.assertEqual(um.messages.maxlen, config.conversation.depth)
-
-        data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data, maxlen=3)
-        self.assertEqual(um.messages, data["messages"])
+    def setUp(self) -> None:
+        db.init(":memory:")
+        self.um = UserMessages(1, maxlen=3)
 
     def test_last(self):
-        um = UserMessages({}, maxlen=3)
-        self.assertIsNone(um.last)
-
-        data = {
-            "messages": deque(
-                [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]
-            )
-        }
-        um = UserMessages(data, maxlen=3)
-        self.assertEqual(um.last, ("Is it cold today?", "Yep!"))
+        self.assertIsNone(self.um.last)
+        self.um.add("Hello", "Hi")
+        self.um.add("Is it cold today?", "Yep!")
+        self.assertEqual(self.um.last, ("Is it cold today?", "Yep!"))
 
     def test_add(self):
-        data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data, maxlen=3)
-        um.add("Is it cold today?", "Yep!")
+        self.um.add("Hello", "Hi")
+        self.um.add("Is it cold today?", "Yep!")
         self.assertEqual(
-            um.messages,
-            deque([UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]),
+            self.um.as_list(),
+            [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")],
         )
 
+    def test_add_maxlen(self):
+        for i in range(5):
+            self.um.add(f"q{i}", f"a{i}")
+        self.assertEqual([m.question for m in self.um.as_list()], ["q2", "q3", "q4"])
+        (count,) = db.conn.execute("select count(*) from messages").fetchone()
+        self.assertEqual(count, 3)
+
     def test_pop(self):
-        data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data, maxlen=3)
-        message = um.pop()
+        self.um.add("Hello", "Hi")
+        message = self.um.pop()
         self.assertEqual(message.question, "Hello")
         self.assertEqual(message.answer, "Hi")
 
-        message = um.pop()
+        message = self.um.pop()
         self.assertIsNone(message)
 
     def test_clear(self):
-        data = {"messages": deque([UserMessage("Hello", "Hi")])}
-        um = UserMessages(data, maxlen=3)
-        um.clear()
-        self.assertEqual(len(um.messages), 0)
+        self.um.add("Hello", "Hi")
+        UserMessages(2, maxlen=3).add("Hello", "Hi")
+        self.um.clear()
+        self.assertEqual(self.um.as_list(), [])
+        self.assertEqual(len(UserMessages(2, maxlen=3).as_list()), 1)
 
     def test_as_list(self):
-        data = {
-            "messages": deque(
-                [UserMessage("Hello", "Hi"), UserMessage("Is it cold today?", "Yep!")]
-            )
-        }
-        um = UserMessages(data, maxlen=3)
-        self.assertEqual(um.as_list(), [("Hello", "Hi"), ("Is it cold today?", "Yep!")])
-
-
-class TimestampedValueTest(unittest.TestCase):
-    def test_init(self):
-        data = {}
-        now = dt.datetime.now()
-        counter = TimestampedValue(data, name="counter")
-        self.assertEqual(data["counter"]["value"], None)
-        self.assertGreaterEqual(data["counter"]["timestamp"], now)
-        self.assertIsNone(counter.value)
-        self.assertGreaterEqual(counter.timestamp, now)
-
-    def test_init_initial(self):
-        data = {}
-        now = dt.datetime.now()
-        counter = TimestampedValue(data, name="counter", initial=42)
-        self.assertEqual(data["counter"]["value"], 42)
-        self.assertGreaterEqual(data["counter"]["timestamp"], now)
-        self.assertEqual(counter.value, 42)
-        self.assertGreaterEqual(counter.timestamp, now)
-
-    def test_value(self):
-        data = {}
-        counter = TimestampedValue(data, name="counter")
-
-        counter.value = 11
-        self.assertEqual(data["counter"]["value"], 11)
-        self.assertEqual(counter.value, 11)
-
-        counter.value = 21
-        self.assertEqual(data["counter"]["value"], 21)
-        self.assertEqual(counter.value, 21)
-
-    def test_timestamp(self):
-        data = {}
-        counter = TimestampedValue(data, name="counter")
-
-        now = dt.datetime.now()
-        counter.value = 11
-        self.assertGreaterEqual(data["counter"]["timestamp"], now)
-        self.assertGreaterEqual(counter.timestamp, now)
-
-        now = dt.datetime.now()
-        counter.value = 21
-        self.assertGreaterEqual(data["counter"]["timestamp"], now)
-        self.assertGreaterEqual(counter.timestamp, now)
+        self.um.add("Hello", "Hi")
+        self.um.add("Is it cold today?", "Yep!")
+        self.assertEqual(self.um.as_list(), [("Hello", "Hi"), ("Is it cold today?", "Yep!")])
 
 
 class ExpiringCounterTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.data = TimestampedValue(data={}, name="counter", initial=0)
-        self.counter = ExpiringCounter(self.data, period=dt.timedelta(hours=1))
+        db.init(":memory:")
+        self.counter = ExpiringCounter(1, period=dt.timedelta(hours=1))
+
+    def _shift(self, delta: dt.timedelta) -> None:
+        timestamp = self.counter.timestamp + delta
+        db.conn.execute(
+            "update users set message_count_at = ? where id = 1", (timestamp.isoformat(),)
+        )
+
+    def test_init(self):
+        self.assertEqual(self.counter.value, 0)
+        self.assertIsNone(self.counter.timestamp)
+        self.assertTrue(self.counter.is_expired())
+        self.assertEqual(self.counter.expires_after(), dt.timedelta(0))
 
     def test_increment(self):
-        self.assertEqual(self.data.value, 0)
-        self.counter.increment()
-        self.assertEqual(self.data.value, 1)
-        self.counter.increment()
-        self.assertEqual(self.data.value, 2)
+        now = dt.datetime.now()
+        self.assertEqual(self.counter.increment(), 1)
+        self.assertEqual(self.counter.value, 1)
+        self.assertGreaterEqual(self.counter.timestamp, now)
+        self.assertEqual(self.counter.increment(), 2)
+        self.assertEqual(self.counter.value, 2)
 
     def test_is_expired(self):
+        self.counter.increment()
         self.assertFalse(self.counter.is_expired())
-        self.data._data["timestamp"] = dt.datetime.now() - dt.timedelta(hours=2)
+        self._shift(-dt.timedelta(hours=2))
         self.assertTrue(self.counter.is_expired())
 
     def test_expires_after(self):
+        self.counter.increment()
         self.assertGreater(self.counter.expires_after(), dt.timedelta(minutes=59))
         self.assertLessEqual(self.counter.expires_after(), dt.timedelta(minutes=60))
 
-        self.data._data["timestamp"] = self.data._data["timestamp"] - dt.timedelta(minutes=30)
+        self._shift(-dt.timedelta(minutes=30))
         self.assertGreater(self.counter.expires_after(), dt.timedelta(minutes=29))
         self.assertLessEqual(self.counter.expires_after(), dt.timedelta(minutes=30))
 
-        self.data._data["timestamp"] = dt.datetime.now() - dt.timedelta(hours=2)
+        self._shift(-dt.timedelta(hours=2))
         self.assertEqual(self.counter.expires_after(), dt.timedelta(0))
 
     def test_increment_expired(self):
         self.counter.increment()
         self.counter.increment()
         self.counter.increment()
-        self.assertEqual(self.data.value, 3)
+        self.assertEqual(self.counter.value, 3)
 
-        self.data._data["timestamp"] = dt.datetime.now() - dt.timedelta(hours=2)
+        self._shift(-dt.timedelta(hours=2))
         self.counter.increment()
-        self.assertEqual(self.data.value, 1)
+        self.assertEqual(self.counter.value, 1)
 
 
 class ParsePeriodTest(unittest.TestCase):

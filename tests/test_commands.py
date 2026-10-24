@@ -6,7 +6,7 @@ from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 from telegram.ext import filters as tg_filters
 
-from bot import bot, commands, models
+from bot import bot, commands, db, models
 from bot.config import config
 from bot.filters import Filters
 from tests.mocks import FakeApplication, FakeBot, FakeGPT, mock_chat
@@ -152,12 +152,12 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
     async def test_conversation_depth(self):
         commands.config.editor.save = lambda: None
         config.conversation.depth = 3
-        user = models.UserData(self.context.user_data)
-        assert user.messages.messages.maxlen == 3
+        user = models.UserData(1)
+        assert user.messages.maxlen == 3
         update = self._create_update(11, "/config conversation.depth 5")
         await self.command(update, self.context)
-        user = models.UserData(self.context.user_data)
-        self.assertEqual(user.messages.messages.maxlen, 5)
+        user = models.UserData(1)
+        self.assertEqual(user.messages.maxlen, 5)
 
     async def test_not_changed(self):
         commands.config.editor.save = lambda: None
@@ -171,8 +171,8 @@ class ConfigTest(unittest.IsolatedAsyncioTestCase, Helper):
 
     async def test_delayed(self):
         commands.config.editor.save = lambda: None
-        config.persistence_path = "./data/persistence.pkl"
-        update = self._create_update(11, "/config persistence_path /tmp/data.pkl")
+        config.db_path = "./data/pokitoki.db"
+        update = self._create_update(11, "/config db_path /tmp/data.db")
         await self.command(update, self.context)
         self.assertTrue("Restart the bot" in self.bot.text)
 
@@ -207,13 +207,13 @@ class ModelPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, "/model")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("Syntax:"))
-        self.assertEqual(self.application.chat_data[1], {})
+        self.assertEqual(models.ChatData(1).model, "")
 
     async def test_set(self):
         update = self._create_update(11, text="/model gpt-5")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Set model"))
-        self.assertEqual(self.application.chat_data[1]["model"], "gpt-5")
+        self.assertEqual(models.ChatData(1).model, "gpt-5")
 
     async def test_show(self):
         update = self._create_update(11, text="/model gpt-5")
@@ -222,7 +222,7 @@ class ModelPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, text="/model")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("Using model"))
-        self.assertEqual(self.application.chat_data[1]["model"], "gpt-5")
+        self.assertEqual(models.ChatData(1).model, "gpt-5")
 
     async def test_reset(self):
         update = self._create_update(11, text="/model gpt-5")
@@ -231,7 +231,7 @@ class ModelPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, text="/model reset")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Using default model"))
-        self.assertEqual(self.application.chat_data[1]["model"], "")
+        self.assertEqual(models.ChatData(1).model, "")
 
 
 class ModelGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
@@ -250,13 +250,13 @@ class ModelGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, "/model@bot gpt-5", user=self.alice)
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Set model"))
-        self.assertEqual(self.application.chat_data[1]["model"], "gpt-5")
+        self.assertEqual(models.ChatData(1).model, "gpt-5")
 
     async def test_not_allowed(self):
         update = self._create_update(11, "/model@bot gpt-5", user=self.bob)
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "")
-        self.assertEqual(self.application.chat_data[1], {})
+        self.assertEqual(models.ChatData(1).model, "")
 
 
 class PromptPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
@@ -274,13 +274,13 @@ class PromptPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, "/prompt")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("Syntax:"))
-        self.assertEqual(self.application.chat_data[1], {})
+        self.assertEqual(models.ChatData(1).prompt, "")
 
     async def test_set_custom(self):
         update = self._create_update(11, text="/prompt Laugh")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Set custom prompt"))
-        self.assertEqual(self.application.chat_data[1]["prompt"], "Laugh")
+        self.assertEqual(models.ChatData(1).prompt, "Laugh")
 
     async def test_show_custom(self):
         update = self._create_update(11, text="/prompt Laugh")
@@ -289,7 +289,7 @@ class PromptPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, text="/prompt")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("Using custom prompt"))
-        self.assertEqual(self.application.chat_data[1]["prompt"], "Laugh")
+        self.assertEqual(models.ChatData(1).prompt, "Laugh")
 
     async def test_reset(self):
         update = self._create_update(11, text="/prompt Laugh")
@@ -298,7 +298,7 @@ class PromptPrivateTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, text="/prompt reset")
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Using default prompt"))
-        self.assertEqual(self.application.chat_data[1]["prompt"], "")
+        self.assertEqual(models.ChatData(1).prompt, "")
 
 
 class PromptGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
@@ -317,13 +317,13 @@ class PromptGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11, "/prompt@bot Laugh", user=self.alice)
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("✓ Set custom prompt"))
-        self.assertEqual(self.application.chat_data[1]["prompt"], "Laugh")
+        self.assertEqual(models.ChatData(1).prompt, "Laugh")
 
     async def test_not_allowed(self):
         update = self._create_update(11, "/prompt@bot Laugh", user=self.bob)
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "")
-        self.assertEqual(self.application.chat_data[1], {})
+        self.assertEqual(models.ChatData(1).prompt, "")
 
 
 class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
@@ -339,7 +339,7 @@ class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.usernames = ["alice"]
 
     async def test_retry(self):
-        user_data = models.UserData(self.context.user_data)
+        user_data = models.UserData(1)
         user_data.messages.add("What is your name?", "My name is AI.")
         update = self._create_update(11)
         await self.command(update, self.context)
@@ -415,8 +415,6 @@ class MessageGroupTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.chat = Chat(id=1, type=ChatType.GROUP)
         self.chat.set_bot(self.bot)
         self.application = FakeApplication(self.bot)
-        self.application.user_data[1] = {}
-        self.application.user_data[2] = {}
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
         self.user_erik = User(id=2, first_name="Erik", is_bot=False, username="erik")
@@ -478,19 +476,17 @@ class MessageLimitTest(unittest.IsolatedAsyncioTestCase, Helper):
 
         user = User(id=2, first_name="Bob", is_bot=False, username="bob")
         # the counter has reached the limit, but the value has expired
-        user_data = {
-            "message_counter": {
-                "value": 3,
-                "timestamp": dt.datetime.now() - dt.timedelta(hours=1),
-            }
-        }
-        self.application.user_data[user.id] = user_data
+        expired_at = dt.datetime.now() - dt.timedelta(hours=1)
+        db.conn.execute(
+            "insert into users (id, message_count, message_count_at) values (?, ?, ?)",
+            (user.id, 3, expired_at.isoformat()),
+        )
         context = CallbackContext(self.application, chat_id=1, user_id=user.id)
 
         update = self._create_update(11, text="What is your name?", user=user)
         await self.command(update, context)
         self.assertEqual(self.bot.text, "What is your name?")
-        self.assertEqual(user_data["message_counter"]["value"], 1)
+        self.assertEqual(models.UserData(user.id).message_counter.value, 1)
 
     async def test_unlimited(self):
         config.conversation.message_limit.count = 0

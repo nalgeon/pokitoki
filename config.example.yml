@@ -1,7 +1,7 @@
 # Bot configuration parameters.
 
 # Config schema version. Increments for backward-incompatible changes.
-schema_version: 6
+schema_version: 7
 
 # Telegram settings.
 telegram:
@@ -53,8 +53,8 @@ conversation:
         count: 0
         period: hour
 
-# Where to store the chat context file.
-persistence_path: "./data/persistence.pkl"
+# SQLite database with chat and user data.
+db_path: "./data/pokitoki.db"
 
 # Custom AI commands (additional prompts)
 shortcuts:

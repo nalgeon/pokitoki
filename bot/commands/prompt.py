@@ -32,7 +32,7 @@ class PromptCommand:
             # Only admins are allowed to change the prompt in group chats.
             return
 
-        chat = ChatData(context.chat_data)
+        chat = ChatData(message.chat_id)
         _, _, prompt = message.text.partition(" ")
         if not prompt:
             # /prompt without arguments

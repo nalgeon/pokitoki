@@ -7,6 +7,8 @@ from typing import Any, ClassVar
 
 import yaml
 
+from bot import db
+
 
 @dataclass
 class Telegram:
@@ -78,7 +80,7 @@ class Config:
     """Config properties."""
 
     # Config schema version. Increments for backward-incompatible changes.
-    schema_version = 6
+    schema_version = 7
     # Bot version.
     version = 239
 
@@ -109,8 +111,8 @@ class Config:
             message_limit=src["conversation"].get("message_limit") or {},
         )
 
-        # Where to store the chat context file.
-        self.persistence_path = src.get("persistence_path") or "./data/persistence.pkl"
+        # SQLite database with chat and user data.
+        self.db_path = src.get("db_path") or "./data/pokitoki.db"
 
         # Custom AI commands (additional prompts).
         self.shortcuts = src.get("shortcuts") or {}
@@ -122,7 +124,7 @@ class Config:
             "telegram": dataclasses.asdict(self.telegram),
             "ai": dataclasses.asdict(self.ai),
             "conversation": dataclasses.asdict(self.conversation),
-            "persistence_path": self.persistence_path,
+            "db_path": self.db_path,
             "shortcuts": self.shortcuts,
         }
 
@@ -150,7 +152,7 @@ class ConfigEditor:
     # Changes made to these properties take effect after a restart.
     delayed: ClassVar = [
         "telegram.token",
-        "persistence_path",
+        "db_path",
     ]
     # All editable properties.
     editable = immediate + delayed
@@ -278,6 +280,9 @@ class SchemaMigrator:
         if data["schema_version"] == 5:
             data = cls._migrate_v5(data)
             has_changed = True
+        if data["schema_version"] == 6:
+            data = cls._migrate_v6(data)
+            has_changed = True
         return data, has_changed
 
     @classmethod
@@ -350,6 +355,22 @@ class SchemaMigrator:
             "ai": ai,
             "conversation": old["conversation"],
             "persistence_path": old.get("persistence_path"),
+            "shortcuts": old.get("shortcuts"),
+        }
+        return data
+
+    def _migrate_v6(old: dict) -> dict:
+        # Moves chat settings from the pickle file to the SQLite database
+        # in the same directory. The pickle file itself is left intact.
+        persistence_path = old.get("persistence_path") or "./data/persistence.pkl"
+        db_path = os.path.join(os.path.dirname(persistence_path), "pokitoki.db")
+        db.import_pickle(persistence_path, db_path)
+        data = {
+            "schema_version": 7,
+            "telegram": old["telegram"],
+            "ai": old["ai"],
+            "conversation": old["conversation"],
+            "db_path": db_path,
             "shortcuts": old.get("shortcuts"),
         }
         return data

@@ -14,10 +14,9 @@ from telegram.ext import (
     CallbackContext,
     CommandHandler,
     MessageHandler,
-    PicklePersistence,
 )
 
-from bot import ai, commands, markdown, models, questions
+from bot import ai, commands, db, markdown, models, questions
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
@@ -45,13 +44,12 @@ filters = Filters()
 
 
 def main():
-    persistence = PicklePersistence(filepath=config.persistence_path)
+    db.init(config.db_path)
     application = (
         ApplicationBuilder()
         .token(config.telegram.token)
         .post_init(post_init)
         .post_shutdown(post_shutdown)
-        .persistence(persistence)
         .concurrent_updates(True)
         .get_updates_http_version("1.1")
         .http_version("1.1")
@@ -104,6 +102,7 @@ async def post_init(application: Application) -> None:
 async def post_shutdown(application: Application) -> None:
     """Frees acquired resources."""
     await fetcher.close()
+    db.close()
 
 
 def with_message_limit(func):
@@ -113,7 +112,7 @@ def with_message_limit(func):
         update: Update, message: Message, context: CallbackContext, question: str
     ) -> None:
         username = update.effective_user.username
-        user = UserData(context.user_data)
+        user = UserData(update.effective_user.id)
 
         # check if the message counter exceeds the message limit
         if (
@@ -151,7 +150,7 @@ async def reply_to(
         else:
             answer = await _ask_question(message, context, question)
 
-        user = UserData(context.user_data)
+        user = UserData(message.from_user.id)
         user.messages.add(question, answer)
         logger.debug(user.messages)
         await _send_answer(message, context, answer)
@@ -173,7 +172,7 @@ async def _ask_question(message: Message, context: CallbackContext, question: st
     question = await fetcher.substitute_urls(question)
     logger.debug(f"Prepared question: {question}")
 
-    user = UserData(context.user_data)
+    user = UserData(message.from_user.id)
     if message.chat.type == Chat.PRIVATE:
         # in private chats the bot remembers previous messages
         if is_follow_up:
@@ -191,7 +190,7 @@ async def _ask_question(message: Message, context: CallbackContext, question: st
         prev_message = questions.extract_prev(message, context)
         history = [("", prev_message)] if prev_message else []
 
-    chat = ChatData(context.chat_data)
+    chat = ChatData(message.chat_id)
     model = chat.model or config.ai.model
     start = time.perf_counter_ns()
     answer = await ai.chat.ask(model, prompt=chat.prompt, question=question, history=history)

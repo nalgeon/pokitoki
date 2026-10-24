@@ -1,5 +1,7 @@
 import unittest
+from unittest import mock
 
+from bot import db
 from bot.config import Config, ConfigEditor, SchemaMigrator
 
 
@@ -23,7 +25,7 @@ class ConfigTest(unittest.TestCase):
         self.assertTrue(config.ai.prompt, "You are an AI assistant.")
 
         self.assertEqual(config.conversation.depth, 5)
-        self.assertEqual(config.persistence_path, "./data/persistence.pkl")
+        self.assertEqual(config.db_path, "./data/pokitoki.db")
         self.assertEqual(config.shortcuts, {})
 
     def test_defaults(self):
@@ -86,8 +88,8 @@ class GetValueTest(unittest.TestCase):
         self.assertEqual(value, "Translate into English")
 
     def test_str(self):
-        value = self.editor.get_value("persistence_path")
-        self.assertEqual(value, "./data/persistence.pkl")
+        value = self.editor.get_value("db_path")
+        self.assertEqual(value, "./data/pokitoki.db")
 
     def test_int(self):
         value = self.editor.get_value("conversation.depth")
@@ -224,6 +226,12 @@ class SetValueTest(unittest.TestCase):
 
 
 class MigrateTest(unittest.TestCase):
+    def setUp(self) -> None:
+        # don't touch the real files
+        patcher = mock.patch.object(db, "import_pickle")
+        self.import_pickle = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_migrate_v1(self):
         old = {
             "telegram_token": "tg-1234",
@@ -238,11 +246,11 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 6,
+                "schema_version": 7,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 3},
-                "persistence_path": "./data/persistence.pkl",
+                "db_path": "./data/pokitoki.db",
                 "shortcuts": None,
             },
         )
@@ -262,11 +270,11 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 6,
+                "schema_version": 7,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
-                "persistence_path": "./data/persistence.pkl",
+                "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -286,11 +294,11 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 6,
+                "schema_version": 7,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
-                "persistence_path": "./data/persistence.pkl",
+                "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -314,11 +322,11 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 6,
+                "schema_version": 7,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
                 "conversation": {"depth": 5},
-                "persistence_path": "./data/persistence.pkl",
+                "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
@@ -338,24 +346,49 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 6,
+                "schema_version": 7,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
                 "ai": {"api_key": "oa-1234", "model": "gpt-5"},
                 "conversation": {"depth": 5},
-                "persistence_path": "./data/persistence.pkl",
+                "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
             },
         )
 
-    def test_not_changed(self):
+    def test_migrate_v6(self):
         old = {
             "schema_version": 6,
             "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+            "ai": {"api_key": "oa-1234", "model": "gpt-5"},
+            "conversation": {"depth": 5},
+            "persistence_path": "/var/bot/state.pkl",
+            "shortcuts": {"bugfix": "Fix bugs"},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 7,
+                "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
+                "ai": {"api_key": "oa-1234", "model": "gpt-5"},
+                "conversation": {"depth": 5},
+                "db_path": "/var/bot/pokitoki.db",
+                "shortcuts": {"bugfix": "Fix bugs"},
+            },
+        )
+        self.import_pickle.assert_called_once_with("/var/bot/state.pkl", "/var/bot/pokitoki.db")
+
+    def test_not_changed(self):
+        old = {
+            "schema_version": 7,
+            "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
             "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
             "conversation": {"depth": 5},
-            "persistence_path": "./data/persistence.pkl",
+            "db_path": "./data/pokitoki.db",
             "shortcuts": {"bugfix": "Fix bugs"},
         }
         migrated, has_changed = SchemaMigrator.migrate(old)
         self.assertFalse(has_changed)
+        self.import_pickle.assert_not_called()
         self.assertEqual(migrated, old)

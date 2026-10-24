@@ -1,49 +1,53 @@
-"""Bot data models."""
+"""Bot data models, stored in the database."""
 
 import datetime as dt
-from collections import deque
-from collections.abc import Mapping
-from typing import NamedTuple, TypeVar
+from typing import NamedTuple
 
+from bot import db
 from bot.config import config
-
-T = TypeVar("T")
 
 
 class ChatData:
     """Represents data associated with a specific chat."""
 
-    def __init__(self, data: Mapping):
-        # data should be a 'chat data' mapping from the chat context
-        self.data = data
+    def __init__(self, chat_id: int):
+        self.chat_id = chat_id
 
     @property
     def model(self) -> str:
-        return self.data.get("model") or ""
+        row = db.conn.execute("select model from chats where id = ?", (self.chat_id,)).fetchone()
+        return (row and row[0]) or ""
 
     @model.setter
-    def model(self, value: str) -> str:
-        self.data["model"] = value
+    def model(self, value: str) -> None:
+        db.conn.execute(
+            "insert into chats (id, model) values (?, ?) "
+            "on conflict (id) do update set model = excluded.model",
+            (self.chat_id, value or None),
+        )
 
     @property
     def prompt(self) -> str:
-        return self.data.get("prompt") or ""
+        row = db.conn.execute("select prompt from chats where id = ?", (self.chat_id,)).fetchone()
+        return (row and row[0]) or ""
 
     @prompt.setter
-    def prompt(self, value: str) -> str:
-        self.data["prompt"] = value
+    def prompt(self, value: str) -> None:
+        db.conn.execute(
+            "insert into chats (id, prompt) values (?, ?) "
+            "on conflict (id) do update set prompt = excluded.prompt",
+            (self.chat_id, value or None),
+        )
 
 
 class UserData:
     """Represents data associated with a specific user."""
 
-    def __init__(self, data: Mapping):
-        # data should be a 'user data' mapping from the chat context
-        self.data = data
-        self.messages = UserMessages(data, maxlen=config.conversation.depth)
+    def __init__(self, user_id: int):
+        self.user_id = user_id
+        self.messages = UserMessages(user_id, maxlen=config.conversation.depth)
         period = parse_period(value=1, period=config.conversation.message_limit.period)
-        message_count = TimestampedValue(data, name="message_counter", initial=0)
-        self.message_counter = ExpiringCounter(message_count, period=period)
+        self.message_counter = ExpiringCounter(user_id, period=period)
 
 
 class UserMessage(NamedTuple):
@@ -54,85 +58,85 @@ class UserMessage(NamedTuple):
 
 
 class UserMessages:
-    """Represents user message history."""
+    """Represents user message history (up to `maxlen` latest messages)."""
 
-    def __init__(self, data: Mapping, maxlen: int) -> None:
-        messages = data.get("messages") or []
-        data["messages"] = deque(messages, maxlen)
-        self.data = data
-        self.messages = data["messages"]
+    def __init__(self, user_id: int, maxlen: int) -> None:
+        self.user_id = user_id
+        self.maxlen = maxlen
 
     @property
     def last(self) -> UserMessage | None:
         """The latest chat message (if any)."""
-        if not self.messages:
-            return None
-        return self.messages[-1]
+        row = db.conn.execute(
+            "select question, answer from messages where user_id = ? order by id desc limit 1",
+            (self.user_id,),
+        ).fetchone()
+        return UserMessage(*row) if row else None
 
     def add(self, question: str, answer: str):
-        """Adds a message to the message history."""
-        self.messages.append(UserMessage(question, answer))
+        """Adds a message to the message history, removing the oldest ones beyond `maxlen`."""
+        db.conn.execute(
+            "insert into messages (user_id, question, answer) values (?, ?, ?)",
+            (self.user_id, question, answer),
+        )
+        db.conn.execute(
+            "delete from messages where user_id = ? and id not in "
+            "(select id from messages where user_id = ? order by id desc limit ?)",
+            (self.user_id, self.user_id, self.maxlen),
+        )
 
     def pop(self) -> UserMessage | None:
         """Removes the last message from the message history and returns it."""
-        if not self.messages:
+        row = db.conn.execute(
+            "select id, question, answer from messages where user_id = ? order by id desc limit 1",
+            (self.user_id,),
+        ).fetchone()
+        if not row:
             return None
-        return self.messages.pop()
+        db.conn.execute("delete from messages where id = ?", (row[0],))
+        return UserMessage(row[1], row[2])
 
     def clear(self):
         """Cleares messages history."""
-        self.messages.clear()
+        db.conn.execute("delete from messages where user_id = ?", (self.user_id,))
 
-    def as_list(self):
-        return list(self.messages)
+    def as_list(self) -> list[UserMessage]:
+        rows = db.conn.execute(
+            "select question, answer from "
+            "(select id, question, answer from messages where user_id = ? order by id desc limit ?) "
+            "order by id",
+            (self.user_id, self.maxlen),
+        ).fetchall()
+        return [UserMessage(*row) for row in rows]
 
     def __str__(self) -> str:
-        return str(self.messages)
+        return str(self.as_list())
 
     def __repr__(self) -> str:
-        return repr(self.messages)
-
-
-class TimestampedValue[T]:
-    """A value with a 'last modified' timestamp."""
-
-    def __init__(self, data: Mapping, name: str, initial: T | None = None) -> None:
-        if name not in data:
-            data[name] = {"value": initial, "timestamp": dt.datetime.now()}
-        self._data = data[name]
-
-    @property
-    def value(self) -> T:
-        """Returns the value."""
-        return self._data["value"]
-
-    @value.setter
-    def value(self, value: T) -> None:
-        """Sets the value."""
-        self._data["value"] = value
-        self._data["timestamp"] = dt.datetime.now()
-
-    @property
-    def timestamp(self) -> dt.datetime:
-        """Returns the date and time of the last modification."""
-        return self._data["timestamp"]
+        return repr(self.as_list())
 
 
 class ExpiringCounter:
-    """A counter that expires after a given period of time."""
+    """A user message counter that expires after a given period of time."""
 
-    def __init__(self, data: TimestampedValue, period: dt.timedelta) -> None:
-        self._data = data
+    def __init__(self, user_id: int, period: dt.timedelta) -> None:
+        self.user_id = user_id
         self.period = period
 
     @property
     def value(self) -> int:
         """Counter value."""
-        return self._data.value
+        return self._load()[0]
+
+    @property
+    def timestamp(self) -> dt.datetime | None:
+        """The date and time of the last modification (None if never modified)."""
+        return self._load()[1]
 
     def is_expired(self) -> bool:
         """Checks if the counter value has expired."""
-        return dt.datetime.now() > self._data.timestamp + self.period
+        timestamp = self.timestamp
+        return timestamp is None or dt.datetime.now() > timestamp + self.period
 
     def expires_after(self) -> dt.timedelta:
         """
@@ -142,14 +146,26 @@ class ExpiringCounter:
         """
         if self.is_expired():
             return dt.timedelta(0)
-        return self._data.timestamp + self.period - dt.datetime.now()
+        return self.timestamp + self.period - dt.datetime.now()
 
     def increment(self) -> int:
         """Increments and returns the counter value."""
-        if self.is_expired():
-            self._data.value = 0
-        self._data.value += 1
-        return self._data.value
+        value = 1 if self.is_expired() else self.value + 1
+        db.conn.execute(
+            "insert into users (id, message_count, message_count_at) values (?, ?, ?) "
+            "on conflict (id) do update set "
+            "message_count = excluded.message_count, message_count_at = excluded.message_count_at",
+            (self.user_id, value, dt.datetime.now().isoformat()),
+        )
+        return value
+
+    def _load(self) -> tuple[int, dt.datetime | None]:
+        row = db.conn.execute(
+            "select message_count, message_count_at from users where id = ?", (self.user_id,)
+        ).fetchone()
+        if not row or not row[1]:
+            return 0, None
+        return row[0], dt.datetime.fromisoformat(row[1])
 
 
 def parse_period(value: int, period: str) -> dt.timedelta:
