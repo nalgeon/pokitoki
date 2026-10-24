@@ -145,7 +145,7 @@ To ask a question about a document, send it as a file and write the question in 
 
 ### Reply with attachment
 
-Sometimes the AI's reply exceeds the maximum message length set by Telegram. In this case, the bot will not fail or spam you with messages. Instead, it will send the answer as an attached markdown file.
+Sometimes the AI's reply exceeds the maximum message length set by Telegram. In this case, the bot will not fail or spam you with messages. Instead, it will send the answer as an attached text file.
 
 ### Edited question
 

@@ -226,7 +226,7 @@ async def _send_answer(message: Message, context: CallbackContext, answer: str) 
     await context.bot.send_document(
         chat_id=message.chat_id,
         caption=caption,
-        filename=f"{message.id}.md",
+        filename=f"{message.id}.txt",
         document=doc,
         reply_parameters=reply_parameters,
     )

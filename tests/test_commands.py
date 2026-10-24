@@ -398,7 +398,7 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
     async def test_document(self):
         update = self._create_update(11, text="I have so much to say" + "." * 5000)
         await self.command(update, self.context)
-        self.assertEqual(self.bot.text, "I have so much to... (see attachment for the rest): 11.md")
+        self.assertEqual(self.bot.text, "I have so much to... (see attachment for the rest): 11.txt")
 
     async def test_exception(self):
         ai = FakeGPT(error=Exception("connection timeout"))

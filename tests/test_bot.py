@@ -25,7 +25,7 @@ class SendAnswerTest(unittest.IsolatedAsyncioTestCase):
         message, context = _create_message()
         answer = "word " * MessageLimit.MAX_TEXT_LENGTH
         await bot._send_answer(message, context, answer=answer)
-        self.assertTrue(context.bot.text.endswith("(see attachment for the rest): 11.md"))
+        self.assertTrue(context.bot.text.endswith("(see attachment for the rest): 11.txt"))
 
 
 def _create_message() -> tuple[Message, CallbackContext]:
