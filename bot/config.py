@@ -4,6 +4,7 @@ import dataclasses
 import os
 from dataclasses import dataclass
 from typing import Any, ClassVar
+from urllib import parse
 
 import yaml
 
@@ -20,30 +21,48 @@ class Telegram:
 
 @dataclass
 class AI:
+    provider: str
     url: str
     api_key: str
     model: str
     window: int
     prompt: str
+    tools: list
 
-    default_url = "https://api.openai.com/v1"
+    providers: ClassVar = ("openai", "claude", "gemini", "compatible")
+    default_provider = "openai"
+    default_urls: ClassVar = {
+        "openai": "https://api.openai.com/v1",
+        "claude": "https://api.anthropic.com/v1",
+        "gemini": "https://generativelanguage.googleapis.com/v1beta",
+    }
     default_model = "gpt-6-luna"
     default_window = 128000
     default_prompt = "You are an AI assistant."
+    default_tools: ClassVar = ["web_search", "web_fetch"]
 
     def __init__(
         self,
+        provider: str,
         url: str,
         api_key: str,
         model: str,
         window: int,
         prompt: str,
+        tools: list | None,
     ) -> None:
-        self.url = url or self.default_url
+        self.provider = provider or self.default_provider
+        self.url = url or ""
         self.api_key = api_key
         self.model = model or self.default_model
         self.window = window or self.default_window
         self.prompt = prompt or self.default_prompt
+        self.tools = self.default_tools.copy() if tools is None else tools
+
+    @property
+    def base_url(self) -> str:
+        """API endpoint: the configured one or the provider's default."""
+        return (self.url or self.default_urls.get(self.provider, "")).rstrip("/")
 
 
 @dataclass
@@ -80,7 +99,7 @@ class Config:
     """Config properties."""
 
     # Config schema version. Increments for backward-incompatible changes.
-    schema_version = 7
+    schema_version = 8
     # Bot version.
     version = 239
 
@@ -98,11 +117,13 @@ class Config:
 
         # AI settings.
         self.ai = AI(
+            provider=src["ai"].get("provider"),
             url=src["ai"].get("url"),
             api_key=src["ai"]["api_key"],
             model=src["ai"].get("model"),
             window=src["ai"].get("window"),
             prompt=src["ai"].get("prompt"),
+            tools=src["ai"].get("tools"),
         )
 
         # Conversation settings.
@@ -283,6 +304,9 @@ class SchemaMigrator:
         if data["schema_version"] == 6:
             data = cls._migrate_v6(data)
             has_changed = True
+        if data["schema_version"] == 7:
+            data = cls._migrate_v7(data)
+            has_changed = True
         return data, has_changed
 
     @classmethod
@@ -371,6 +395,25 @@ class SchemaMigrator:
             "ai": old["ai"],
             "conversation": old["conversation"],
             "db_path": db_path,
+            "shortcuts": old.get("shortcuts"),
+        }
+        return data
+
+    def _migrate_v7(old: dict) -> dict:
+        # Older versions only supported Chat Completions APIs.
+        # OpenAI moves to the Responses API, anything else stays as is.
+        ai = old["ai"].copy()
+        host = parse.urlparse(ai.get("url") or AI.default_urls["openai"]).hostname
+        ai["provider"] = "openai" if host == "api.openai.com" else "compatible"
+        if (ai.get("url") or "").rstrip("/") == AI.default_urls["openai"]:
+            # use the provider's default, so that changing the provider just works
+            del ai["url"]
+        data = {
+            "schema_version": 8,
+            "telegram": old["telegram"],
+            "ai": ai,
+            "conversation": old["conversation"],
+            "db_path": old.get("db_path"),
             "shortcuts": old.get("shortcuts"),
         }
         return data

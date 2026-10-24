@@ -91,6 +91,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         config.telegram.usernames = ["alice", "bob"]
         config.telegram.admins = ["alice"]
         config.telegram.chat_ids = [-100500]
+        config.ai.provider = "openai"
         config.ai.url = "https://api.openai.com/v1"
         config.ai.model = "gpt-4"
         config.conversation.depth = 10
@@ -112,7 +113,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.assertTrue("- access to messages: True" in self.bot.text)
 
         self.assertTrue("<pre>AI information:" in self.bot.text)
-        self.assertTrue("- provider: api.openai.com" in self.bot.text)
+        self.assertTrue("- provider: openai (api.openai.com)" in self.bot.text)
         self.assertTrue("- model: gpt-4" in self.bot.text)
         self.assertTrue("- history depth: 10" in self.bot.text)
         self.assertTrue("- shortcuts: translate_en, translate_fr" in self.bot.text)

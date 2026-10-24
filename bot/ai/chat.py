@@ -1,19 +1,37 @@
-"""OpenAI-compatible language model."""
+"""Language model chat, backed by one of the supported AI providers."""
 
 import logging
 
-import httpx
-
+from bot.ai import claude, compatible, gemini, openai
 from bot.config import config
 
-client = httpx.AsyncClient(timeout=60.0)
 logger = logging.getLogger(__name__)
+
+PROVIDERS = {
+    "openai": openai,
+    "claude": claude,
+    "gemini": gemini,
+    "compatible": compatible,
+}
 
 # Number of tokens reserved for the answer when trimming the history.
 N_OUTPUT = 4096
 
 # Known models and their context windows
 MODELS = {
+    # Claude
+    "claude-fable-5-1": 1_000_000,
+    "claude-fable-5": 1_000_000,
+    "claude-opus-5-5": 1_000_000,
+    "claude-opus-5": 1_000_000,
+    "claude-opus-4-8": 1_000_000,
+    "claude-opus-4-7": 1_000_000,
+    "claude-opus-4-6": 1_000_000,
+    "claude-sonnet-5-5": 1_000_000,
+    "claude-sonnet-5": 1_000_000,
+    "claude-sonnet-4-6": 1_000_000,
+    "claude-haiku-5-5": 1_000_000,
+    "claude-haiku-4-5": 200_000,
     # Gemini
     "gemini-4-argon": 1_048_576,
     "gemini-3.8-flash": 1_048_576,
@@ -39,45 +57,30 @@ MODELS = {
 
 async def ask(model: str, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
     """Asks the language model a question and returns an answer."""
+    provider = PROVIDERS.get(config.ai.provider)
+    if not provider:
+        raise ValueError(f"Unknown AI provider: {config.ai.provider}")
     n_input = _calc_n_input(model, n_output=N_OUTPUT)
     messages = _generate_messages(prompt, question, history)
     messages = shorten(messages, length=n_input)
+    return await provider.complete(model, messages)
 
-    logger.debug("> chat request: model=%s, messages=%s", model, messages)
-    response = await client.post(
-        f"{config.ai.url}/chat/completions",
-        headers={"Authorization": f"Bearer {config.ai.api_key}"},
-        json={"model": model, "messages": messages},
-    )
-    resp = response.json()
-    if "usage" not in resp:
-        raise RuntimeError(resp)
-    logger.debug(
-        "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
-        resp["usage"]["prompt_tokens"],
-        resp["usage"]["completion_tokens"],
-        resp["usage"]["total_tokens"],
-    )
-    return _prepare_answer(resp)
+
+def can_fetch() -> bool:
+    """Returns True if the model fetches URLs from the question by itself."""
+    return config.ai.provider in ("claude", "gemini") and "web_fetch" in config.ai.tools
 
 
 def _generate_messages(prompt: str, question: str, history: list[tuple[str, str]]) -> list[dict]:
     """Builds message history to provide context for the language model."""
     messages = [{"role": "system", "content": prompt or config.ai.prompt}]
     for prev_question, prev_answer in history:
-        messages.append({"role": "user", "content": prev_question})
+        # in group chats, the history only contains the previous answer
+        if prev_question:
+            messages.append({"role": "user", "content": prev_question})
         messages.append({"role": "assistant", "content": prev_answer})
     messages.append({"role": "user", "content": question})
     return messages
-
-
-def _prepare_answer(resp) -> str:
-    """Post-processes an answer from the language model."""
-    if len(resp["choices"]) == 0:
-        raise ValueError("received an empty answer")
-
-    answer = resp["choices"][0]["message"]["content"]
-    return answer.strip()
 
 
 def shorten(messages: list[dict], length: int) -> list[dict]:
@@ -120,7 +123,7 @@ def _calc_n_input(name: str, n_output: int) -> int:
     Calculates the maximum number of input tokens
     according to the model and the maximum number of output tokens.
     """
-    # OpenAI counts length in tokens, not charactes.
+    # Models count length in tokens, not charactes.
     # We need to leave some tokens reserved for the output.
     n_total = MODELS.get(name) or config.ai.window
     logger.debug("model=%s, n_total=%s, n_output=%s", name, n_total, n_output)

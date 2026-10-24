@@ -1,5 +1,5 @@
 """
-Command-line interface to the OpenAI API.
+Command-line interface to the AI model.
 
 Usage example:
 $ python -m bot.cli "What is your name?"
@@ -17,11 +17,12 @@ from bot.fetcher import Fetcher
 
 async def main(question):
     print(f"> {question}")
-    fetcher = Fetcher()
-    question = await fetcher.substitute_urls(question)
+    if not chat.can_fetch():
+        fetcher = Fetcher()
+        question = await fetcher.substitute_urls(question)
+        await fetcher.close()
     model = os.getenv("AI_MODEL") or config.ai.model
     answer = await chat.ask(model, prompt=config.ai.prompt, question=question, history=[])
-    await fetcher.close()
     lines = textwrap.wrap(answer, width=60)
     for line in lines:
         print(line)

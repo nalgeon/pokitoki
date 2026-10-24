@@ -1,7 +1,7 @@
 # Bot configuration parameters.
 
 # Config schema version. Increments for backward-incompatible changes.
-schema_version: 7
+schema_version: 8
 
 # Telegram settings.
 telegram:
@@ -22,15 +22,23 @@ telegram:
 
 # AI settings.
 ai:
-    # AI API endpoint. You can use any OpenAI-compatible provider like
-    # OpenRouter (https://openrouter.ai/api/v1) or Nebius (https://api.studio.nebius.ai/v1).
-    url: "https://api.openai.com/v1"
+    # AI provider:
+    #   `openai`     = OpenAI (Responses API)
+    #   `claude`     = Anthropic Claude (Claude API)
+    #   `gemini`     = Google Gemini (Gemini API)
+    #   `compatible` = any provider with an OpenAI-compatible Chat Completions API,
+    #                  like OpenRouter or Nebius (set the `url` too).
+    provider: "openai"
+
+    # AI API endpoint. Leave empty to use the provider's default one.
+    # For the `compatible` provider, set it to the provider's API URL,
+    # e.g. https://openrouter.ai/api/v1 or https://api.studio.nebius.ai/v1
+    url: ""
 
     # AI API key.
     api_key: ""
 
-    # Chat model name.
-    # See https://platform.openai.com/docs/models for description.
+    # Chat model name, e.g. gpt-6-luna, claude-opus-5-5 or gemini-3.8-flash.
     model: "gpt-6-luna"
 
     # Context window size in tokens.
@@ -39,6 +47,13 @@ ai:
 
     # Model prompt.
     prompt: "You are an AI assistant."
+
+    # Server-side tools the model can use (ignored by the `compatible` provider):
+    #   `web_search` = search the web
+    #   `web_fetch`  = open URLs from the question (claude and gemini only;
+    #                  otherwise the bot fetches the URLs and adds their contents to the question)
+    # Providers may charge extra for tool use. Set to [] to disable the tools.
+    tools: ["web_search", "web_fetch"]
 
 conversation:
     # The maximum number of previous messages

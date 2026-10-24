@@ -1,4 +1,4 @@
-"""Telegram chat bot built using the language model from OpenAI."""
+"""Telegram chat bot built using large language models."""
 
 import io
 import logging
@@ -29,7 +29,7 @@ logging.basicConfig(
 )
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("bot").setLevel(logging.INFO)
-logging.getLogger("bot.ai.chat").setLevel(logging.INFO)
+logging.getLogger("bot.ai").setLevel(logging.INFO)
 logging.getLogger("bot.commands").setLevel(logging.INFO)
 logging.getLogger("bot.questions").setLevel(logging.INFO)
 logging.getLogger("__main__").setLevel(logging.INFO)
@@ -93,7 +93,7 @@ async def post_init(application: Application) -> None:
     logger.info(f"allowed users: {config.telegram.usernames}")
     logger.info(f"allowed chats: {config.telegram.chat_ids}")
     logger.info(f"admins: {config.telegram.admins}")
-    logger.info(f"api url: {config.ai.url}")
+    logger.info(f"ai provider: {config.ai.provider}, url: {config.ai.base_url}")
     logger.info(f"model name: {config.ai.model}")
     logger.info(f"bot: username={bot.username}, id={bot.id}")
     await bot.set_my_commands(commands.BOT_COMMANDS)
@@ -164,12 +164,14 @@ async def reply_to(
 
 
 async def _ask_question(message: Message, context: CallbackContext, question: str) -> str:
-    """Answers a question using the OpenAI model."""
+    """Answers a question using the AI model."""
     user_id = message.from_user.username or message.from_user.id
     logger.info(f"-> question id={message.id}, user={user_id}, n_chars={len(question)}")
 
     question, is_follow_up = questions.prepare(question)
-    question = await fetcher.substitute_urls(question)
+    if not ai.chat.can_fetch():
+        # the model cannot open URLs by itself, so the bot inlines them
+        question = await fetcher.substitute_urls(question)
     logger.debug(f"Prepared question: {question}")
 
     user = UserData(message.from_user.id)

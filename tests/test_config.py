@@ -35,8 +35,23 @@ class ConfigTest(unittest.TestCase):
             "conversation": {},
         }
         config = Config("config.test.yml", src)
-        self.assertEqual(config.ai.url, "https://api.openai.com/v1")
+        self.assertEqual(config.ai.provider, "openai")
+        self.assertEqual(config.ai.url, "")
+        self.assertEqual(config.ai.base_url, "https://api.openai.com/v1")
         self.assertEqual(config.ai.model, "gpt-6-luna")
+        self.assertEqual(config.ai.tools, ["web_search", "web_fetch"])
+
+    def test_base_url(self):
+        src = {
+            "telegram": {"token": "tg-1234"},
+            "ai": {"provider": "claude", "api_key": "sk-1234", "tools": []},
+            "conversation": {},
+        }
+        config = Config("config.test.yml", src)
+        self.assertEqual(config.ai.base_url, "https://api.anthropic.com/v1")
+        self.assertEqual(config.ai.tools, [])
+        config.ai.url = "https://proxy.example.com/v1/"
+        self.assertEqual(config.ai.base_url, "https://proxy.example.com/v1")
 
     def test_as_dict(self):
         src = {
@@ -246,9 +261,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 7,
+                "schema_version": 8,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 3},
                 "db_path": "./data/pokitoki.db",
                 "shortcuts": None,
@@ -270,9 +285,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 7,
+                "schema_version": 8,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 5},
                 "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
@@ -294,9 +309,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 7,
+                "schema_version": 8,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 5},
                 "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
@@ -322,9 +337,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 7,
+                "schema_version": 8,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo", "provider": "openai"},
                 "conversation": {"depth": 5},
                 "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
@@ -346,9 +361,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 7,
+                "schema_version": 8,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "ai": {"api_key": "oa-1234", "model": "gpt-5"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-5", "provider": "openai"},
                 "conversation": {"depth": 5},
                 "db_path": "./data/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
@@ -369,9 +384,9 @@ class MigrateTest(unittest.TestCase):
         self.assertEqual(
             migrated,
             {
-                "schema_version": 7,
+                "schema_version": 8,
                 "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-                "ai": {"api_key": "oa-1234", "model": "gpt-5"},
+                "ai": {"api_key": "oa-1234", "model": "gpt-5", "provider": "openai"},
                 "conversation": {"depth": 5},
                 "db_path": "/var/bot/pokitoki.db",
                 "shortcuts": {"bugfix": "Fix bugs"},
@@ -379,11 +394,52 @@ class MigrateTest(unittest.TestCase):
         )
         self.import_pickle.assert_called_once_with("/var/bot/state.pkl", "/var/bot/pokitoki.db")
 
-    def test_not_changed(self):
+    def test_migrate_v7(self):
         old = {
             "schema_version": 7,
+            "telegram": {"token": "tg-1234"},
+            "ai": {"url": "https://openrouter.ai/api/v1", "api_key": "or-1234", "model": "x"},
+            "conversation": {"depth": 5},
+            "db_path": "./data/pokitoki.db",
+            "shortcuts": {},
+        }
+        migrated, has_changed = SchemaMigrator.migrate(old)
+        self.assertTrue(has_changed)
+        self.assertEqual(
+            migrated,
+            {
+                "schema_version": 8,
+                "telegram": {"token": "tg-1234"},
+                "ai": {
+                    "url": "https://openrouter.ai/api/v1",
+                    "api_key": "or-1234",
+                    "model": "x",
+                    "provider": "compatible",
+                },
+                "conversation": {"depth": 5},
+                "db_path": "./data/pokitoki.db",
+                "shortcuts": {},
+            },
+        )
+
+    def test_migrate_v7_openai(self):
+        old = {
+            "schema_version": 7,
+            "telegram": {"token": "tg-1234"},
+            "ai": {"url": "https://api.openai.com/v1", "api_key": "oa-1234"},
+            "conversation": {"depth": 5},
+            "db_path": "./data/pokitoki.db",
+            "shortcuts": {},
+        }
+        migrated, _ = SchemaMigrator.migrate(old)
+        self.assertEqual(migrated["ai"]["provider"], "openai")
+        self.assertNotIn("url", migrated["ai"])
+
+    def test_not_changed(self):
+        old = {
+            "schema_version": 8,
             "telegram": {"token": "tg-1234", "usernames": ["alice"], "chat_ids": [-100500]},
-            "ai": {"api_key": "oa-1234", "model": "gpt-3.5-turbo"},
+            "ai": {"provider": "openai", "api_key": "oa-1234", "model": "gpt-3.5-turbo"},
             "conversation": {"depth": 5},
             "db_path": "./data/pokitoki.db",
             "shortcuts": {"bugfix": "Fix bugs"},
