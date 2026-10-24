@@ -1,9 +1,11 @@
 """/help command."""
 
-from telegram import Update
-from telegram.ext import CallbackContext
+from telegram import LinkPreviewOptions, Update
 from telegram.constants import ParseMode
+from telegram.ext import CallbackContext
+
 from bot.config import config
+
 from . import constants
 
 
@@ -13,7 +15,9 @@ class HelpCommand:
     async def __call__(self, update: Update, context: CallbackContext) -> None:
         text = generate_message(update.effective_user.username)
         await update.message.reply_text(
-            text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
+            text,
+            parse_mode=ParseMode.MARKDOWN,
+            link_preview_options=LinkPreviewOptions(is_disabled=True),
         )
 
 

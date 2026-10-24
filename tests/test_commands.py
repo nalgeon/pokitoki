@@ -1,21 +1,19 @@
 import datetime as dt
 import unittest
-from telegram import Chat, Message, MessageEntity, Update, User
+
+from telegram import Chat, Message, MessageEntity, MessageOriginHiddenUser, Update, User
 from telegram.constants import ChatType
 from telegram.ext import CallbackContext
 from telegram.ext import filters as tg_filters
 
-from bot import askers
-from bot import bot
-from bot import commands
-from bot import models
+from bot import askers, bot, commands, models
 from bot.config import config
 from bot.filters import Filters
-from tests.mocks import FakeGPT, FakeDalle, FakeApplication, FakeBot, mock_text_asker
+from tests.mocks import FakeApplication, FakeBot, FakeDalle, FakeGPT, mock_text_asker
 
 
 class Helper:
-    def _create_update(self, update_id: int, text: str = None, **kwargs) -> Update:
+    def _create_update(self, update_id: int, text: str | None = None, **kwargs) -> Update:
         if "user" in kwargs:
             user = kwargs["user"]
             del kwargs["user"]
@@ -436,7 +434,8 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         )
 
     async def test_forward(self):
-        update = self._create_update(11, text="What is your name?", forward_date=dt.datetime.now())
+        origin = MessageOriginHiddenUser(date=dt.datetime.now(), sender_user_name="Bob")
+        update = self._create_update(11, text="What is your name?", forward_origin=origin)
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("This is a forwarded message"))
 

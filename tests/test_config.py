@@ -1,4 +1,5 @@
 import unittest
+
 from bot.config import Config, ConfigEditor, SchemaMigrator
 
 

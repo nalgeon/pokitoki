@@ -283,12 +283,10 @@ docker compose up --build --detach
 
 ## Development setup
 
-Prepare the environment:
+Install [uv](https://docs.astral.sh/uv/) and prepare the environment:
 
 ```
-python3 -m venv env
-. env/bin/activate
-pip install -r requirements.txt
+uv sync
 ```
 
 Prepare the config and data directory:
@@ -303,20 +301,26 @@ Set tokens and other settings in `config.yml`.
 Run tests:
 
 ```
-python -m unittest discover
+make test
+```
+
+Run linter:
+
+```
+make lint
 ```
 
 Start the bot:
 
 ```
-python -m bot.bot
+uv run python -m bot.bot
 ```
 
 ## Contributing
 
 Contributions are welcome. For anything other than bugfixes, please first open an issue to discuss what you want to change.
 
-Use [Black](https://black.readthedocs.io/en/stable/) for code formatting. Be sure to add or update tests as appropriate.
+Use [Ruff](https://docs.astral.sh/ruff/) for linting and formatting (`uv run ruff check --fix . && uv run ruff format .`). Be sure to add or update tests as appropriate.
 
 ## Changelog
 

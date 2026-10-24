@@ -2,7 +2,8 @@
 
 import logging
 import textwrap
-from telegram import Chat, Update
+
+from telegram import Chat, ReplyParameters, Update
 from telegram.ext import CallbackContext
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,8 @@ class ErrorCommand:
         text = textwrap.shorten(f"⚠️ {error_text}", width=255, placeholder="...")
 
         message = update.message
-        reply_to_message_id = message.id if message and message.chat.type != Chat.PRIVATE else None
+        is_group = message and message.chat.type != Chat.PRIVATE
+        reply_parameters = ReplyParameters(message.id) if is_group else None
         await context.bot.send_message(
-            update.effective_chat.id, text, reply_to_message_id=reply_to_message_id
+            update.effective_chat.id, text, reply_parameters=reply_parameters
         )

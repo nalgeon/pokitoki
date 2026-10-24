@@ -1,10 +1,10 @@
-from typing import Optional
 from telegram import User
+
 from bot import askers
 
 
 class FakeGPT:
-    def __init__(self, error: Optional[Exception] = None):
+    def __init__(self, error: Exception | None = None):
         self.error = error
         self.prompt = None
         self.question = None
@@ -20,7 +20,7 @@ class FakeGPT:
 
 
 class FakeDalle:
-    def __init__(self, error: Optional[Exception] = None):
+    def __init__(self, error: Exception | None = None):
         self.error = error
         self.prompt = None
         self.size = None
@@ -78,7 +78,9 @@ class FakeBot:
     ) -> None:
         self.text = f"{caption}: {filename}"
 
-    async def send_photo(self, chat_id: int, photo: str, caption: str = None, **kwargs) -> None:
+    async def send_photo(
+        self, chat_id: int, photo: str, caption: str | None = None, **kwargs
+    ) -> None:
         self.text = f"{caption}: {photo}"
 
     async def get_me(self, **kwargs) -> User:

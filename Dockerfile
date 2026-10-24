@@ -1,14 +1,16 @@
-FROM python:3.11-alpine
+FROM python:3.13-alpine
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /bin/uv
 
-ARG PIP_DISABLE_PIP_VERSION_CHECK=1
-ARG PIP_NO_CACHE_DIR=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
+ENV UV_NO_CACHE=1
 
 WORKDIR /code
-COPY ./requirements.txt .
-RUN pip3 install -r requirements.txt
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev
 
 COPY ./bot ./bot
 
-CMD ["python","-m","bot.bot"]
+CMD ["/code/.venv/bin/python", "-m", "bot.bot"]

@@ -1,8 +1,10 @@
 """Bot data models."""
 
-from collections import deque
 import datetime as dt
-from typing import Generic, Mapping, NamedTuple, Optional, TypeVar
+from collections import deque
+from collections.abc import Mapping
+from typing import NamedTuple, TypeVar
+
 from bot.config import config
 
 T = TypeVar("T")
@@ -61,7 +63,7 @@ class UserMessages:
         self.messages = data["messages"]
 
     @property
-    def last(self) -> Optional[UserMessage]:
+    def last(self) -> UserMessage | None:
         """The latest chat message (if any)."""
         if not self.messages:
             return None
@@ -71,7 +73,7 @@ class UserMessages:
         """Adds a message to the message history."""
         self.messages.append(UserMessage(question, answer))
 
-    def pop(self) -> Optional[UserMessage]:
+    def pop(self) -> UserMessage | None:
         """Removes the last message from the message history and returns it."""
         if not self.messages:
             return None
@@ -91,10 +93,10 @@ class UserMessages:
         return repr(self.messages)
 
 
-class TimestampedValue(Generic[T]):
+class TimestampedValue[T]:
     """A value with a 'last modified' timestamp."""
 
-    def __init__(self, data: Mapping, name: str, initial: Optional[T] = None) -> None:
+    def __init__(self, data: Mapping, name: str, initial: T | None = None) -> None:
         if name not in data:
             data[name] = {"value": initial, "timestamp": dt.datetime.now()}
         self._data = data[name]

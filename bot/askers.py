@@ -6,13 +6,13 @@ and responds to the user with answers provided by the AI.
 import io
 import re
 import textwrap
+from typing import ClassVar
 
-from telegram import Chat, Message
+from telegram import Chat, Message, ReplyParameters
 from telegram.constants import MessageLimit, ParseMode
 from telegram.ext import CallbackContext
 
-from bot import ai
-from bot import markdown
+from bot import ai, markdown
 
 
 class Asker:
@@ -20,11 +20,9 @@ class Asker:
 
     async def ask(self, prompt: str, question: str, history: list[tuple[str, str]]) -> str:
         """Asks AI a question."""
-        pass
 
     async def reply(self, message: Message, context: CallbackContext, answer: str) -> None:
         """Replies with an answer from AI."""
-        pass
 
 
 class TextAsker(Asker):
@@ -49,13 +47,15 @@ class TextAsker(Asker):
             textwrap.shorten(answer, width=255, placeholder="...")
             + " (see attachment for the rest)"
         )
-        reply_to_message_id = message.id if message.chat.type != Chat.PRIVATE else None
+        reply_parameters = (
+            ReplyParameters(message.id) if message.chat.type != Chat.PRIVATE else None
+        )
         await context.bot.send_document(
             chat_id=message.chat_id,
             caption=caption,
             filename=f"{message.id}.md",
             document=doc,
-            reply_to_message_id=reply_to_message_id,
+            reply_parameters=reply_parameters,
         )
 
 
@@ -64,7 +64,7 @@ class ImagineAsker(Asker):
 
     model = ai.images.Model()
     size_re = re.compile(r"(256|512|1024)(?:x\1)?\s?(?:px)?")
-    sizes = {
+    sizes: ClassVar = {
         "256": "256x256",
         "512": "512x512",
         "1024": "1024x1024",

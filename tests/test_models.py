@@ -1,6 +1,6 @@
-from collections import deque
 import datetime as dt
 import unittest
+from collections import deque
 
 from bot import models
 from bot.config import config

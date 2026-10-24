@@ -1,9 +1,11 @@
 """Text message handler."""
 
 import logging
-from typing import Awaitable
+from collections.abc import Awaitable
+
 from telegram import Chat, Update
 from telegram.ext import CallbackContext
+
 from bot import questions
 
 logger = logging.getLogger(__name__)

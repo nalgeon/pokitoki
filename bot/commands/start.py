@@ -1,12 +1,12 @@
 """/start command."""
 
-from telegram import Update
-from telegram.ext import CallbackContext
+from telegram import LinkPreviewOptions, Update
 from telegram.constants import ParseMode
+from telegram.ext import CallbackContext
 
 from bot.config import config
-from . import constants
-from . import help
+
+from . import constants, help
 
 
 class StartCommand:
@@ -26,5 +26,7 @@ class StartCommand:
         if not context.bot.can_read_all_group_messages:
             text += f"\n\n{constants.PRIVACY_MESSAGE}"
         await update.message.reply_text(
-            text, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True
+            text,
+            parse_mode=ParseMode.MARKDOWN,
+            link_preview_options=LinkPreviewOptions(is_disabled=True),
         )

@@ -10,9 +10,9 @@ import os
 import sys
 import textwrap
 
+import bot.ai.chat
 from bot.config import config
 from bot.fetcher import Fetcher
-import bot.ai.chat
 
 
 async def main(question):
@@ -34,5 +34,5 @@ def init_model():
 
 if __name__ == "__main__":
     if len(sys.argv) == 0:
-        exit(1)
+        sys.exit(1)
     asyncio.run(main(sys.argv[1]))

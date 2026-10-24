@@ -1,6 +1,8 @@
 """Retrieves remote content over HTTP."""
 
 import re
+from typing import ClassVar
+
 import httpx
 from bs4 import BeautifulSoup
 
@@ -42,7 +44,7 @@ class Fetcher:
             response.raise_for_status()
             content = Content(response)
             return content.extract_text()
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
             return f"Failed to fetch ({class_name})"
 
@@ -50,13 +52,11 @@ class Fetcher:
 class Content:
     """Extracts resource content as human-readable text."""
 
-    allowed_content_types = set(
-        [
-            "application/json",
-            "application/sql",
-            "application/xml",
-        ]
-    )
+    allowed_content_types: ClassVar = {
+        "application/json",
+        "application/sql",
+        "application/xml",
+    }
 
     def __init__(self, response: httpx.Response) -> None:
         self.response = response
@@ -79,6 +79,4 @@ class Content:
             return False
         if self.content_type.startswith("text/"):
             return True
-        if self.content_type in self.allowed_content_types:
-            return True
-        return False
+        return self.content_type in self.allowed_content_types

@@ -3,10 +3,11 @@
 from urllib import parse
 
 from telegram import Update
-from telegram.ext import CallbackContext
 from telegram.constants import ParseMode
+from telegram.ext import CallbackContext
 
 from bot.config import config
+
 from . import constants
 
 

@@ -14,15 +14,12 @@ from telegram.ext import (
     MessageHandler,
     PicklePersistence,
 )
-from bot import askers
-from bot import commands
-from bot import questions
-from bot import models
+
+from bot import askers, commands, models, questions
 from bot.config import config
 from bot.fetcher import Fetcher
 from bot.filters import Filters
 from bot.models import ChatData, UserData
-
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -96,13 +93,13 @@ def add_handlers(application: Application):
 async def post_init(application: Application) -> None:
     """Defines bot settings."""
     bot = application.bot
-    logging.info(f"config: file={config.filename}, version={config.version}")
-    logging.info(f"allowed users: {config.telegram.usernames}")
-    logging.info(f"allowed chats: {config.telegram.chat_ids}")
-    logging.info(f"admins: {config.telegram.admins}")
-    logging.info(f"api url: {config.openai.url}")
-    logging.info(f"model name: {config.openai.model}")
-    logging.info(f"bot: username={bot.username}, id={bot.id}")
+    logger.info(f"config: file={config.filename}, version={config.version}")
+    logger.info(f"allowed users: {config.telegram.usernames}")
+    logger.info(f"allowed chats: {config.telegram.chat_ids}")
+    logger.info(f"admins: {config.telegram.admins}")
+    logger.info(f"api url: {config.openai.url}")
+    logger.info(f"model name: {config.openai.model}")
+    logger.info(f"bot: username={bot.username}, id={bot.id}")
     await bot.set_my_commands(commands.BOT_COMMANDS)
 
 
@@ -153,7 +150,7 @@ async def reply_to(
         chat = ChatData(context.chat_data)
         model = chat.model or config.openai.model
         asker = askers.create(model=model, question=question)
-        if message.chat.type == Chat.PRIVATE and message.forward_date:
+        if message.chat.type == Chat.PRIVATE and message.forward_origin:
             # this is a forwarded message, don't answer yet
             answer = "This is a forwarded message. What should I do with it?"
         else:
@@ -164,7 +161,7 @@ async def reply_to(
         logger.debug(user.messages)
         await asker.reply(message, context, answer)
 
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         class_name = f"{exc.__class__.__module__}.{exc.__class__.__qualname__}"
         error_text = f"{class_name}: {exc}"
         logger.error("Failed to answer: %s", error_text)

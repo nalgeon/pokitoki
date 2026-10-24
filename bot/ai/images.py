@@ -1,6 +1,7 @@
 """OpenAI-compatible image generation model."""
 
 import httpx
+
 from bot.config import config
 
 client = httpx.AsyncClient(timeout=60.0)
@@ -23,7 +24,7 @@ class Model:
         )
         resp = response.json()
         if "data" not in resp:
-            raise Exception(resp)
+            raise RuntimeError(resp)
         if len(resp["data"]) == 0:
-            raise Exception("received an empty answer")
+            raise ValueError("received an empty answer")
         return resp["data"][0]["url"]

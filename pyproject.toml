@@ -1,0 +1,24 @@
+[project]
+name = "pokitoki"
+version = "0"  # the bot version is Config.version in bot/config.py
+description = "Telegram AI assistant bot for any OpenAI-compatible API"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "httpx>=0.28.1",
+    "python-telegram-bot>=22.8",
+    "pyyaml>=6.0.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.2",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100

@@ -1,10 +1,11 @@
 """Bot configuration parameters."""
 
-import os
-from typing import Any
-import yaml
 import dataclasses
+import os
 from dataclasses import dataclass
+from typing import Any, ClassVar
+
+import yaml
 
 
 @dataclass
@@ -30,7 +31,7 @@ class OpenAI:
     default_image_model = "dall-e-3"
     default_window = 128000
     default_prompt = "You are an AI assistant."
-    default_params = {
+    default_params: ClassVar = {
         "temperature": 0.7,
         "max_tokens": 4096,
     }
@@ -160,13 +161,13 @@ class ConfigEditor:
     """
 
     # These properties cannot be changed at all.
-    readonly = [
+    readonly: ClassVar = [
         "schema_version",
         "version",
         "filename",
     ]
     # Changes made to these properties take effect immediately.
-    immediate = [
+    immediate: ClassVar = [
         "telegram",
         "openai",
         "conversation",
@@ -174,7 +175,7 @@ class ConfigEditor:
         "shortcuts",
     ]
     # Changes made to these properties take effect after a restart.
-    delayed = [
+    delayed: ClassVar = [
         "telegram.token",
         "persistence_path",
     ]
@@ -222,8 +223,8 @@ class ConfigEditor:
         """
         try:
             val = yaml.safe_load(value)
-        except Exception:
-            raise ValueError(f"Invalid value: {value}")
+        except yaml.YAMLError as exc:
+            raise ValueError(f"Invalid value: {value}") from exc
 
         old_val = self.get_value(property)
         if val == old_val:
@@ -250,7 +251,7 @@ class ConfigEditor:
             )
 
         if not isinstance(val, (list, str, int, float, bool)):
-            raise ValueError(f"Cannot set composite value for property: {property}")
+            raise ValueError(f"Cannot set composite value for property: {property}")  # noqa: TRY004
 
         names = property.split(".")
         if names[0] not in self.editable:

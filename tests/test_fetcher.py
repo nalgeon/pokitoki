@@ -1,7 +1,8 @@
 import unittest
+
 from httpx import Request, Response
 
-from bot.fetcher import Fetcher, Content
+from bot.fetcher import Content, Fetcher
 
 
 class FakeClient:

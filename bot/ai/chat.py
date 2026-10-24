@@ -1,7 +1,9 @@
 """OpenAI-compatible language model."""
 
 import logging
+
 import httpx
+
 from bot.config import config
 
 client = httpx.AsyncClient(timeout=60.0)
@@ -115,7 +117,7 @@ class Model:
         )
         resp = response.json()
         if "usage" not in resp:
-            raise Exception(resp)
+            raise RuntimeError(resp)
         logger.debug(
             "< chat response: prompt_tokens=%s, completion_tokens=%s, total_tokens=%s",
             resp["usage"]["prompt_tokens"],

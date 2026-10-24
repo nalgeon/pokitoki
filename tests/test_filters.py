@@ -1,6 +1,7 @@
 import unittest
 
 from telegram.ext import filters as tg_filters
+
 from bot.config import config
 from bot.filters import Filters
 
@@ -11,9 +12,9 @@ class FiltersTest(unittest.TestCase):
         config.telegram.chat_ids = [-100, -200]
         config.telegram.admins = ["admin"]
         filters = Filters()
-        self.assertEqual(filters.users.usernames, set(["alice", "bob"]))
-        self.assertEqual(filters.chats.chat_ids, set([-100, -200]))
-        self.assertEqual(filters.admins.usernames, set(["admin"]))
+        self.assertEqual(filters.users.usernames, {"alice", "bob"})
+        self.assertEqual(filters.chats.chat_ids, {-100, -200})
+        self.assertEqual(filters.admins.usernames, {"admin"})
 
     def test_reload(self):
         config.telegram.usernames = ["alice", "bob"]
@@ -25,9 +26,9 @@ class FiltersTest(unittest.TestCase):
         config.telegram.chat_ids = [-300]
         config.telegram.admins = ["zappa", "xanos"]
         filters.reload()
-        self.assertEqual(filters.users.usernames, set(["alice", "bob", "cindy"]))
-        self.assertEqual(filters.chats.chat_ids, set([-300]))
-        self.assertEqual(filters.admins.usernames, set(["zappa", "xanos"]))
+        self.assertEqual(filters.users.usernames, {"alice", "bob", "cindy"})
+        self.assertEqual(filters.chats.chat_ids, {-300})
+        self.assertEqual(filters.admins.usernames, {"zappa", "xanos"})
 
     def test_is_known_user(self):
         config.telegram.usernames = ["alice", "bob"]
@@ -44,13 +45,13 @@ class EmptyTest(unittest.TestCase):
         filters = Filters()
         self.assertEqual(filters.users, tg_filters.ALL)
         self.assertEqual(filters.chats, tg_filters.ALL)
-        self.assertEqual(filters.admins.usernames, set(["admin"]))
+        self.assertEqual(filters.admins.usernames, {"admin"})
 
     def test_reload(self):
         config.telegram.usernames = []
         filters = Filters()
         config.telegram.usernames = ["alice", "bob"]
-        with self.assertRaises(Exception):
+        with self.assertRaises(RuntimeError):
             filters.reload()
 
     def test_is_known_user(self):

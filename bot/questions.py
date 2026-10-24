@@ -2,6 +2,7 @@
 
 from telegram import Message, MessageEntity
 from telegram.ext import CallbackContext
+
 from bot import shortcuts
 
 
