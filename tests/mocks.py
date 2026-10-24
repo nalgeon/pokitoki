@@ -1,4 +1,5 @@
 from telegram import User
+from telegram.error import BadRequest
 
 from bot import db
 from bot.ai import chat
@@ -40,6 +41,7 @@ class FakeBot:
             can_read_all_group_messages=True,
         )
         self.text = ""
+        self.reject_html = False
 
     @property
     def username(self) -> str:
@@ -60,6 +62,8 @@ class FakeBot:
         pass
 
     async def send_message(self, chat_id: int, text: str, **kwargs) -> None:
+        if kwargs.get("parse_mode") and self.reject_html:
+            raise BadRequest("Can't parse entities")
         self.text = text
 
     async def send_document(

@@ -15,6 +15,12 @@ class SendAnswerTest(unittest.IsolatedAsyncioTestCase):
         await bot._send_answer(message, context, answer="My name is **AI**.")
         self.assertEqual(context.bot.text, "My name is <b>AI</b>.")
 
+    async def test_invalid_html(self):
+        message, context = _create_message()
+        context.bot.reject_html = True
+        await bot._send_answer(message, context, answer="My name is **AI**.")
+        self.assertEqual(context.bot.text, "My name is **AI**.")
+
     async def test_document(self):
         message, context = _create_message()
         answer = "word " * MessageLimit.MAX_TEXT_LENGTH

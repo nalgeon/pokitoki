@@ -8,6 +8,7 @@ import time
 
 from telegram import Chat, Message, ReplyParameters, Update
 from telegram.constants import MessageLimit, ParseMode
+from telegram.error import BadRequest
 from telegram.ext import (
     Application,
     ApplicationBuilder,
@@ -209,7 +210,12 @@ async def _send_answer(message: Message, context: CallbackContext, answer: str) 
     """Replies with an answer from AI, as a document if it's too long for a message."""
     html_answer = markdown.to_html(answer)
     if len(html_answer) <= MessageLimit.MAX_TEXT_LENGTH:
-        await message.reply_text(html_answer, parse_mode=ParseMode.HTML)
+        try:
+            await message.reply_text(html_answer, parse_mode=ParseMode.HTML)
+        except BadRequest as exc:
+            # Telegram rejected the formatting, so send the answer as is
+            logger.warning(f"failed to send formatted answer: {exc}")
+            await message.reply_text(answer)
         return
 
     doc = io.StringIO(answer)
