@@ -164,7 +164,7 @@ Chat information:
 Bot information:
 - id: 5930739038
 - name: @pokitokibot
-- version: 129
+- version: 2026.10.24
 - usernames: 6 users
 - admins: 1 users
 - chat IDs: []

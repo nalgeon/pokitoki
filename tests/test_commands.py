@@ -87,7 +87,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.application = FakeApplication(self.bot)
         self.context = CallbackContext(self.application, chat_id=1, user_id=1)
         self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
-        config.version = 101
+        config.version = "2026.10.24"
         config.telegram.usernames = ["alice", "bob"]
         config.telegram.admins = ["alice"]
         config.telegram.chat_ids = [-100500]
@@ -106,7 +106,7 @@ class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("<pre>Chat information:"))
         self.assertTrue("- name: @bot" in self.bot.text)
-        self.assertTrue("- version: 101" in self.bot.text)
+        self.assertTrue("- version: 2026.10.24" in self.bot.text)
         self.assertTrue("- usernames: 2 users" in self.bot.text)
         self.assertTrue("- admins: 1 users" in self.bot.text)
         self.assertTrue("- chat IDs: [-100500]" in self.bot.text)
