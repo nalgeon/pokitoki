@@ -25,6 +25,7 @@ class ConfigTest(unittest.TestCase):
         self.assertTrue(config.ai.prompt, "You are an AI assistant.")
 
         self.assertEqual(config.conversation.depth, 5)
+        self.assertEqual(config.conversation.timeout, 5)
         self.assertEqual(config.db_path, "./data/pokitoki.db")
         self.assertEqual(config.shortcuts, {})
 
@@ -40,6 +41,15 @@ class ConfigTest(unittest.TestCase):
         self.assertEqual(config.ai.base_url, "https://api.openai.com/v1")
         self.assertEqual(config.ai.model, "gpt-6-luna")
         self.assertEqual(config.ai.tools, ["web_search", "web_fetch"])
+
+    def test_timeout_disabled(self):
+        src = {
+            "telegram": {"token": "tg-1234"},
+            "ai": {"api_key": "oa-1234"},
+            "conversation": {"timeout": 0},
+        }
+        config = Config("config.test.yml", src)
+        self.assertEqual(config.conversation.timeout, 0)
 
     def test_base_url(self):
         src = {

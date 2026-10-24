@@ -73,6 +73,14 @@ class UserMessages:
         ).fetchone()
         return UserMessage(*row) if row else None
 
+    def is_active(self, timeout: dt.timedelta) -> bool:
+        """Checks if the latest message is more recent than `timeout`."""
+        row = db.conn.execute(
+            "select 1 from messages where user_id = ? and created_at > datetime('now', ?) limit 1",
+            (self.user_id, f"-{int(timeout.total_seconds())} seconds"),
+        ).fetchone()
+        return row is not None
+
     def add(self, question: str, answer: str):
         """Adds a message to the message history, removing the oldest ones beyond `maxlen`."""
         db.conn.execute(

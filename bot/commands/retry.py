@@ -16,10 +16,11 @@ class RetryCommand:
 
     async def __call__(self, update: Update, context: CallbackContext) -> None:
         user = UserData(update.effective_user.id)
-        last_message = user.messages.pop()
-        if not last_message:
+        last_message = user.messages.last
+        if not last_message or not last_message.question:
             await update.message.reply_text("No message to retry 🤷‍♂️")
             return
+        user.messages.pop()
         await self.reply_func(
             update=update, message=update.message, context=context, question=last_message.question
         )

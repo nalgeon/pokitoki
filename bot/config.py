@@ -86,12 +86,15 @@ class RateLimit:
 @dataclass
 class Conversation:
     depth: int
+    timeout: int
     message_limit: RateLimit
 
     default_depth = 3
+    default_timeout = 5
 
-    def __init__(self, depth: int, message_limit: dict) -> None:
+    def __init__(self, depth: int, timeout: int | None, message_limit: dict) -> None:
         self.depth = depth or self.default_depth
+        self.timeout = self.default_timeout if timeout is None else timeout
         self.message_limit = RateLimit(**message_limit)
 
 
@@ -129,6 +132,7 @@ class Config:
         # Conversation settings.
         self.conversation = Conversation(
             depth=src["conversation"].get("depth"),
+            timeout=src["conversation"].get("timeout"),
             message_limit=src["conversation"].get("message_limit") or {},
         )
 

@@ -55,6 +55,7 @@ class VersionCommand:
             f"- provider: {config.ai.provider} ({host})\n"
             f"- model: {config.ai.model}\n"
             f"- history depth: {config.conversation.depth}\n"
+            f"- conversation timeout: {config.conversation.timeout} min\n"
             f"- shortcuts: {', '.join(config.shortcuts.keys())}"
             "</pre>"
         )

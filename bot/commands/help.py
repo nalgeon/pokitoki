@@ -40,6 +40,15 @@ def generate_message(username: str) -> str:
     else:
         shortcuts = "none"
 
+    # conversation memory
+    if config.conversation.timeout:
+        memory = constants.MEMORY_MESSAGE.format(timeout=config.conversation.timeout)
+    else:
+        memory = constants.NO_MEMORY_MESSAGE
+
     return constants.HELP_MESSAGE.format(
-        commands=commands, admin_commands=admin_commands, shortcuts=shortcuts
+        memory=memory,
+        commands=commands,
+        admin_commands=admin_commands,
+        shortcuts=shortcuts,
     )

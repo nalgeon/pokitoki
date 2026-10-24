@@ -23,18 +23,23 @@ The bot acts as your personal assistant:
 
 To allow other users to use the bot, list them in the `telegram.usernames` config property.
 
-The bot has a terrible memory, so don't expect it to remember any chat context by default. You can, however, reply with a follow-up question (`Ctrl/Cmd + ↑`). Alternatively, use a plus sign to follow up:
+The bot remembers the conversation while you keep talking. If you ask a question within 5 minutes after the bot's answer, it continues the conversation:
 
 > 🧑 Yesterday, all my troubles seemed so far away
 >
 > 🤖 It sounds like you're quoting "Yesterday" by The Beatles. It's a classic song about longing and nostalgia.
 >
-> 🧑 + who wrote it?
+> 🧑 who wrote it?
 >
 > 🤖 "Yesterday" was written by Paul McCartney of The Beatles.
 
+After a longer pause, the bot starts a new conversation. To start over sooner, use the `/new` command (`/new question` starts over and asks the question right away). To pick up a conversation after a pause, start the question with a plus sign (`+ who wrote it?`) or reply to the bot's message (`Ctrl/Cmd + ↑`). After a pause, a reply continues from the message you replied to.
+
+Change the pause length with the `conversation.timeout` config property (in minutes). Set it to `0` to start a new conversation with every question, unless it starts with a plus or is a reply.
+
 Available commands:
 
+- `/new` - start a new conversation
 - `/retry` - retry answering the last question
 - `/help` - show help
 - `/version` - show bot info
@@ -174,6 +179,7 @@ AI information:
 - provider: openai (api.openai.com)
 - model: gpt-6-luna
 - history depth: 5
+- conversation timeout: 5 min
 - shortcuts: proofread, summarize
 ```
 

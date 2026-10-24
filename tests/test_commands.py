@@ -77,6 +77,16 @@ class HelpTest(unittest.IsolatedAsyncioTestCase, Helper):
         update = self._create_update(11)
         await self.command(update, self.context)
         self.assertTrue(self.bot.text.startswith("Send me a question"))
+        self.assertTrue("within 5 minutes" in self.bot.text)
+
+    async def test_help_no_timeout(self):
+        config.conversation.timeout = 0
+        try:
+            update = self._create_update(11)
+            await self.command(update, self.context)
+            self.assertTrue("I don't remember chat context" in self.bot.text)
+        finally:
+            config.conversation.timeout = 5
 
 
 class VersionTest(unittest.IsolatedAsyncioTestCase, Helper):
@@ -346,6 +356,54 @@ class RetryTest(unittest.IsolatedAsyncioTestCase, Helper):
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
 
+    async def test_nothing_to_retry(self):
+        update = self._create_update(11)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "No message to retry 🤷‍♂️")
+
+    async def test_seeded_reply(self):
+        # a reply to an old message seeds the history with an answer without a question
+        user_data = models.UserData(1)
+        user_data.messages.add("", "My name is AI.")
+        update = self._create_update(11)
+        await self.command(update, self.context)
+        self.assertEqual(self.bot.text, "No message to retry 🤷‍♂️")
+        self.assertEqual(user_data.messages.as_list(), [("", "My name is AI.")])
+
+
+class NewTest(unittest.IsolatedAsyncioTestCase, Helper):
+    def setUp(self):
+        self.ai = FakeGPT()
+        mock_chat(self.ai)
+        self.bot = FakeBot("bot")
+        self.chat = Chat(id=1, type=ChatType.PRIVATE)
+        self.chat.set_bot(self.bot)
+        self.application = FakeApplication(self.bot)
+        self.user = User(id=1, first_name="Alice", is_bot=False, username="alice")
+        self.command = commands.New(bot.reply_to)
+        config.telegram.usernames = ["alice"]
+
+    async def test_new(self):
+        models.UserData(1).messages.add("What is your name?", "My name is AI.")
+        context = CallbackContext(self.application, chat_id=1, user_id=1)
+        context.args = []
+        update = self._create_update(11, text="/new")
+        await self.command(update, context)
+        self.assertEqual(self.bot.text, "Started a new conversation.")
+        self.assertEqual(models.UserData(1).messages.as_list(), [])
+
+    async def test_new_with_question(self):
+        models.UserData(1).messages.add("What is your name?", "My name is AI.")
+        context = CallbackContext(self.application, chat_id=1, user_id=1)
+        context.args = ["Where", "are", "you?"]
+        update = self._create_update(11, text="/new Where are you?")
+        await self.command(update, context)
+        self.assertEqual(self.ai.question, "Where are you?")
+        self.assertEqual(self.ai.history, [])
+        self.assertEqual(
+            models.UserData(1).messages.as_list(), [("/new Where are you?", "Where are you?")]
+        )
+
 
 class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
     def setUp(self):
@@ -360,12 +418,77 @@ class MessageTest(unittest.IsolatedAsyncioTestCase, Helper):
         self.command = commands.Message(bot.reply_to)
         config.telegram.usernames = ["alice"]
 
+    def _expire_history(self):
+        db.conn.execute("update messages set created_at = datetime('now', '-6 minutes')")
+
     async def test_message(self):
         update = self._create_update(11, text="What is your name?")
         await self.command(update, self.context)
         self.assertEqual(self.bot.text, "What is your name?")
         self.assertEqual(self.ai.question, "What is your name?")
         self.assertEqual(self.ai.history, [])
+
+    async def test_continue_within_timeout(self):
+        update = self._create_update(11, text="What is your name?")
+        await self.command(update, self.context)
+        update = self._create_update(12, text="And why is that?")
+        await self.command(update, self.context)
+        self.assertEqual(self.ai.history, [("What is your name?", "What is your name?")])
+
+    async def test_new_after_timeout(self):
+        update = self._create_update(11, text="What is your name?")
+        await self.command(update, self.context)
+        self._expire_history()
+        update = self._create_update(12, text="Where are you?")
+        await self.command(update, self.context)
+        self.assertEqual(self.ai.history, [])
+        self.assertEqual(
+            models.UserData(1).messages.as_list(), [("Where are you?", "Where are you?")]
+        )
+
+    async def test_timeout_disabled(self):
+        config.conversation.timeout = 0
+        try:
+            update = self._create_update(11, text="What is your name?")
+            await self.command(update, self.context)
+            update = self._create_update(12, text="Where are you?")
+            await self.command(update, self.context)
+            self.assertEqual(self.ai.history, [])
+        finally:
+            config.conversation.timeout = 5
+
+    async def test_follow_up_after_timeout(self):
+        update = self._create_update(11, text="What is your name?")
+        await self.command(update, self.context)
+        self._expire_history()
+        update = self._create_update(12, text="+ And why is that?")
+        await self.command(update, self.context)
+        self.assertEqual(self.ai.history, [("What is your name?", "What is your name?")])
+
+    async def test_reply_within_timeout(self):
+        update = self._create_update(11, text="What is your name?")
+        await self.command(update, self.context)
+        answer = self._create_update(12, text="My name is AI.", user=self.bot.user).message
+        update = self._create_update(13, text="And why is that?", reply_to_message=answer)
+        await self.command(update, self.context)
+        self.assertEqual(self.ai.history, [("What is your name?", "What is your name?")])
+
+    async def test_reply_after_timeout(self):
+        update = self._create_update(11, text="What is your name?")
+        await self.command(update, self.context)
+        self._expire_history()
+        answer = self._create_update(5, text="I'm in the cloud.", user=self.bot.user).message
+        update = self._create_update(12, text="Which one?", reply_to_message=answer)
+        await self.command(update, self.context)
+        self.assertEqual(self.ai.question, "Which one?")
+        self.assertEqual(self.ai.history, [("", "I'm in the cloud.")])
+
+        # the next question continues the conversation started from the reply
+        update = self._create_update(13, text="Is it cold there?")
+        await self.command(update, self.context)
+        self.assertEqual(
+            self.ai.history, [("", "I'm in the cloud."), ("+ Which one?", "Which one?")]
+        )
 
     async def test_follow_up(self):
         update = self._create_update(11, text="What is your name?")

@@ -1,5 +1,6 @@
 """Telegram chat bot built using large language models."""
 
+import datetime as dt
 import io
 import logging
 import sys
@@ -76,6 +77,9 @@ def add_handlers(application: Application):
     # message-related commands
     application.add_handler(CommandHandler("model", commands.Model(), filters=filters.users))
     application.add_handler(CommandHandler("prompt", commands.Prompt(), filters=filters.users))
+    application.add_handler(
+        CommandHandler("new", commands.New(reply_to), filters=filters.users_or_chats)
+    )
     application.add_handler(
         CommandHandler("retry", commands.Retry(reply_to), filters=filters.users_or_chats)
     )
@@ -178,9 +182,17 @@ async def _ask_question(message: Message, context: CallbackContext, question: st
     user = UserData(message.from_user.id)
     if message.chat.type == Chat.PRIVATE:
         # in private chats the bot remembers previous messages
-        if is_follow_up:
-            # this is a follow-up question,
+        timeout = dt.timedelta(minutes=config.conversation.timeout)
+        prev_message = questions.extract_prev(message, context)
+        if user.messages.is_active(timeout) or (is_follow_up and not prev_message):
+            # the conversation is ongoing or the user explicitly continues it,
             # so the bot should retain the previous history
+            history = user.messages.as_list()
+        elif prev_message:
+            # this is a reply to an older bot message,
+            # so the bot should start a new conversation from it
+            user.messages.clear()
+            user.messages.add("", prev_message)
             history = user.messages.as_list()
         else:
             # user is asking a question 'from scratch',

@@ -102,6 +102,16 @@ class UserMessagesTest(unittest.TestCase):
         self.assertEqual(self.um.as_list(), [])
         self.assertEqual(len(UserMessages(2, maxlen=3).as_list()), 1)
 
+    def test_is_active(self):
+        timeout = dt.timedelta(minutes=5)
+        self.assertFalse(self.um.is_active(timeout))
+        self.um.add("Hello", "Hi")
+        self.assertTrue(self.um.is_active(timeout))
+        self.assertFalse(self.um.is_active(dt.timedelta(0)))
+        db.conn.execute("update messages set created_at = datetime('now', '-6 minutes')")
+        self.assertFalse(self.um.is_active(timeout))
+        self.assertFalse(UserMessages(2, maxlen=3).is_active(timeout))
+
     def test_as_list(self):
         self.um.add("Hello", "Hi")
         self.um.add("Is it cold today?", "Yep!")

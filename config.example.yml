@@ -60,6 +60,12 @@ conversation:
     # the bot will remember when talking to a user.
     depth: 3
 
+    # In private chats, the bot continues the conversation
+    # if the user writes within this many minutes after the last answer.
+    # Otherwise, it starts a new conversation (0 = always start a new one,
+    # unless the question starts with a '+' or is a reply to the bot).
+    timeout: 5
+
     # The maximum number of messages a user can send during the specified time period.
     # Only applies to users who are not listed in `telegram.usernames`.
     #   `count`  = an integer number of messages (0 = unlimited)
